@@ -1,0 +1,329 @@
+{
+	"Active Income": {
+		"id": "ActiveIncome",
+		"tab": "IncomeTab",
+		"type": "Income",
+		"name": "Active Income",
+		"data": [
+			{
+				"name": "Wage 1",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Wage 2",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "729"
+			},
+			{
+				"name": "Bonus",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			},
+			{
+				"name": "Meal Tickets",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			}
+		]
+	},
+	"Passive Income": {
+		"id":"PassiveIncome",
+		"tab": "IncomeTab",
+		"type": "Income",
+		"data": [
+			{
+				"name": "Rents",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Interests",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Dividends",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			},
+			{
+				"name": "Copyright",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			},
+			{
+				"name": "Allowance",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			},
+			{
+				"name": "Child support",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			}
+		]
+	},
+	"Debt": {
+		"id":"Debt",
+		"tab": "DebtTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Mortgage",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Personal needs loan",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Credit card",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			}
+		]
+	},
+	"Vital Expenses": {
+		"id":"VitalExpenses",
+		"tab": "VitalExpensesTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Food",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Lunch",
+				"daily": "3",
+				"monthly": "60",
+				"yearly": "720"
+			},
+			{
+				"name": "Medication",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			},
+			{
+				"name": "Hygene",
+				"daily": "1",
+				"monthly": "20",
+				"yearly": "240"
+			}
+		]
+	},
+	"Household": {
+		"id":"Household",
+		"tab": "VitalExpensesTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Rent",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Gas",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Electricity",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Water",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Cable (Netflix/HBO/...)",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Internet",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Telephone",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Trash",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Taxes",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Insurance",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Repairs",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			}
+		]
+	},
+	"Transport": {
+		"id":"Transport",
+		"tab": "VitalExpensesTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Public transport plan",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Fuel",
+				"daily": "0",
+				"monthly": "60",
+				"yearly": "0"
+			},
+			{
+				"name": "Insurance",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "SCDW",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Tolls",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Taxes",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Revision",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Repairs",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Tires",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Parking",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			}
+		]
+	},
+	"Savings": {
+		"id":"Savings",
+		"tab": "VitalExpensesTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Emergency fund",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Safety fund",
+				"daily": "0",
+				"monthly": "60",
+				"yearly": "0"
+			},
+			{
+				"name": "Education",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Retirement",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			}
+		]
+	},
+	"Wasted Money": {
+		"id":"WastedMoney",
+		"tab": "WastedMoneyTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Cigarettes",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Gambling",
+				"daily": "0",
+				"monthly": "60",
+				"yearly": "0"
+			},
+			{
+				"name": "Hobbies",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			}
+		]
+	}
+}

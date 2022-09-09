@@ -1,0 +1,71 @@
+{% extends "Base.html" %}
+
+{% block tabs %}
+<li class="tab">
+	<a class="active" href="#IncomeTab"><h6>Income</h6></a>
+</li>
+<li class="tab">
+	<a href="#DebtTab"><h6>Debt</h6></a>
+</li>
+<li class="tab">
+	<a href="#VitalExpensesTab"><h6>Vital expenses</h6></a>
+</li>
+<li class="tab">
+	<a href="#WastedMoneyTab"><h6>Wasted money</h6></a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div id="IncomeTab" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center orange-text">Income</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">Values added in each cell will recompute the others on the same row</h5>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div id="DebtTab" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center orange-text">Debt</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">Small debts should pe repaid in increasing order</h5>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="VitalExpensesTab" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center orange-text">Vital expenses</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">Pay yourself first! Save some money before paying the restof expenses</h5>
+			</div>
+		</div>
+	</div>
+
+</div>
+<div id="WastedMoneyTab" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center orange-text">Wasted Money</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">If hobbies consume more than 10% of your optional expenses, you should consider monetizing your hobby</h5>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row center">
+	<button id="EditBtn" class="waves-effect waves-light btn orange"><img class="vertical-center" src='{{ url_for("static", filename="icons/pencil.svg") }}' />Edit</button>
+	<button id="SaveBtn" style="display: none" class="waves-effect waves-light btn orange"><img class="vertical-center" src='{{ url_for("static", filename="icons/content-save.svg") }}' />Save</button>
+</div>
+{% endblock %}
+{% block script %}
+<script src="{{ url_for('static', filename='js/gui.js') }}"></script>
+<script src="{{ url_for('static', filename='js/orm.js') }}"></script>
+<script src="{{ url_for('static', filename='js/planning.js') }}"></script>
+{% endblock %}

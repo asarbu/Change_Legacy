@@ -1,0 +1,296 @@
+{% extends "Base.html" %}
+{% block head %}
+<style>
+	
+</style>
+{% endblock %}
+{% block tabs %}
+<li class="tab">
+	<a class="active" href="#Tab1"><h6>August</h6></a>
+</li>
+<li class="tab">
+	<a href="#Tab2"><h6>September</h6></a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div id="Tab1" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center orange-text">August</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">August expenses</h5>
+			</div>
+		</div>
+	</div>
+	<!-- Modal Structure -->
+	<div id="modal1" class="modal bottom-sheet">
+		<div class="modal-content">
+			<h4>New Expense</h4>
+			<p>
+				<div class="card">
+					<div class="card-content container">
+						<div class="input-field">
+							<input id="bought_date" type="text" class="datepicker valid">
+							<label for="bought_date">Bought date</label>
+						</div>
+						<div class="input-field">
+							<input id="description" type="text" class="validate">
+							<label for="description">Description</label>
+						</div>
+						<div class=" input-field activator grey-text text-darken-4 modal-trigger" href="#modal2">
+							<input id="category" type="text" class="validate">
+							<input id="expense_type" type="hidden">
+							<label for="category">Category</label>
+						</div>
+						<div class=" input-field activator grey-text text-darken-4">
+							<input id="price" type="number" step="0.01" class="validate">
+							<label for="price">Price</label>
+						</div>
+					</div>
+				</div>
+			</p>
+		</div>
+		<div class="modal-footer">
+			<button class="modal-close waves-effect waves-green btn-flat save-modal">Save</button>
+		</div>
+	</div>
+
+	<div id="modal2" class="modal bottom-sheet">
+		<div class="modal-content">
+			<ul id="categoryList" class="collapsible popout">
+			</ul>
+		</div>
+		<div class="modal-footer">
+			<a id="modal2_close" href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+		</div>
+	</div>
+
+	<div id="summaryModal" class="modal bottom-sheet">
+		<div class="modal-content">
+			<h4>New Expense</h4>
+			<p>
+				<div class="card">
+					<div class="card-content container">
+						<table id="Summary" class="striped responsive-table row" style="border: 1px solid black; border-collapse: collapse; table-layout: fixed; width: 100%;">
+							<thead>
+								<tr id="SummaryHeader">
+									<th>Category</th>
+									<th>Spending</th>
+									<th>Budget</th>
+									<th>Percentage</th>
+									<th hideable="true" style="display: none">
+										<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</p>
+		</div>
+		<div class="modal-footer">
+			<a id="modal2_close" href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
+		</div>
+	</div>
+
+	<table id="Sep" class="striped row table-content">
+		<thead>
+			<tr id="ActiveIncomeHeader">
+				<th>August</th>
+				<th>Date</th>
+				<th>Category</th>
+				<th>Amount</th>
+				<th hideable="true" style="display: none">
+					<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+	</table>
+</div>
+
+<div id="Tab2" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center orange-text">October</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">Small debts should pe repaid in increasing order</h5>
+			</div>
+		</div>
+	</div>
+	<table id="Oct" class="striped responsive-table row" style="border: 1px solid black; border-collapse: collapse; table-layout: fixed; width: 100%;">
+		<thead>
+			<tr>
+				<th>October</th>
+				<th>Daily</th>
+				<th>Monthly</th>
+				<th>Yearly</th>
+				<th hideable="true" style="display: none">
+					<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+		</tbody>
+		<tfoot>
+			<tr>
+				<th id="total">Total :</th>
+				<td class="totalCell"></td>
+				<td class="totalCell"></td>
+				<td class="totalCell"></td>
+				<td hideable="true" style="display: none"></td>
+			</tr>
+			<tr>
+				<th id="empty" colspan="3"></th>
+				<td>
+				</td>
+			</tr>
+		</tfoot>
+	</table>
+</div>
+	
+<div class="row center">
+	<button id="EditBtn" class="waves-effect waves-light btn"><img class="vertical-center" src='{{ url_for("static", filename="icons/pencil.svg") }}' />Edit</button>
+	<button id="SaveBtn" style="display: none" class="waves-effect waves-light btn"><img class="vertical-center" src='{{ url_for("static", filename="icons/content-save.svg") }}' />Save</button>
+</div>
+
+<div class="fixed-action-btn">
+	<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
+		<i class="material-icons">add</i>
+	</button>
+</div>
+
+<div class="fixed-action-btn-left">
+	<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
+		<i class="material-icons">add</i>
+	</button>
+</div>
+
+<div class="fixed-action-btn-center">
+	<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#summaryModal">
+		<i class="material-icons">insert_chart</i>
+	</button>
+</div>
+
+
+{% endblock %}
+{% block script %}
+<script src='static/js/orm.js'></script>
+<script src='static/js/gui.js'></script>
+<script src='static/js/spendings.js'></script>
+
+<script>
+	//Default bought date should be today to avoid useless clicks
+	var options = { year: 'numeric', month: 'short', day: 'numeric' };
+	var today = new Date();
+	document.getElementById("bought_date").value = today.toLocaleDateString("en-US", options);
+
+	//If the user clicks a subcategory, we should close the modal and fill the input
+	var category = document.getElementById('category');
+	var expenseType = document.getElementById('expense_type');
+	var modal = document.getElementById('modal2_close');
+	if (document.body.addEventListener) {
+		document.body.addEventListener('click', categoryClickedHandler, false);
+	}
+	else {
+		document.body.attachEvent('onclick', categoryClickedHandler);//for IE
+	}
+
+	function categoryClickedHandler(e) {
+		e = e || window.event;
+		var target = e.target || e.srcElement;
+		if (target.className.match('category')) {
+			category.value = target.innerHTML;
+			category.classList.add('valid');
+			expenseType.value = (target.parentNode.parentNode.parentNode.parentNode.firstElementChild.innerHTML);
+			M.updateTextFields();
+			modal.click();
+
+		}
+	}
+
+	const divs = document.querySelectorAll('.save-modal');
+
+	divs.forEach(el => el.addEventListener('click', event => {
+
+		var expenseType = document.getElementById("expense_type").value;
+		var bought_date_var = document.getElementById("bought_date").value;
+		var category_var = document.getElementById("category").value;
+		var description_var = document.getElementById("description").value;
+		var price_var = document.getElementById("price").value;
+
+		spendings.insertSpending({
+			type: expenseType,
+			bought_date: bought_date_var,
+			description: description_var,
+			category: category_var,
+			price: price_var
+		});
+
+		var link = document.createElement('a');
+		link.href = "#!";
+		link.click();
+	}));
+
+	const showTables = () => {
+		fetch("static/js/planning.json")
+			.then(response => {
+				return response.json();
+			})
+			.then(db => fillPlanningTables(db));
+
+	}
+
+	function fillPlanningTables(db) {
+		var categoryList = document.getElementById("categoryList")
+
+		for (const [key, value] of Object.entries(db)) {
+			if (value.type == "Expense")
+				categoryList.innerHTML += '<li>\
+					<div class="collapsible-header">'
+					+ key +
+					'</div>\
+						<div class="collapsible-body">\
+						<span> <ul class="card collection">'
+					+ getSubCategories(value.data) +
+					'</ul></span>\
+						  </div>\
+					</li>'
+		}
+
+	}
+
+	function getSubCategories(data) {
+		var subCategories = ''
+		for (const [key, value] of Object.entries(data)) {
+			subCategories += '<li class="collection-item category">' + value.name + '</li>'
+		}
+		return subCategories
+	}
+
+	document.addEventListener('DOMContentLoaded', function () {
+		var elems = document.querySelectorAll('.fixed-action-btn');
+		var instances = M.FloatingActionButton.init(elems, {});
+		showTables();
+	});
+	M.AutoInit();
+
+	function computeTotal() {
+		let totalCells = document.getElementsByClassName('totalCell');
+		for (var i = 0; i < totalCells.length; ++i) {
+			var total = 0;
+			var colIndex = totalCells[i].cellIndex;
+			var table = totalCells[i].parentNode.parentNode.parentNode;
+			var rows = table.tBodies[0].rows;
+			for (var rowIndex = 0; rowIndex < rows.length; ++rowIndex) {
+				total += parseFloat(rows[rowIndex].cells[colIndex].innerHTML);
+			}
+			totalCells[i].innerHTML = total;
+		}
+	}
+</script>
+{% endblock %}
