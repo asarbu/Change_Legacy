@@ -39,6 +39,12 @@
 					<li>
 						<a href="/">Monthly expenses</a>
 					</li>
+					<li>
+						<a id="GDriveLogin">Connect to Google Drive</a>
+					</li>
+					<li>
+						<a id="Signout">Log out</a>
+					</li>
 				</ul>
 				<ul id="nav-mobile" class="sidenav">
 					<li>
@@ -47,9 +53,15 @@
 					<li>
 						<a href="/">Monthly expenses</a>
 					</li>
+					<li>
+						<a id="GDriveLoginMobile">Connect to Google Drive</a>
+					</li>
+					<li>
+						<a id="Signout">Log out</a>
+					</li>
 				</ul>
 				<a href="#" data-target="nav-mobile" class="sidenav-trigger">
-					<img class="vertical-center" src="{{ url_for('static', filename='icons/menu.svg') }}" alt="Menu"/>
+					<img class="vertical-center" src="{{ url_for('static', filename='icons/menu.svg') }}" alt="Menu" />
 				</a>
 			</div>
 			<div class="nav-content container">
@@ -103,14 +115,18 @@
 				</div>
 			</div>
 			<div class="footer-copyright">
-				<div class="container"> Made by <a class="orange-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+				<div class="container">
+					Made by <a class="orange-text text-lighten-3" href="http://materializecss.com">Materialize</a>
 				</div>
 			</div>
 		</footer>
 		<!--  Scripts-->
-		
 		<script src="{{ url_for('static', filename='js/materialize.js') }}"></script>
 		<script src="static/js/app.js"></script>
+
+		<script src="{{ url_for('static', filename='js/gdrive.js') }}"></script>
+		<script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+		<script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 		{% block script %}{% endblock %}
 	</body>
 </html>
