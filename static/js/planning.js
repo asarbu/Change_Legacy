@@ -13,7 +13,6 @@ function initListeners() {
 	var editableElements = document.querySelectorAll('td[editable="true"]');
 	console.log(editableElements.length)
 	for (var i = 0; i < editableElements.length; i++) {
-		console.log("adding listener")
 		editableElements[i].addEventListener('input', cellChanged, false);
 	}
 }
@@ -21,6 +20,7 @@ function initListeners() {
 class Planning {
 	constructor() {
 		this.pdb = new Idb("Planning", 1, upgradePlanningDatabase);
+		console.log(new Date().getFullYear())
 	}
 
 	async init() {

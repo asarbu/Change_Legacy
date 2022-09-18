@@ -12,6 +12,14 @@ def index(name="Change!"):
 def planning(name="Change!"):
     return render_template('planning.html', name=name)
     
+@app.route('/index.html', methods=['GET'])
+def indexHtml(name="Change!"):
+    return render_template('index.html', name=name)
+
+@app.route('/auth.html', methods=['GET'])
+def authHtml(name="Change!"):
+    return render_template('Auth.html', name=name)
+    
 @app.route('/sw.js')
 def sw():
     response=make_response(send_from_directory('static', 'sw.js'))

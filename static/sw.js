@@ -7,6 +7,7 @@ const assets = [
   "static/js/materialize.js",
   "static/js/orm.js",
   "static/js/gui.js",
+  "static/js/gdrive.js",
   "static/js/spendings.js",
   "static/js/planning.js",
   "static/js/planning.json",
@@ -23,6 +24,7 @@ const assets = [
   "https://fonts.gstatic.com/s/materialicons/v139/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2"
 ]
 
+//Comment     
 self.addEventListener("install", installEvent => {
   installEvent.waitUntil(
       caches.open(staticCacheName).then(cache => {
