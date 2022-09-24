@@ -57,7 +57,7 @@ class Idb {
 		});
 	}
 
-	insert(storeName, value, key) {
+	put(storeName, value, key) {
 		return new Promise((resolve, reject) => {
 			const txn = this.db.transaction(storeName, 'readwrite');
 
@@ -141,7 +141,7 @@ class Idb {
 
 	populateStoreFromTemplate(storeName, planningFile) {
 		for (const [key, value] of Object.entries(planningFile)) {
-			this.insert(storeName, value, key);
+			this.put(storeName, value, key);
 		}
 	}
 }

@@ -8,7 +8,7 @@
     var YOUR_CLIENT_ID = '48008571695-vjj7lrnm4dv8i49ioi3a4tq3pbl1j67h.apps.googleusercontent.com';
     var YOUR_REDIRECT_URI = 'https://asarbu.loca.lt/auth.html';
     var fragmentString = location.hash.substring(1);
-  
+  console.log(location)
     // Parse query string to see if page request is coming from OAuth 2.0 server.
     var params = {};
     var regex = /([^&=]+)=([^&]*)/g, m;
@@ -17,6 +17,7 @@
     }
     if (Object.keys(params).length > 0) {
       localStorage.setItem('oauth2-test-params', JSON.stringify(params) );
+      console.log(params);
       if (params['state'] && params['state'] == 'try_sample_request') {
         trySampleRequest();
       }
@@ -26,6 +27,7 @@
     // Otherwise, start OAuth 2.0 flow.
     async function trySampleRequest() {
       var params = JSON.parse(localStorage.getItem('oauth2-test-params'));
+      console.log(params)
       if (params && params['access_token']) {
         const url = 'https://www.googleapis.com/drive/v3/about?fields=user&' +
             'access_token=' + params['access_token'];
@@ -63,7 +65,8 @@
                     'scope': 'https://www.googleapis.com/auth/drive',
                     'state': 'try_sample_request',
                     'include_granted_scopes': 'true',
-                    'response_type': 'token'};
+                    'response_type': 'token',
+                  };
   
       // Add form parameters as hidden input values.
       for (var p in params) {

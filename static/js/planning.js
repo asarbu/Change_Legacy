@@ -1,12 +1,17 @@
 // ----------------------- ORM Operations ----------------------- //
 var planning;
-async function initPlanning() {
+var gdrive;
+const gdriveEnabled = true;
+async function initPlanning() {	
+	gdrive = await import('/static/modules/gdrive.mjs');
+
 	var sideNavs = document.querySelectorAll('.sidenav');
 	M.Sidenav.init(sideNavs, {});
 
 	planning = new Planning();
 	await planning.init();
 	await planning.readPlanningDb();
+	
 }
 
 function initListeners() {
@@ -20,16 +25,20 @@ function initListeners() {
 class Planning {
 	constructor() {
 		this.pdb = new Idb("Planning", 1, upgradePlanningDatabase);
-		console.log(new Date().getFullYear())
 	}
 
 	async init() {
 		await this.pdb.init()
 			.then(pdb => pdb.fetchTemplateToStore(PLANNING_TEMPLATE_URI, PLANNING_STORE_NAME));
+		if(gdriveEnabled)
+			await persistPlanningToNetwork();
 	}
 
 	readPlanningDb() {
-		this.pdb.openCursor(PLANNING_STORE_NAME).then(this.createPlanningTable.bind(this));
+		//this.pdb.openCursor(PLANNING_STORE_NAME).then(this.createPlanningTable.bind(this));
+		gdrive.readFile(localStorage.getItem(PLANNING_TEMPLATE_URI))
+		.then(planningData => this.createPlanningTable(planningData))
+		
 	}
 
 	createPlanningTable(planningItems) {
@@ -93,9 +102,17 @@ class Planning {
 		lastRow.cells[2].innerHTML = totalMonthly;
 		lastRow.cells[3].innerHTML = totalYearly;
 	}
-
-	
 }
+
+async function persistPlanningToNetwork() {
+	const currentMonth = (new Date().toLocaleString("en-US", {month: "short"})) + ".json";
+	const cursorData = await planning.pdb.openCursor(PLANNING_STORE_NAME);
+	const planningData = Array.from(cursorData.entries());
+	const fileId = await gdrive.writeFile(currentMonth, planningData);
+
+	localStorage.setItem(PLANNING_TEMPLATE_URI, fileId);
+}
+
 function editableCellChanged(event) {
 	if (!event.target.hasAttribute('editable'))
 		return;
@@ -132,8 +149,22 @@ function addRow(btn) {
 	appendRowToTable(table, ["New Row", 0, 0, 0], { index: index, useBold: false, deletable: true, hidden: false });
 }
 
-function deleteRow(btn) {
-	var row = btn.parentNode.parentNode;
+async function deleteRow(btn) {
+	const row = btn.parentNode.parentNode;
+	const key = row.parentNode.parentNode.tHead.rows[0].cells[0].innerHTML;
+	const value = row.cells[0].innerHTML;
+	const planningItem = await planning.pdb.get(PLANNING_STORE_NAME, key);
+	const data = planningItem.data;
+
+	for (var index = data.length - 1; index >= 0; index--) {
+		if (data[index].name === value) {
+			data.splice(index, 1);
+			break;
+		}
+	}
+	planningItem.data = data;
+	await planning.pdb.put(PLANNING_STORE_NAME, planningItem, key);
+
 	row.parentNode.removeChild(row);
 }
 
@@ -161,6 +192,7 @@ function onClickEdit(btn) {
 
 async function onClickSave(btn) {
 	var editedRows = document.querySelectorAll('tr[edited="true"]');
+	persistPlanningToNetwork();
 
 	for (var i = 0; i < editedRows.length; i++) {
 		const row = editedRows[i];

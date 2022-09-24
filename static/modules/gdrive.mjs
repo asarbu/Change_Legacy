@@ -4,69 +4,27 @@ const CLIENT_ID = '48008571695-vjj7lrnm4dv8i49ioi3a4tq3pbl1j67h.apps.googleuserc
 const API_KEY = 'AIzaSyCqtQs6eT16KFp1i4bhosBDoZ-fOu2txsg';
 const FILES_API = "https://www.googleapis.com/drive/v3/files";
 const ROOT = "root";
-
-document.getElementById('GDriveLogin').style.display = 'none';
-document.getElementById('Signout').style.display = 'none';
-
-async function maybeEnableButtons() {
-	document.getElementById('GDriveLogin').style.display = '';
-	//document.getElementById('Signout').style.visibility = 'visible';
-}
-
-async function onClickGDrive() {
-	document.getElementById('Signout').style.display = '';
-	document.getElementById('GDriveLogin').style.display = 'none';
-
-	//TDO move this into an initialize function
-	var pdb = new Idb("Planning", 1, upgradePlanningDatabase);
-	await pdb.init();
-
-	var topFolder = await findFolder("Change!");
-	if (!topFolder) {
-		topFolder = await createFolder("Change!");
-	}
-	const currentYear = (new Date().getFullYear());
-	var yearFolder = await findFolder(currentYear, topFolder);
-	if(!yearFolder) {
-		yearFolder = await createFolder(currentYear, topFolder);
-	}
-	const currentMonth = (new Date().toLocaleString("en-US", {month: "short"})) + ".json";
-	var monthFile = await findFile(currentMonth, yearFolder);
-	if(!monthFile) {
-		const cursorData = await pdb.openCursor(PLANNING_STORE_NAME);
-		const planningData = Array.from(cursorData.entries());
-		monthFile = await writeFile(currentMonth, yearFolder, planningData);
-	}
-	const data = await readFile(monthFile);
-}
-
 export async function writeFile(fileName, data) {
-	const topFolder = findFolder("Change!");
+	var topFolder = await findFolder("Change!");
 	if (!topFolder) {
 		topFolder = await createFolder("Change!");
 	}
 	if(!topFolder) return;
 
 	const currentYear = (new Date().getFullYear());
-	const yearFolder = await findFolder(currentYear, topFolder);
+	var yearFolder = await findFolder(currentYear, topFolder);
 	if(!yearFolder) {
 		yearFolder = await createFolder(currentYear, topFolder);
 	}
 	if(!yearFolder) return;
 
-	const monthFile = await findFile(fileName, yearFolder);
-	monthFile = await writeFile(fileName, yearFolder, data, monthFile === undefined);
-	
-	if(!monthFile) return;
-	return true;
-}
-
-/**
- *  Sign out the user upon button click.
- */
-function onClickSignout() {
-	document.getElementById('GDriveLogin').style.display = '';
-	document.getElementById('Signout').style.display = 'none';
+	var monthFile = await findFile(fileName, yearFolder);
+	if(!monthFile) {
+		monthFile = await write(fileName, yearFolder, data);
+	} else {
+		monthFile = await update(monthFile, data);
+	}
+	return monthFile;
 }
 
 function getHeader() {
@@ -155,7 +113,39 @@ async function createFolder(name, parent) {
 	}
 }
 
-async function writeFile(name, parent, data, create) {
+async function update(fileId, data) {
+	const fileContent = JSON.stringify(data);
+	const file = new Blob([fileContent], {type: 'text/plain'});
+	const metadata = {
+		'mimeType': 'text/plain',
+	};
+
+	const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
+	const access_token = params['access_token'];
+	
+	const url = new URL(`https://www.googleapis.com/upload/drive/v3/files/${fileId}`);
+	url.searchParams.append("uploadType", "multipart");
+	url.searchParams.append("fields", "id");
+
+	const header = new Headers({ 'Authorization': 'Bearer ' + access_token });
+
+	const form = new FormData();
+	form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+	form.append('file', file);
+	fetch(url, {
+		method: `PATCH`,
+		headers: header,
+		body: form,
+	}).then((res) => {
+		return res.json();
+	}).then(json => {
+		return json.id;
+	});
+
+	return fileId;
+}
+
+async function write(name, parent, data) {
 	const fileContent = JSON.stringify(data);
 	const file = new Blob([fileContent], {type: 'text/plain'});
 	const metadata = {
@@ -166,7 +156,6 @@ async function writeFile(name, parent, data, create) {
 
 	const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
 	const access_token = params['access_token'];
-	const httpMethod = create ? 'POST' : 'PATCH';
 	
 	const url = new URL("https://www.googleapis.com/upload/drive/v3/files");
 	url.searchParams.append("uploadType", "multipart");
@@ -177,9 +166,8 @@ async function writeFile(name, parent, data, create) {
 	const form = new FormData();
 	form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
 	form.append('file', file);
-
 	fetch(url, {
-		method: httpMethod,
+		method: "POST",
 		headers: header,
 		body: form,
 	}).then((res) => {
@@ -212,7 +200,3 @@ export async function readFile(fileId) {
 		return contents;
 	}
 }
-
-document.getElementById("GDriveLogin").addEventListener("click", onClickGDrive);
-document.getElementById("GDriveLoginMobile").addEventListener("click", onClickGDrive);
-document.getElementById("Signout").addEventListener("click", onClickSignout);
