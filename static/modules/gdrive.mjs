@@ -1,9 +1,118 @@
 // We are not worried about exposing the keys, as the only domain from this can be called is ours.
 // Wreckless users who leave devices unattended and give access to their accounts are not good actors.
 const CLIENT_ID = '48008571695-vjj7lrnm4dv8i49ioi3a4tq3pbl1j67h.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyCqtQs6eT16KFp1i4bhosBDoZ-fOu2txsg';
+const REDIRECT_URI = 'https://asarbu.loca.lt/auth.html';
+const CLIENT_SECRET = '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';
 const FILES_API = "https://www.googleapis.com/drive/v3/files";
 const ROOT = "root";
+
+const oauth2 = {
+	name : "oauth2",
+	token : "oauth2_token",
+	access_token : "access_token",
+	refresh_token : "oauth2_refresh_token",
+	code : "oauth2_code"
+}
+
+function getCode() {
+
+}
+
+function getRefreshToken() {
+	console.log("Getting refresh token")
+	var params = JSON.parse(localStorage.getItem(oauth2.code));
+	var data = {
+		"code": params.code,
+		"client_id": CLIENT_ID,
+		"client_secret" : CLIENT_SECRET,
+		"redirect_uri": YOUR_REDIRECT_URI,
+		"grant_type" : 'authorization_code',
+	};
+	console.log("Data:" , data)
+	const url = new URL('https://oauth2.googleapis.com/token');
+	const json = await fetch(url, {
+		method: "POST",
+		body: JSON.stringify(data),
+	})
+	.then(response => response.json()) 
+	.then(json => json)
+	.catch(err => console.err(err));
+	console.log("Received token", json)
+	if(json.refresh_token) {
+		localStorage.setItem('oauth2-refresh-token', json.refresh_token);
+		delete json.refresh_token;
+	}
+	json.refreshed_at = new Date().getTime();
+	json.expires_at = json.refreshed_at + json.expires_in * 1000;
+	localStorage.setItem('oauth2-token', JSON.stringify(json));
+}
+
+async function getAccessToken() {
+	if(await loggedIn()) {
+		const params = JSON.parse(localStorage.getItem(oauth2.token));
+		const access_token = params[oauth2.access_token];
+		return access_token;
+	}
+}
+
+async function loggedIn() {
+	console.log("Looking for token in localstorage");
+	if(localStorage.getItem(oauth2.token) === null) {
+		console.log("No token found. Requesting one from server");
+		return await tryRefreshAccessToken();
+	} else {
+		const token = JSON.parse(localStorage.getItem(oauth2.token));
+		const now = new Date();
+		console.log("Checking exipration date for token", token.expires_at, " -", now.getTime())
+		if(token.expires_at && (token.expires_at < now)) {
+			return await tryRefreshAccessToken();
+		}
+		return true;
+	}
+	return false;
+}
+
+async function tryRefreshAccessToken() {
+	console.log("Refreshing access token")
+
+	//If there is no refresh token, we cannot get an access token.
+	if(localStorage.getItem(oauth2.refresh_token) === null) {
+		console.log("Cannot request from server. No refresh token found")
+		return false;
+	}
+	var refresh_token = localStorage.getItem(oauth2.refresh_token);
+	var data = {
+		"client_id": YOUR_CLIENT_ID,
+		"client_secret" : YOUR_CLIENT_SECRET,
+		"refresh_token": refresh_token,
+		"grant_type" : 'refresh_token'
+	};
+	const url = new URL('https://oauth2.googleapis.com/token');
+	const headers = new Headers({
+				'Accept': 'application/json',
+				'Content-Type': 'application/json'
+			});
+	const json = await fetch(url, {
+		method: "POST",
+		headers: headers,
+		body: JSON.stringify(data),
+	})
+	.then(response => response.json()) 
+	.then(json => json)
+	.catch(err => console.err(err));
+
+	if(json) {
+		json.refreshed_at = new Date().getTime();
+		json.expires_at = json.refreshed_at + json.expires_in * 1000;
+	} else {
+		console.error("Refreshing token did not succeed", json);
+		return false;
+	}
+
+	localStorage.setItem(oauth2.token, JSON.stringify(json));
+	return true;
+}
+
 export async function writeFile(fileName, data) {
 	var topFolder = await findFolder("Change!");
 	if (!topFolder) {
@@ -27,23 +136,17 @@ export async function writeFile(fileName, data) {
 	return monthFile;
 }
 
-function getHeader() {
-	const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
-    if (params && params['access_token']) {
+async function getHeader() {
+	const token = await getAccessToken();
+    if (token) {
 		return new Headers({
-			'Authorization': 'Bearer ' + params['access_token'],
+			'Authorization': 'Bearer ' + token,
 			'Accept': 'application/json',
 			'Content-Type': 'application/json'
 		});
 	}
 }
 
-function loggedIn() {
-	const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
-    if (params && params['access_token']) {
-		return true;
-	}
-}
 
 async function find(name, parent, type) {	
     if (loggedIn()) {
@@ -55,7 +158,7 @@ async function find(name, parent, type) {
 		}
 		//console.log(q)
 
-		const header = getHeader();
+		const header = await getHeader();
 		const url = new URL(FILES_API);
 		url.searchParams.append("q", q);
 
@@ -93,8 +196,8 @@ async function createFolder(name, parent) {
 		"parents" : [parent || ROOT]
 	};
 	
-	var params = JSON.parse(localStorage.getItem('oauth2-test-params'));
-    if (params && params['access_token']) {
+	var params = JSON.parse(localStorage.getItem(oauth2.name));
+    if (params && params[oauth2.access_token]) {
 		const headers = getHeader();
 		const url = new URL(FILES_API);
 
@@ -120,8 +223,8 @@ async function update(fileId, data) {
 		'mimeType': 'text/plain',
 	};
 
-	const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
-	const access_token = params['access_token'];
+	const params = JSON.parse(localStorage.getItem(oauth2.name));
+	const access_token = params[oauth2.access_token];
 	
 	const url = new URL(`https://www.googleapis.com/upload/drive/v3/files/${fileId}`);
 	url.searchParams.append("uploadType", "multipart");
@@ -154,8 +257,8 @@ async function write(name, parent, data) {
 		'parents' : [parent]
 	};
 
-	const params = JSON.parse(localStorage.getItem('oauth2-test-params'));
-	const access_token = params['access_token'];
+	const params = JSON.parse(localStorage.getItem(oauth2.name));
+	const access_token = params[oauth2.access_token];
 	
 	const url = new URL("https://www.googleapis.com/upload/drive/v3/files");
 	url.searchParams.append("uploadType", "multipart");

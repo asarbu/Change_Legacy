@@ -5,52 +5,202 @@
 {% endblock %}
 {% block script %}
 <script>
-    var YOUR_CLIENT_ID = '48008571695-vjj7lrnm4dv8i49ioi3a4tq3pbl1j67h.apps.googleusercontent.com';
-    var YOUR_REDIRECT_URI = 'https://asarbu.loca.lt/auth.html';
-    var fragmentString = location.hash.substring(1);
-  console.log(location)
-    // Parse query string to see if page request is coming from OAuth 2.0 server.
-    var params = {};
-    var regex = /([^&=]+)=([^&]*)/g, m;
-    while (m = regex.exec(fragmentString)) {
-      params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
-    }
-    if (Object.keys(params).length > 0) {
-      localStorage.setItem('oauth2-test-params', JSON.stringify(params) );
-      console.log(params);
-      if (params['state'] && params['state'] == 'try_sample_request') {
-        trySampleRequest();
+    const YOUR_CLIENT_ID = '48008571695-vjj7lrnm4dv8i49ioi3a4tq3pbl1j67h.apps.googleusercontent.com';
+    const YOUR_REDIRECT_URI = 'https://asarbu.loca.lt/auth.html';
+	const YOUR_CLIENT_SECRET = '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';
+
+    parseUri();
+
+    function parseUri() {
+      console.log("Entering main")
+      if(!loggedIn()) {
+        console.log("User not logged")
+        if(true) {
+          parseServerLocation();
+        } else {
+          parseClientLocation();
+        }
       }
     }
+
+    function loggedIn() {
+		console.log("Looking for token in localstorage");
+		if(localStorage.getItem("oauth2-token") === null) {
+			console.log("No token found. Requesting one from server");
+			//If there is no refresh token, we cannot get an access token here.
+			if(localStorage.getItem("oauth2-refresh-token") === null) {
+				console.log("No refresh token found. Please request a new one")
+				return false;
+			}
+			refreshAccessToken();
+
+			if(localStorage.getItem("oauth2-token") === null) {
+				return false;
+			}
+			else {
+				return true;
+			}
+      	} else {
+			const token = JSON.parse(localStorage.getItem("oauth2-token"));
+			console.log("Checking exipration date for token")
+			const now = new Date();
+			console.log(token.expires_at, " -", now.getTime())
+			if(token.expires_at && (token.expires_at < now)) {
+				refreshAccessToken();
+			}
+			return true;
+		}
+
+		return false;
+    }
+
+	async function parseServerLocation() {
+		var locationString = location.href;
+    	console.log("parse server location " + locationString)
+		let paramString = new RegExp('(.*)[?](.*)').exec(locationString);
+		if (null == paramString) {
+			return
+		}
+
+		// Parse query string to see if page request is coming from OAuth 2.0 server.
+		var params = {};
+		var regex = /([^&=]+)=([^&]*)/g, match;
+		while (match = regex.exec(paramString[2])) {
+			params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+		}
+		if (Object.keys(params).length > 0) {
+			localStorage.setItem('oauth2-code', JSON.stringify(params) );
+			if (params['state'] && params['state'] == 'change-application-nonce') {
+				if(localStorage.getItem("oauth2-refresh-token") === null) {
+					await getRefreshToken();
+				} else {
+					refreshAccessToken();
+				}
+
+			}
+		}
+	}
+
+	async function refreshAccessToken() {
+		console.log("Refreshing access token")
+		var refresh_token = localStorage.getItem('oauth2-refresh-token');
+		var data = {
+			"client_id": YOUR_CLIENT_ID,
+			"client_secret" : YOUR_CLIENT_SECRET,
+			"refresh_token": refresh_token,
+			"grant_type" : 'refresh_token'
+		};
+		const url = new URL('https://oauth2.googleapis.com/token');
+		const headers = new Headers({
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				});
+		const json = await fetch(url, {
+			method: "POST",
+			headers: headers,
+			body: JSON.stringify(data),
+		})
+		.then(response => response.json()) 
+		.then(json => json)
+		.catch(err => console.err(err));
+
+		if(json) {
+			json.refreshed_at = new Date().getTime();
+			json.expires_at = json.refreshed_at + json.expires_in * 1000;
+		}
+
+    	localStorage.setItem("oauth2-token", JSON.stringify(json));
+	}
+
+	async function getRefreshToken() {
+		console.log("Getting refresh token")
+		var params = JSON.parse(localStorage.getItem('oauth2-code'));
+		var data = {
+			"code": params.code,
+			"client_id": YOUR_CLIENT_ID,
+			"client_secret" : YOUR_CLIENT_SECRET,
+			"redirect_uri": YOUR_REDIRECT_URI,
+			"grant_type" : 'authorization_code',
+		};
+		console.log("Data:" , data)
+		const url = new URL('https://oauth2.googleapis.com/token');
+		const json = await fetch(url, {
+			method: "POST",
+			body: JSON.stringify(data),
+		})
+		.then(response => response.json()) 
+		.then(json => json)
+		.catch(err => console.err(err));
+		console.log("Received token", json)
+		if(json.refresh_token) {
+			localStorage.setItem('oauth2-refresh-token', json.refresh_token);
+			delete json.refresh_token;
+		}
+		json.refreshed_at = new Date().getTime();
+		json.expires_at = json.refreshed_at + json.expires_in * 1000;
+		localStorage.setItem('oauth2-token', JSON.stringify(json));
+	}
+
+    function parseClientLocation() {
+		var fragmentString = location.hash.substring(1);
+		// Parse query string to see if page request is coming from OAuth 2.0 server.
+		var params = {};
+		var regex = /([^&=]+)=([^&]*)/g, m;
+		while (m = regex.exec(fragmentString)) {
+			params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
+		}
+		if (Object.keys(params).length > 0) {
+			localStorage.setItem('oauth2-token', JSON.stringify(params) );
+			if (params['state'] && params['state'] == 'change-application-nonce') {
+				trySampleRequest();
+			}
+		}
+    }
+
+    
 
     // If there's an access token, try an API request.
     // Otherwise, start OAuth 2.0 flow.
     async function trySampleRequest() {
-      var params = JSON.parse(localStorage.getItem('oauth2-test-params'));
-      console.log(params)
-      if (params && params['access_token']) {
-        const url = 'https://www.googleapis.com/drive/v3/about?fields=user&' +
-            'access_token=' + params['access_token'];
-          const json = await fetch(url, {method: "GET"})
-        .then(result => {
-            if(result.ok) {
-                return result.text();
-            } else {
-                oauth2SignIn();
-                return "Token expired. Redirected.";
-            }
-        })
-        .then(content => console.log(content));
-      } else {
-        oauth2SignIn();
-      }
+		if(loggedIn()) {
+			var params = JSON.parse(localStorage.getItem('oauth2-token'));
+			if (params && params['access_token']) {
+				const url = 'https://www.googleapis.com/drive/v3/about?fields=user&' +
+				'access_token=' + params['access_token'];
+				const json = await fetch(url, {method: "GET"})
+				.then(result => {
+					if(result.ok) {
+						return result.text();
+					} else {
+						oauth2SignIn();
+						return "Token expired. Redirected.";
+					}
+				})
+				.then(content => console.log(content));
+			} else {
+				oauth2SignIn();
+			}
+		} else {
+			var code = JSON.parse(localStorage.getItem('oauth2-code'));
+			if (code) {
+				getRefreshToken();
+			}
+			oauth2SignIn();
+		}
+	}
+
+    function oauth2SignIn() {
+		if(true) {
+			oauth2ServerSignIn();
+		} else {
+			oauth2ClientSignIn();
+		}
     }
   
     /*
      * Create form to request access token from Google's OAuth 2.0 server.
      */
-    function oauth2SignIn() {
-        console.log("oAuth sign in")
+    function oauth2ClientSignIn() {
       // Google's OAuth 2.0 endpoint for requesting an access token
       var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
   
@@ -63,9 +213,44 @@
       var params = {'client_id': YOUR_CLIENT_ID,
                     'redirect_uri': YOUR_REDIRECT_URI,
                     'scope': 'https://www.googleapis.com/auth/drive',
-                    'state': 'try_sample_request',
+                    'state': 'change-application-nonce',
                     'include_granted_scopes': 'true',
                     'response_type': 'token',
+                  };
+  
+      // Add form parameters as hidden input values.
+      for (var p in params) {
+        var input = document.createElement('input');
+        input.setAttribute('type', 'hidden');
+        input.setAttribute('name', p);
+        input.setAttribute('value', params[p]);
+        form.appendChild(input);
+      }
+  
+      // Add form to page and submit it to open the OAuth 2.0 endpoint.
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+
+    function oauth2ServerSignIn() {
+		console.log("OAuth 2.0 sign in")
+      // Google's OAuth 2.0 endpoint for requesting an access token
+      var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
+  
+      // Create element to open OAuth 2.0 endpoint in new window.
+      var form = document.createElement('form');
+      form.setAttribute('method', 'GET'); // Send as a GET request.
+      form.setAttribute('action', oauth2Endpoint);
+  
+      // Parameters to pass to OAuth 2.0 endpoint.
+      var params = {'client_id': YOUR_CLIENT_ID,
+                    'redirect_uri': YOUR_REDIRECT_URI,
+                    'scope': 'https://www.googleapis.com/auth/drive',
+                    'state': 'change-application-nonce',
+                    'include_granted_scopes': 'true',
+                    'response_type': 'code',
+                    'access_type': 'offline'
                   };
   
       // Add form parameters as hidden input values.
