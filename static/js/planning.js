@@ -4,7 +4,7 @@ var gdrive;
 const gdriveEnabled = true;
 async function initPlanning() {	
 	gdrive = await import('/static/modules/gdrive.mjs');
-
+	gdrive.setRedirectUri("https://asarbu.loca.lt/Planning");
 	var sideNavs = document.querySelectorAll('.sidenav');
 	M.Sidenav.init(sideNavs, {});
 
@@ -35,9 +35,9 @@ class Planning {
 	}
 
 	readPlanningDb() {
-		//this.pdb.openCursor(PLANNING_STORE_NAME).then(this.createPlanningTable.bind(this));
-		gdrive.readFile(localStorage.getItem(PLANNING_TEMPLATE_URI))
-		.then(planningData => this.createPlanningTable(planningData))
+		this.pdb.openCursor(PLANNING_STORE_NAME).then(this.createPlanningTable.bind(this));
+		/*gdrive.readFile(localStorage.getItem(PLANNING_TEMPLATE_URI))
+		.then(planningData => this.createPlanningTable(planningData))*/
 		
 	}
 

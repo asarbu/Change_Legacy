@@ -9,16 +9,16 @@
     const YOUR_REDIRECT_URI = 'https://asarbu.loca.lt/auth.html';
 	const YOUR_CLIENT_SECRET = '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';
 
-    parseUri();
+    await parseUri();
 
-    function parseUri() {
+    async function parseUri() {
       console.log("Entering main")
       if(!loggedIn()) {
         console.log("User not logged")
         if(true) {
-          parseServerLocation();
+          await parseServerLocation();
         } else {
-          parseClientLocation();
+          await parseClientLocation();
         }
       }
     }
