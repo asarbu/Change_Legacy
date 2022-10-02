@@ -207,6 +207,7 @@ function oauth2OfflineSignIn() {
 
 export async function writeFile(fileName, data) {
 	var topFolder = await findFolder("Change!");
+
 	if (!topFolder) {
 		topFolder = await createFolder("Change!");
 	}
@@ -224,6 +225,7 @@ export async function writeFile(fileName, data) {
 		monthFile = await write(fileName, yearFolder, data);
 	} else {
 		monthFile = await update(monthFile, data);
+		console.trace()
 	}
 	return monthFile;
 }

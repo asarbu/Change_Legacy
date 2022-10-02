@@ -69,34 +69,28 @@
 	<div id="summaryModal" class="modal bottom-sheet">
 		<div class="modal-content">
 			<h4>New Expense</h4>
-			<p>
-				<div class="card">
-					<div class="card-content container">
-						<table id="Summary" class="striped responsive-table row" style="border: 1px solid black; border-collapse: collapse; table-layout: fixed; width: 100%;">
-							<thead>
-								<tr id="SummaryHeader">
-									<th>Category</th>
-									<th>Spending</th>
-									<th>Budget</th>
-									<th>Percentage</th>
-									<th hideable="true" style="display: none">
-										<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
-									</th>
-								</tr>
-							</thead>
-							<tbody>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</p>
+				<table id="Summary" class="striped responsive-table row" style="border: 1px solid black; border-collapse: collapse; table-layout: fixed; width: 100%;">
+					<thead>
+						<tr id="SummaryHeader">
+							<th>Category</th>
+							<th>Spending</th>
+							<th>Budget</th>
+							<th>Percentage</th>
+							<th hideable="true" style="display: none">
+								<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+					</tbody>
+				</table>
 		</div>
 		<div class="modal-footer">
 			<a id="modal2_close" href="#!" class="modal-close waves-effect waves-green btn-flat">Close</a>
 		</div>
 	</div>
 
-	<table id="Sep" class="striped row table-content">
+	<table id="CurrentMonth" class="striped row table-content">
 		<thead>
 			<tr id="ActiveIncomeHeader">
 				<th>August</th>
@@ -114,43 +108,6 @@
 </div>
 
 <div id="Tab2" class="container">
-	<div class="section no-pad-bot">
-		<div class="container">
-			<h1 class="header center orange-text">October</h1>
-			<div class="row center">
-				<h5 class="header col s12 light">Small debts should pe repaid in increasing order</h5>
-			</div>
-		</div>
-	</div>
-	<table id="Oct" class="striped responsive-table row" style="border: 1px solid black; border-collapse: collapse; table-layout: fixed; width: 100%;">
-		<thead>
-			<tr>
-				<th>October</th>
-				<th>Daily</th>
-				<th>Monthly</th>
-				<th>Yearly</th>
-				<th hideable="true" style="display: none">
-					<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
-				</th>
-			</tr>
-		</thead>
-		<tbody>
-		</tbody>
-		<tfoot>
-			<tr>
-				<th id="total">Total :</th>
-				<td class="totalCell"></td>
-				<td class="totalCell"></td>
-				<td class="totalCell"></td>
-				<td hideable="true" style="display: none"></td>
-			</tr>
-			<tr>
-				<th id="empty" colspan="3"></th>
-				<td>
-				</td>
-			</tr>
-		</tfoot>
-	</table>
 </div>
 	
 <div class="row center">
@@ -182,7 +139,7 @@
 <script src='static/js/orm.js'></script>
 <script src='static/js/gui.js'></script>
 <script src='static/js/spendings.js'></script>
-<script async defer src="static/js/gdrive.js"></script>
+<script type="module" src="/static/modules/gdrive.mjs"></script>
 
 <script>
 	//Default bought date should be today to avoid useless clicks
@@ -215,9 +172,7 @@
 	}
 
 	const divs = document.querySelectorAll('.save-modal');
-
 	divs.forEach(el => el.addEventListener('click', event => {
-
 		var expenseType = document.getElementById("expense_type").value;
 		var bought_date_var = document.getElementById("bought_date").value;
 		var category_var = document.getElementById("category").value;
@@ -237,61 +192,10 @@
 		link.click();
 	}));
 
-	const showTables = () => {
-		fetch("static/js/planning.json")
-			.then(response => {
-				return response.json();
-			})
-			.then(db => fillPlanningTables(db));
-
-	}
-
-	function fillPlanningTables(db) {
-		var categoryList = document.getElementById("categoryList")
-
-		for (const [key, value] of Object.entries(db)) {
-			if (value.type == "Expense")
-				categoryList.innerHTML += '<li>\
-					<div class="collapsible-header">'
-					+ key +
-					'</div>\
-						<div class="collapsible-body">\
-						<span> <ul class="card collection">'
-					+ getSubCategories(value.data) +
-					'</ul></span>\
-						  </div>\
-					</li>'
-		}
-
-	}
-
-	function getSubCategories(data) {
-		var subCategories = ''
-		for (const [key, value] of Object.entries(data)) {
-			subCategories += '<li class="collection-item category">' + value.name + '</li>'
-		}
-		return subCategories
-	}
-
 	document.addEventListener('DOMContentLoaded', function () {
 		var elems = document.querySelectorAll('.fixed-action-btn');
 		var instances = M.FloatingActionButton.init(elems, {});
-		showTables();
 	});
 	M.AutoInit();
-
-	function computeTotal() {
-		let totalCells = document.getElementsByClassName('totalCell');
-		for (var i = 0; i < totalCells.length; ++i) {
-			var total = 0;
-			var colIndex = totalCells[i].cellIndex;
-			var table = totalCells[i].parentNode.parentNode.parentNode;
-			var rows = table.tBodies[0].rows;
-			for (var rowIndex = 0; rowIndex < rows.length; ++rowIndex) {
-				total += parseFloat(rows[rowIndex].cells[colIndex].innerHTML);
-			}
-			totalCells[i].innerHTML = total;
-		}
-	}
 </script>
 {% endblock %}

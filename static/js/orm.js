@@ -40,10 +40,12 @@ class Idb {
 
 	openCursor(storeName) {
 		return new Promise((resolve, reject) => {
-			const txn = this.db.transaction(storeName, "readonly");
-			const objectStore = txn.objectStore(storeName);
+			const st = this.getStoreTransaction(storeName, "readonly");
+			const store = st[0];
+			const txn = st[1];
+
 			var values = new Map();
-			objectStore.openCursor().onsuccess = (event) => {
+			store.openCursor().onsuccess = (event) => {
 				let cursor = event.target.result;
 				if (cursor) {
 					values.set(cursor.key, cursor.value);
@@ -59,9 +61,8 @@ class Idb {
 
 	put(storeName, value, key) {
 		return new Promise((resolve, reject) => {
-			const txn = this.db.transaction(storeName, 'readwrite');
+			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
 
-			const store = txn.objectStore(storeName);
 			var query;
 			if (key) {
 				query = store.put(value, key);
@@ -81,9 +82,7 @@ class Idb {
 
 	get(storeName, key) {
 		return new Promise((resolve, reject) => {
-			const txn = this.db.transaction(storeName, 'readonly');
-			const store = txn.objectStore(storeName);
-
+			const store = this.getStoreTransaction(storeName, 'readonly')[0];
 			let query = store.get(key);
 
 			query.onsuccess = (event) => {
@@ -100,8 +99,7 @@ class Idb {
 
 	count(storeName) {
 		return new Promise((resolve, reject) => {
-			const txn = this.db.transaction(storeName, 'readonly');
-			const store = txn.objectStore(storeName);
+			const store = this.getStoreTransaction(storeName, 'readonly')[0];
 
 			let query = store.count();
 			query.onsuccess = (event) => {
@@ -112,8 +110,7 @@ class Idb {
 
 	delete(storeName, key) {
 		return new Promise((resolve, reject) => {
-			const txn = this.db.transaction(storeName, 'readwrite');
-			const store = txn.objectStore(storeName);
+			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
 			let query = store.delete(key);
 
 			query.onsuccess = function (event) {
@@ -143,6 +140,16 @@ class Idb {
 		for (const [key, value] of Object.entries(planningFile)) {
 			this.put(storeName, value, key);
 		}
+	}
+
+	getStoreTransaction(storeName, mode) {
+		if (!this.db.objectStoreNames.contains(storeName)) {
+			this.db.createObjectStore(storeName, { autoIncrement: true });
+		}
+		const txn = this.db.transaction(storeName, mode);
+		const store = txn.objectStore(storeName);
+
+		return [store, txn];
 	}
 }
 

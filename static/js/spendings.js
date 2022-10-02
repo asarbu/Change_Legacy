@@ -26,7 +26,7 @@ class Spendings {
 			.then(pdb => pdb.fetchTemplateToStore(PLANNING_TEMPLATE_URI, PLANNING_STORE_NAME));
 	}
 
-	getAllSpendings() {
+	getAllSpendings(month) {
 		this.idb.openCursor(SPENDINGS_STORE_NAME)
 			//We need to bind this in order to preserve the implicit reference to the object
 			.then(this.processSpendings.bind(this))
@@ -78,21 +78,14 @@ class Spendings {
 		}
 	}
 
-	upgradeSpendingsDb(db, oldVersion) {
-		if (oldVersion === 0) {
-			let store = db.createObjectStore(SPENDINGS_STORE_NAME, { autoIncrement: true });
-			store.createIndex('byCategory', 'category', { unique: false });
-		}
-	}
-
 	insertSpending(spending) {
-		this.idb.insert(SPENDINGS_STORE_NAME, spending).then(this.appendToSpendingTable);
+		this.idb.put(SPENDINGS_STORE_NAME, spending).then(this.appendToSpendingTable);
 	}
 
 	appendToSpendingTable(spendingResult) {
 		const key = spendingResult[0];
 		const value = spendingResult[1];
-		var table = document.getElementById("Sep");
+		var table = document.getElementById("CurrentMonth");
 		var row = appendRowToTable(table, [value.bought_date, value.description, value.category, value.price], { readonly: true });
 		row.setAttribute("db_id", key);
 	}
@@ -117,6 +110,13 @@ class Spendings {
 					'</ul></span>\
 							  </div>\
 						</li>'
+		}
+	}
+
+	upgradeSpendingsDb(db, oldVersion) {
+		if (oldVersion === 0) {
+			let store = db.createObjectStore(SPENDINGS_STORE_NAME, { autoIncrement: true });
+			store.createIndex('byCategory', 'category', { unique: false });
 		}
 	}
 }

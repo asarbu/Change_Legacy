@@ -30,8 +30,9 @@ class Planning {
 	async init() {
 		await this.pdb.init()
 			.then(pdb => pdb.fetchTemplateToStore(PLANNING_TEMPLATE_URI, PLANNING_STORE_NAME));
-		if(gdriveEnabled)
+		/*if(gdriveEnabled)
 			await persistPlanningToNetwork();
+		*/
 	}
 
 	readPlanningDb() {
@@ -43,48 +44,60 @@ class Planning {
 
 	createPlanningTable(planningItems) {
 		for (const [name, planningItem] of planningItems) {
-			var tbl = `<table id="` + planningItem.id + `" class="striped table-content row">
-					<thead>
-					<tr>
-						<th>` + name + `</th>
-						<th>Daily</th>
-						<th>Monthly</th>
-						<th>Yearly</th>
-						<th hideable="true" style="display: none">
-							<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="static/icons/table-row-plus-after.svg" alt="AddRow"/>Add row</button>
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-				</table>`;
+			const table = document.createElement('table');
+			const thead = document.createElement('thead');
+			const tbody = document.createElement('tbody');
+
+			table.id = planningItem.id;
+			table.classList.add("striped", "table-content", "row");
+			table.appendChild(thead);
+			table.appendChild(tbody);
+
+			const headingRow = document.createElement('tr');
+			const nameCol = document.createElement('th');
+			const daily = document.createElement('th');
+			const monthly = document.createElement('th');
+			const yearly = document.createElement('th');
+			const buttons = document.createElement('th');
+
+			nameCol.innerHTML = name;
+			daily.innerHTML = "Daily";
+			monthly.innerHTML = "Monthlhy";
+			yearly.innerHTML = "Yearly";
+			buttons.innerHTML = '<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="static/icons/table-row-plus-after.svg" alt="AddRow"/>Add row</button>';
+			buttons.setAttribute("hideable", "true");
+			buttons.style.display = "none";
+
+			headingRow.appendChild(nameCol);
+			headingRow.appendChild(daily);
+			headingRow.appendChild(monthly);
+			headingRow.appendChild(yearly);
+			headingRow.appendChild(buttons);
+			thead.appendChild(headingRow);
+
+			const data = planningItem.data;
+			for (let i = 0; i < data.length; i++) {
+				const element = data[i];
+				appendRowToTable(table, [element.name, element.daily, element.monthly, element.yearly], { index: -1, hidden: true, deletable: true, readonly: false });
+			}
+			this.recomputeTotal(table, true);
+
 			var tab = document.getElementById(planningItem.tab);
-			tab.innerHTML += tbl;
-			this.fillPlanningTable(document.getElementById(planningItem.id), planningItem.data);
+			tab.appendChild(table);
 		}
 	}
 
-	fillPlanningTable(table, data) {
-		var totalDaily = 0;
-		var totalMonthly = 0;
-		var totalYearly = 0;
-		for (let i = 0; i < data.length; i++) {
-			const element = data[i];
-			totalDaily += parseInt(element.daily);
-			totalMonthly += parseInt(element.monthly);
-			totalYearly += parseInt(element.yearly);
-			appendRowToTable(table, [element.name, element.daily, element.monthly, element.yearly], { index: -1, hidden: true, deletable: true, readonly: false });
-		}
-		var row = appendRowToTable(table,
-			["Total", totalDaily, totalMonthly, totalYearly],
-			{ useBold: true, readonly: true, index: -1, hidden: true, deletable: true });
-	}
-
-	recomputeTotal(table) {
-		//const key = lastRow.parentNode.parentNode.tHead.rows[0].cells[0].innerHTML;
-
+	recomputeTotal(table, create = false) {
 		const key = table.tHead.rows[0].cells[0].innerHTML;
-		const lastRow = table.tBodies[0].rows[table.tBodies[0].rows.length - 1];
+		var lastRow;
+		if(create) {
+			lastRow = appendRowToTable(table,
+				["Total", totalDaily, totalMonthly, totalYearly],
+				{ useBold: true, readonly: true, index: -1, hidden: true, deletable: true });
+		}
+		else {
+			lastRow = table.tBodies[0].rows[table.tBodies[0].rows.length - 1];
+		}
 
 		var totalDaily = 0;
 		var totalMonthly = 0;
@@ -203,7 +216,6 @@ async function onClickSave(btn) {
 		row.removeAttribute("edited");
 
 		const planningItemName = row.cells[0].innerHTML;
-		console.log(planningItemName)
 		const planningItemsData = planningItem.data.find(e => e.name == planningItemName);
 		planningItemsData.daily = parseInt(row.cells[1].innerHTML);
 		planningItemsData.monthly = parseInt(row.cells[2].innerHTML);
