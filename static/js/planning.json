@@ -1,9 +1,8 @@
 {
-	"Active Income": {
-		"id": "ActiveIncome",
+	"ActiveIncome": {
+		"name": "Active Income",
 		"tab": "IncomeTab",
 		"type": "Income",
-		"name": "Active Income",
 		"data": [
 			{
 				"name": "Wage 1",
@@ -31,8 +30,8 @@
 			}
 		]
 	},
-	"Passive Income": {
-		"id":"PassiveIncome",
+	"PassiveIncome": {
+		"name":"Passive Income",
 		"tab": "IncomeTab",
 		"type": "Income",
 		"data": [
@@ -75,7 +74,7 @@
 		]
 	},
 	"Debt": {
-		"id":"Debt",
+		"name":"Debt",
 		"tab": "DebtTab",
 		"type": "Expense",
 		"data": [
@@ -99,8 +98,8 @@
 			}
 		]
 	},
-	"Vital Expenses": {
-		"id":"VitalExpenses",
+	"VitalExpenses": {
+		"name":"Vital Expenses",
 		"tab": "VitalExpensesTab",
 		"type": "Expense",
 		"data": [
@@ -131,7 +130,7 @@
 		]
 	},
 	"Household": {
-		"id":"Household",
+		"name":"Household",
 		"tab": "VitalExpensesTab",
 		"type": "Expense",
 		"data": [
@@ -204,7 +203,7 @@
 		]
 	},
 	"Transport": {
-		"id":"Transport",
+		"name":"Transport",
 		"tab": "VitalExpensesTab",
 		"type": "Expense",
 		"data": [
@@ -271,7 +270,7 @@
 		]
 	},
 	"Savings": {
-		"id":"Savings",
+		"name":"Savings",
 		"tab": "VitalExpensesTab",
 		"type": "Expense",
 		"data": [
@@ -301,8 +300,8 @@
 			}
 		]
 	},
-	"Wasted Money": {
-		"id":"WastedMoney",
+	"WastedMoney": {
+		"name":"Wasted Money",
 		"tab": "WastedMoneyTab",
 		"type": "Expense",
 		"data": [

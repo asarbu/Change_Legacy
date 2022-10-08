@@ -11,6 +11,7 @@ function appendRowToTable(table, data, options) {
 		dataCell.textContent = dataCtn;
 		if (!options.readonly) {
 			dataCell.setAttribute("editable", true);
+			
 		}
 		if (options.useBold == true) {
 			dataCell.style.fontWeight = "bold";
@@ -23,14 +24,74 @@ function appendRowToTable(table, data, options) {
 
 	if (options.deletable) {
 		const buttonsCell = row.insertCell(-1);
-		buttonsCell.innerHTML = '<button class="waves-effect waves-light btn-small" onclick="deleteRow(this)"><i class="material-icons">delete</i>Delete</button>'
-
+		const btn = document.createElement("button");
+		btn.classList.add("waves-effect", "waves-light", "red", "btn-small");
+		buttonsCell.appendChild(btn);
+		const img = document.createElement("img");
+		img.classList.add("white-fill");
+		img.innerHTML = "Delete";
+		img.alt = "Delete";
+		img.src = icons.delete;
+		btn.appendChild(img)
+		
 		buttonsCell.setAttribute("hideable", "true");
 		if (options.hidden) {
 			buttonsCell.style.display = 'none';
 		}
 	}
 	return row;
+}
+
+function createRow(table, data, options) {
+	var index = -1;
+	if (options.index) {
+		index = options.index;
+	}
+	const row = table.tBodies[0].insertRow(index);
+	var dataCell;
+
+	for (const dataCtn of Object.values(data)) {
+		dataCell = row.insertCell(-1);
+		dataCell.textContent = dataCtn;
+		if (!options.readonly) {
+			dataCell.setAttribute("editable", true);
+		}
+		if (options.useBold == true) {
+			dataCell.style.fontWeight = "bold";
+		}
+	}
+
+	if (options.color) {
+		dataCell.style.color = options.color;
+	}
+
+	if (options.deletable) {	
+		const buttonsCell = row.insertCell(-1);
+		const btn = document.createElement("button");
+		btn.classList.add("waves-effect", "waves-light", "red", "btn-small");
+		buttonsCell.appendChild(btn);
+		const img = document.createElement("img");
+		img.classList.add("white-fill");
+		img.innerHTML = "Delete";
+		img.alt = "Delete";
+		img.src = icons.delete;
+		btn.appendChild(img)
+		
+		buttonsCell.setAttribute("hideable", "true");
+		if (options.hidden) {
+			buttonsCell.style.display = 'none';
+		}
+	}
+	console.log("Created row", row)
+	return row;
+}
+
+function ReadRow() {
+	//TBD
+}
+
+function DeleteRow(table, row) {
+
 }
 
 var percentColors = [

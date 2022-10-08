@@ -8,6 +8,11 @@ async function initSpending() {
 		return;
 	}
 
+	const editBtnIcon = document.getElementById("EditBtnImg");
+	editBtnIcon.src = icons.edit;
+	const saveBtnIcon = document.getElementById("SaveBtnImg")
+	saveBtnIcon.src = icons.save;
+
 	spendings = new Spendings();
 	await spendings.init();
 	spendings.getAllSpendings();
@@ -86,7 +91,7 @@ class Spendings {
 		const key = spendingResult[0];
 		const value = spendingResult[1];
 		var table = document.getElementById("CurrentMonth");
-		var row = appendRowToTable(table, [value.bought_date, value.description, value.category, value.price], { readonly: true });
+		var row = appendRowToTable(table, [value.description, value.bought_date, value.category, value.price], { hidden:true, deletable:true, readonly: true });
 		row.setAttribute("db_id", key);
 	}
 
@@ -101,15 +106,17 @@ class Spendings {
 		for (const [key, value] of Object.entries(this.idb)) {
 			if (value.type == "Expense")
 				categoryList.innerHTML += '<li>\
-						<div class="collapsible-header">'
-					+ key +
+					<div class="collapsible-header">'
+						+ key +
 					'</div>\
-							<div class="collapsible-body">\
-							<span> <ul class="card collection">'
-					+ getSubCategories(value.data) +
-					'</ul></span>\
-							  </div>\
-						</li>'
+					<div class="collapsible-body">\
+						<span>\
+							<ul class="card collection">'
+								+ getSubCategories(value.data) +
+						'</ul>\
+						</span>\
+					</div>\
+					</li>'
 		}
 	}
 
@@ -122,12 +129,6 @@ class Spendings {
 }
 
 //-------------------- GUI HANDLERES---------------------------//
-function addRow(btn) {
-	//th->tr->thead->table
-	var table = btn.parentNode.parentNode.parentNode.parentNode;
-	appendRowToTable(table, "New Row", 0, 0, 0, table.rows.length - 1);
-}
-
 function deleteRow(btn) {
 	var row = btn.parentNode.parentNode;
 	spendings.idb.delete(SPENDINGS_STORE_NAME, parseInt(row.getAttribute("db_id")));
@@ -157,11 +158,11 @@ function onClickEdit() {
 }
 
 function onClickSave() {
-	var editBtn = document.getElementById("EditBtn");
+	const editBtn = document.getElementById("EditBtn");
 	editBtn.style.display = "";
-	var saveBtn = document.getElementById("SaveBtn");
+	const saveBtn = document.getElementById("SaveBtn");
 	saveBtn.style.display = "none";
-
+	
 	let tableDefs = document.querySelectorAll('td[editable="true"]')
 	for (var i = 0; i < tableDefs.length; ++i) {
 		tableDefs[i].contentEditable = "false";

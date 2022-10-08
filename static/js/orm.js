@@ -61,6 +61,7 @@ class Idb {
 
 	put(storeName, value, key) {
 		return new Promise((resolve, reject) => {
+			console.log(key);
 			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
 
 			var query;
@@ -87,7 +88,6 @@ class Idb {
 
 			query.onsuccess = (event) => {
 				if (!event.target.result) {
-					console.trace();
 					reject(`The value with key ${key} not found`);
 				} else {
 					const value = event.target.result;

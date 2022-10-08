@@ -60,14 +60,15 @@
 </div>
 
 <div class="row center">
-	<button id="EditBtn" class="waves-effect waves-light btn orange"><img class="vertical-center" src='{{ url_for("static", filename="icons/pencil.svg") }}' />Edit</button>
-	<button id="SaveBtn" style="display: none" class="waves-effect waves-light btn orange"><img class="vertical-center" src='{{ url_for("static", filename="icons/content-save.svg") }}' />Save</button>
+	<button id="EditBtn" class="waves-effect waves-light btn red"><img class="vertical-center" src='{{ url_for("static", filename="icons/pencil.svg") }}' /></button>
+	<button id="SaveBtn" style="display: none" class="waves-effect waves-light btn red"><img class="vertical-center" src='{{ url_for("static", filename="icons/content-save.svg") }}' /></button>
 </div>
 {% endblock %}
 {% block script %}
-<script src="{{ url_for('static', filename='js/gui.js') }}"></script>
-<script src="{{ url_for('static', filename='js/orm.js') }}"></script>
-<script src="{{ url_for('static', filename='js/planning.js') }}"></script>
+<script src="static/js/icons.js"></script>
+<script src="static/js/gui.js"></script>
+<script src="static/js/orm.js"></script>
+<script src="static/js/planning.js"></script>
 <script type="module" src="/static/modules/gdrive.mjs"></script>
 
 {% endblock %}

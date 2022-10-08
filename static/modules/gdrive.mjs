@@ -118,8 +118,13 @@ async function loggedIn() {
 	} else {
 		const token = JSON.parse(localStorage.getItem(oauth2.token));
 		const now = new Date();
-		if(token.expires_at && (token.expires_at < now)) {
-			return await tryRefreshAccessToken();
+		if(token.expires_at === undefined || token.expires_at < now) {
+			if(!await tryRefreshAccessToken()) {
+				//Refreshing did not succeed. Refresh token expired or revoked.
+				localStorage.removeItem(oauth2.refresh_token);
+				localStorage.removeItem(oauth2.token);
+				processOAuth2Flow();
+			}
 		}
 		return true;
 	}
@@ -128,7 +133,6 @@ async function loggedIn() {
 
 async function tryRefreshAccessToken() {
 	console.log("Refreshing access token")
-
 	//If there is no refresh token, we cannot get an access token.
 	if(localStorage.getItem(oauth2.refresh_token) === null) {
 		console.log("Cannot request from server. No refresh token found")
@@ -147,15 +151,17 @@ async function tryRefreshAccessToken() {
 				'Accept': 'application/json',
 				'Content-Type': 'application/json'
 			});
-	const json = await fetch(url, {
+	const response = await fetch(url, {
 		method: "POST",
 		headers: headers,
 		body: JSON.stringify(data),
-	})
-	.then(response => response.json()) 
-	.then(json => json)
-	.catch(err => console.err(err));
+	});
+	console.log(response);
+	if(response.status != 200) {
+		return false;
+	}
 
+	const json = await response.json();
 	if(json) {
 		json.refreshed_at = new Date().getTime();
 		json.expires_at = json.refreshed_at + json.expires_in * 1000;
@@ -225,7 +231,6 @@ export async function writeFile(fileName, data) {
 		monthFile = await write(fileName, yearFolder, data);
 	} else {
 		monthFile = await update(monthFile, data);
-		console.trace()
 	}
 	return monthFile;
 }

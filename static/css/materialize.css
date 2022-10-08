@@ -17,6 +17,11 @@ footer{
   background-color: #e51c23 !important;
 }
 
+.white-fill {
+  filter: invert(1);
+
+}
+
 .materialize-red-text {
   color: #e51c23 !important;
 }
@@ -2361,6 +2366,7 @@ audio:not([controls]) {
  */
 img {
   border-style: none;
+  height: 100%;
 }
 
 /**

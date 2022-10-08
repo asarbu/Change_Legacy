@@ -17,7 +17,7 @@
 <div id="Tab1" class="container">
 	<div class="section no-pad-bot">
 		<div class="container">
-			<h1 class="header center orange-text">August</h1>
+			<h1 class="header center red-text">August</h1>
 			<div class="row center">
 				<h5 class="header col s12 light">August expenses</h5>
 			</div>
@@ -98,7 +98,7 @@
 				<th>Category</th>
 				<th>Amount</th>
 				<th hideable="true" style="display: none">
-					<button onclick=addRow(this) class="waves-effect waves-light btn"><img class="vertical-center" src="{{ url_for('static', filename='icons/table-row-plus-after.svg') }}" alt="AddRow" />Add row</button>
+					Edit
 				</th>
 			</tr>
 		</thead>
@@ -111,8 +111,8 @@
 </div>
 	
 <div class="row center">
-	<button id="EditBtn" class="waves-effect waves-light btn"><img class="vertical-center" src='{{ url_for("static", filename="icons/pencil.svg") }}' />Edit</button>
-	<button id="SaveBtn" style="display: none" class="waves-effect waves-light btn"><img class="vertical-center" src='{{ url_for("static", filename="icons/content-save.svg") }}' />Save</button>
+	<button id="EditBtn" class="waves-effect red waves-light btn"><img id="EditBtnImg" class="white-fill vertical-center"/></button>
+	<button id="SaveBtn" class="waves-effect red waves-light btn" style="display: none"><img id="SaveBtnImg" class="white-fill vertical-center"/></button>
 </div>
 
 <div class="fixed-action-btn">
@@ -132,13 +132,13 @@
 		<i class="material-icons">insert_chart</i>
 	</button>
 </div>
-
-
 {% endblock %}
+
 {% block script %}
 <script src='static/js/orm.js'></script>
 <script src='static/js/gui.js'></script>
 <script src='static/js/spendings.js'></script>
+<script src='static/js/icons.js'></script>
 <script type="module" src="/static/modules/gdrive.mjs"></script>
 
 <script>
