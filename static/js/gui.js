@@ -1,45 +1,29 @@
-function appendRowToTable(table, data, options) {
-	var index = -1;
-	if (options.index) {
-		index = options.index;
-	}
-	const row = table.tBodies[0].insertRow(index);
-	var dataCell;
+function createImageButton(text, href, classList, src) {
+	const btn = document.createElement("button");
+	btn.classList.add(...classList);
+	btn.setAttribute("href",href);
+	const img = document.createElement("img");
+	img.classList.add("white-fill");
+	img.innerText = text;
+	img.alt = text;
+	img.src = src;
+	btn.appendChild(img);
+	return btn;
+}
 
-	for (const dataCtn of data) {
-		dataCell = row.insertCell(-1);
-		dataCell.textContent = dataCtn;
-		if (!options.readonly) {
-			dataCell.setAttribute("editable", true);
-			
+function create(element, properties) {
+	var elmt = document.createElement(element);
+    for (var prop in properties) {
+		if(prop === "classes") {
+			elmt.classList.add(...properties[prop]);
+			continue;
 		}
-		if (options.useBold == true) {
-			dataCell.style.fontWeight = "bold";
-		}
-	}
-
-	if (options.color) {
-		dataCell.style.color = options.color;
-	}
-
-	if (options.deletable) {
-		const buttonsCell = row.insertCell(-1);
-		const btn = document.createElement("button");
-		btn.classList.add("waves-effect", "waves-light", "red", "btn-small");
-		buttonsCell.appendChild(btn);
-		const img = document.createElement("img");
-		img.classList.add("white-fill");
-		img.innerHTML = "Delete";
-		img.alt = "Delete";
-		img.src = icons.delete;
-		btn.appendChild(img)
-		
-		buttonsCell.setAttribute("hideable", "true");
-		if (options.hidden) {
-			buttonsCell.style.display = 'none';
-		}
-	}
-	return row;
+		//if(elmt[prop])
+	        elmt[prop] = properties[prop];
+		//else
+		//	elmt.setAttribute(prop, properties[prop]);
+    }
+    return elmt;
 }
 
 function createRow(table, data, options) {

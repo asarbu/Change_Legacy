@@ -1,6 +1,8 @@
 var planning;
 var gdrive;
 const gdriveEnabled = true;
+const APP_FOLDER = "Change!";
+const PLANNING_FILE_NAME = "Planning.json";
 
 async function initPlanning() {	
 	gdrive = await import('/static/modules/gdrive.mjs');
@@ -35,37 +37,93 @@ class Planning {
 
 	//#region Network operations
 	async syncPlanningToNetwork() {
-		const now = new Date();
-		const currentYear = now.toLocaleString("en-US", {year: "numeric"});
-		const currentMonth = now.toLocaleString("en-US", {month: "short"});
+		await this.mergeLocalPlanningToNetwork(false);
+	}
 
-		let fileId = localStorage.getItem(currentYear + currentMonth);
-		if(fileId !== undefined) {
-			//No planning file found, writing current data to network
-			await this.persistPlanningToNetwork();
-		}
+	async mergeLocalPlanningToNetwork(overwrite = false) {
+		let networkFileId = localStorage.getItem(PLANNING_FILE_NAME);
+		if(networkFileId === undefined) {
+			//No planning file found, write current data to network, but do not overwrite
+			const cursorData = await planning.pdb.openCursor(PLANNING_STORE_NAME);
+			networkFileId = await this.persistPlanningToNetwork(cursorData, overwrite);
+			
+			if(networkFileId === undefined) {
+				console.error("Could not retrieve planning file from newtork");
+			}
 
-		fileId = localStorage.getItem(currentYear + currentMonth);
-		if(!fileId) {
-			console.error("Could not retrieve planning file from newtork");
 			return;
 		}
 
-		const data = await gdrive.readFile(fileId);
-		console.log(data);
+		const networkPlanning = await gdrive.readFile(networkFileId);		
+		const localPlanning = await planning.pdb.openCursor(PLANNING_STORE_NAME);
+		
+		for(const [networkKey, networkPlanningItem] of networkPlanning) {
+			const localPlanningItem = localPlanning.get(networkKey);
+			if(localPlanningItem === undefined) {
+				console.error("Did not find local item with key", networkKey)
+			}
+			const localPlanningData = localPlanningItem.data;
+			const networkPlanningData = networkPlanningItem.data;
+
+			for (let index = 0; index < networkPlanningData.length - 1; index++) {
+				const networkPlanningEntry = networkPlanningData[index];
+				const localPlanningEntry = localPlanningData[index];
+				
+				if(!this.areEqual(networkPlanningEntry, localPlanningEntry)) {
+					if(localPlanningEntry.edited) {
+						delete localPlanningEntry.edited;
+						networkPlanningData[index] = localPlanningEntry;
+					} else {
+						localPlanningData[index] = networkPlanningEntry;
+					}
+				} else {
+					if(localPlanningEntry.added) {
+						delete localPlanningEntry.added;
+						networkPlanningData.push(localPlanningEntry);
+					}
+					if(localPlanningEntry.deleted) {
+						localPlanning.splice(index, 1);
+						networkPlanningData.splice(index, 1);
+						index--;
+					}
+				}
+			}
+		}
+
+		const fileId = this.persistPlanningToNetwork(networkPlanning, true);
+		if(fileId) {
+
+		}
+		return networkPlanning;
+	}
+
+	areEqual(networkEntry, localEntry) {
+		if(networkEntry === undefined || localEntry === undefined) 
+			return false;
+		return 	networkEntry.name === localEntry.name && 
+				networkEntry.daily === localEntry.daily &&
+				networkEntry.monthly === localEntry.monthly &&
+				networkEntry.yearly === localEntry.yearly;
 	}
 	
-	async persistPlanningToNetwork() {
-		const now = new Date();
-		const currentYear = now.toLocaleString("en-US", {year: "numeric"});
-		const currentMonth = now.toLocaleString("en-US", {month: "short"});
-		const fileName = currentMonth + ".json";
-		const cursorData = await planning.pdb.openCursor(PLANNING_STORE_NAME);
-		const planningData = Array.from(cursorData.entries());
-		const fileId = await gdrive.writeFile(fileName, planningData);
+	async persistPlanningToNetwork(planningItem, overwrite) {
+		var topFolder = await gdrive.findFolder(APP_FOLDER);
 
-		//Store for fast retrieval
-		localStorage.setItem(currentYear + currentMonth, fileId);
+		if (!topFolder) {
+			topFolder = await gdrive.createFolder(APP_FOLDER);
+		}
+		if(!topFolder) return;
+
+		const planningData = Array.from(planningItem.entries());
+		const fileId = await gdrive.writeFile(topFolder, PLANNING_FILE_NAME, planningData, overwrite);
+		
+		if(fileId !== undefined) {
+			//Store file id for fast retrieval
+			localStorage.setItem(PLANNING_FILE_NAME, fileId);
+			return true;
+		}
+
+		return false;
 	}
 	//#endregion
 }
@@ -106,7 +164,7 @@ function createPlanningTable(planningItems) {
 		button.classList.add("waves-effect", "waves-light", "btn", "red");
 		button.addEventListener("click", onClickAddRow, false);
 
-		img.classList.add("vertical-center", "white-fill");
+		img.classList.add("white-fill");
 		img.alt = "Add row";
 		img.src = icons.add_row;
 
@@ -263,16 +321,6 @@ function onClickEdit(btn) {
 async function onClickSave(btn) {
 	var editedRows = document.querySelectorAll('tr[edited="true"]');
 
-	/*
-
-	for (var index = data.length - 1; index >= 0; index--) {
-		if (data.deleted === true) {
-			data.splice(index, 1);
-		}
-	}
-
-	*/
-
 	for (var i = 0; i < editedRows.length; i++) {
 		const row = editedRows[i];
 		const key = row.parentNode.parentNode.id;
@@ -293,7 +341,7 @@ async function onClickSave(btn) {
 		planning.pdb.put(PLANNING_STORE_NAME, planningItem, key);
 	}
 
-	planning.persistPlanningToNetwork();
+	planning.mergeLocalPlanningToNetwork(true);
 
 	var editBtn = document.getElementById("EditBtn")
 	editBtn.style.display = ""

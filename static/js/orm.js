@@ -61,7 +61,6 @@ class Idb {
 
 	put(storeName, value, key) {
 		return new Promise((resolve, reject) => {
-			console.log(key);
 			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
 
 			var query;
@@ -143,9 +142,9 @@ class Idb {
 	}
 
 	getStoreTransaction(storeName, mode) {
-		if (!this.db.objectStoreNames.contains(storeName)) {
+		/*if (!this.db.objectStoreNames.contains(storeName)) {
 			this.db.createObjectStore(storeName, { autoIncrement: true });
-		}
+		}*/
 		const txn = this.db.transaction(storeName, mode);
 		const store = txn.objectStore(storeName);
 

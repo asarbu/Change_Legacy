@@ -5408,13 +5408,13 @@ button.btn-floating {
 }
 
 .fixed-action-btn-center {
-    position: fixed;
-    left: 50%;
-    bottom: 23px;
-    padding-top: 15px;
-    margin-left: -27px;
-    margin-bottom: 0;
-    z-index: 997;
+  position: fixed;
+  left: 50%;
+  bottom: 23px;
+  padding-top: 15px;
+  margin-left: -27px;
+  margin-bottom: 0;
+  z-index: 997;
 }
 
 .fixed-action-btn.active ul {
@@ -5442,9 +5442,14 @@ button.btn-floating {
   margin: 7.5px 15px 0 0;
 }
 
-.fixed-action-btn img {
+.fixed-action-btn img, .fixed-action-btn-center img, .fixed-action-btn-left img {
 	position: absolute;
-	top: 10%;
+  transform: scale(0.5);
+}
+
+.btn img, .btn-small img {
+	position: absolute;
+  transform: scale(0.75);
 }
 
 .fixed-action-btn.direction-right {

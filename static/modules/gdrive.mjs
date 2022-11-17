@@ -82,7 +82,7 @@ async function getRefreshToken(authorizationCode) {
 		"redirect_uri": redirectUri,
 		"grant_type" : 'authorization_code',
 	};
-	console.log("Data:" , data)
+	//console.log("Data:" , data)
 	const url = new URL('https://oauth2.googleapis.com/token');
 	const json = await fetch(url, {
 		method: "POST",
@@ -156,7 +156,7 @@ async function tryRefreshAccessToken() {
 		headers: headers,
 		body: JSON.stringify(data),
 	});
-	console.log(response);
+	//console.log(response);
 	if(response.status != 200) {
 		return false;
 	}
@@ -211,28 +211,15 @@ function oauth2OfflineSignIn() {
 	form.submit();
 }
 
-export async function writeFile(fileName, data) {
-	var topFolder = await findFolder("Change!");
+export async function writeFile(parent, fileName, data, overwrite) {
+	var fileId = await findFile(fileName, parent);
 
-	if (!topFolder) {
-		topFolder = await createFolder("Change!");
+	if(!fileId) {
+		fileId = await write(fileName, parent, data);
+	} else if(overwrite) {
+		fileId = await update(fileId, data);
 	}
-	if(!topFolder) return;
-
-	const currentYear = (new Date().getFullYear());
-	var yearFolder = await findFolder(currentYear, topFolder);
-	if(!yearFolder) {
-		yearFolder = await createFolder(currentYear, topFolder);
-	}
-	if(!yearFolder) return;
-
-	var monthFile = await findFile(fileName, yearFolder);
-	if(!monthFile) {
-		monthFile = await write(fileName, yearFolder, data);
-	} else {
-		monthFile = await update(monthFile, data);
-	}
-	return monthFile;
+	return fileId;
 }
 
 async function getHeader() {
@@ -247,7 +234,7 @@ async function getHeader() {
 }
 
 
-async function find(name, parent, type) {	
+export async function find(name, parent, type) {	
 	const token = await getAccessToken();
     if (token) {
 		parent = parent || ROOT;
@@ -262,13 +249,14 @@ async function find(name, parent, type) {
 		const url = new URL(FILES_API);
 		url.searchParams.append("q", q);
 
+		//console.trace();
 		const id = await fetch(url, {
 			method: "GET",
 			headers: header
 		})
 		.then(response => response.json()) 
 		.then(json => { 
-			if(json.files.length > 0) {
+			if(json && json.files && json.files.length > 0) {
 				return json.files[0].id;
 			} else {
 				return;
@@ -281,7 +269,7 @@ async function find(name, parent, type) {
 	}
 }
 
-async function findFolder(name, parent) {
+export async function findFolder(name, parent) {
 	return await find(name, parent, 'application/vnd.google-apps.folder');
 }
 
@@ -289,7 +277,7 @@ async function findFile(name, parent) {
 	return await find(name, parent);
 }
 
-async function createFolder(name, parent) {
+export async function createFolder(name, parent) {
 	const token = await getAccessToken();
 	if(token) {
 		var metadata = {
@@ -300,8 +288,6 @@ async function createFolder(name, parent) {
 
 		const headers = await getHeader();
 		const url = new URL(FILES_API);
-
-		console.log(headers)
 
 		const id = await fetch(url, {
 			method: 'POST',
@@ -336,7 +322,7 @@ async function update(fileId, data) {
 		const form = new FormData();
 		form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
 		form.append('file', file);
-		fetch(url, {
+		const updatedFileId = await fetch(url, {
 			method: `PATCH`,
 			headers: header,
 			body: form,
@@ -346,7 +332,7 @@ async function update(fileId, data) {
 			return json.id;
 		});
 
-		return fileId;
+		return updatedFileId;
 	}
 }
 
@@ -385,6 +371,11 @@ async function write(name, parent, data) {
 export async function readFile(fileId) {
 	const token = await getAccessToken();
 	if(token) {
+		if(!fileId) {
+			console.error("No file id provided: ");
+			console.trace();
+		}
+
 		const header = await getHeader();
 		const url = new URL(FILES_API + '/' + fileId);
 		url.searchParams.append('alt', 'media');

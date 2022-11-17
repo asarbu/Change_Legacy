@@ -6,10 +6,7 @@
 {% endblock %}
 {% block tabs %}
 <li class="tab">
-	<a class="active" href="#Tab1"><h6>August</h6></a>
-</li>
-<li class="tab">
-	<a href="#Tab2"><h6>September</h6></a>
+	<a href="#Tab1"><h6>August</h6></a>
 </li>
 {% endblock %}
 
@@ -105,33 +102,30 @@
 		<tbody>
 		</tbody>
 	</table>
-</div>
-
-<div id="Tab2" class="container">
+	<div class="fixed-action-btn">
+		<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
+			<i class="material-icons">add</i>
+		</button>
+	</div>
+	
+	<div class="fixed-action-btn-left">
+		<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
+			<i class="material-icons">add</i>
+		</button>
+	</div>
+	
+	<div class="fixed-action-btn-center">
+		<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#summaryModal">
+			<i class="material-icons">insert_chart</i>
+		</button>
+	</div>	
 </div>
 	
 <div class="row center">
-	<button id="EditBtn" class="waves-effect red waves-light btn"><img id="EditBtnImg" class="white-fill vertical-center"/></button>
-	<button id="SaveBtn" class="waves-effect red waves-light btn" style="display: none"><img id="SaveBtnImg" class="white-fill vertical-center"/></button>
+	<button id="EditBtn" class="waves-effect red waves-light btn"><img id="EditBtnImg" class="white-fill"/></button>
+	<button id="SaveBtn" class="waves-effect red waves-light btn" style="display: none"><img id="SaveBtnImg" class="white-fill"/></button>
 </div>
 
-<div class="fixed-action-btn">
-	<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
-		<i class="material-icons">add</i>
-	</button>
-</div>
-
-<div class="fixed-action-btn-left">
-	<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#modal1">
-		<i class="material-icons">add</i>
-	</button>
-</div>
-
-<div class="fixed-action-btn-center">
-	<button class="btn-floating btn-large waves-effect waves-light red modal-trigger" href="#summaryModal">
-		<i class="material-icons">insert_chart</i>
-	</button>
-</div>
 {% endblock %}
 
 {% block script %}
@@ -142,11 +136,6 @@
 <script type="module" src="/static/modules/gdrive.mjs"></script>
 
 <script>
-	//Default bought date should be today to avoid useless clicks
-	var options = { year: 'numeric', month: 'short', day: 'numeric' };
-	var today = new Date();
-	document.getElementById("bought_date").value = today.toLocaleDateString("en-US", options);
-
 	//If the user clicks a subcategory, we should close the modal and fill the input
 	var category = document.getElementById('category');
 	var expenseType = document.getElementById('expense_type');
@@ -192,10 +181,6 @@
 		link.click();
 	}));
 
-	document.addEventListener('DOMContentLoaded', function () {
-		var elems = document.querySelectorAll('.fixed-action-btn');
-		var instances = M.FloatingActionButton.init(elems, {});
-	});
 	M.AutoInit();
 </script>
 {% endblock %}
