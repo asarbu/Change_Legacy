@@ -87,6 +87,8 @@ function onClickSave() {
 		localStorage.setItem(settings.GDRIVE_KEEP_LOGGED_IN, true);
 	else
 		localStorage.removeItem(settings.GDRIVE_KEEP_LOGGED_IN);
+
+	M.toast({html: 'Saved!', classes: 'rounded'});
 }
 
 if(gdriveSync) {

@@ -6,11 +6,11 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 @app.route("/")
 def index(name="Change!"):
-    return render_template('index.html', name=name)
+    return render_template('Index.html', name=name)
     
 @app.route('/Planning', methods=['GET'])
 def planning(name="Change!"):
-    return render_template('planning.html', name=name)
+    return render_template('Planning.html', name=name)
     
 @app.route('/index.html', methods=['GET'])
 def indexHtml(name="Change!"):
