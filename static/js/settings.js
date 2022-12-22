@@ -26,7 +26,13 @@ function initSettings() {
 	
 	gdriveCheckbox.addEventListener("click", onClickGdriveSync);
 	gdriveKeepLoggedInCheckbox.addEventListener("click", onClickGdriveKeepLoggedIn);
+
+
+	const buttonRow = create("div", {classes:["row", "center"]});
+	const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
 	saveBtn.addEventListener("click", onClickSave);
+	buttonRow.appendChild(saveBtn);
+	document.getElementById("main").appendChild(buttonRow);
 	
 	var sideNavs = document.querySelectorAll('.sidenav');
 	M.Sidenav.init(sideNavs, {});

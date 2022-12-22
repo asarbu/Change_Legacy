@@ -183,7 +183,7 @@
 				"yearly": "0"
 			},
 			{
-				"name": "Taxes",
+				"name": "House maintenance",
 				"daily": "0",
 				"monthly": "0",
 				"yearly": "0"
@@ -349,7 +349,7 @@
 				"yearly": "0"
 			},
 			{
-				"name": "House maintenance",
+				"name": "House repairs",
 				"daily": "0",
 				"monthly": "0",
 				"yearly": "0"

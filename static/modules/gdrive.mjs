@@ -149,7 +149,7 @@ async function loggedIn() {
 			return await tryRefreshAccessToken();
 		} else {
 			const token = JSON.parse(localStorage.getItem(oauth2.token));
-			if(!tokenExpired(token))  {
+			if(tokenExpired(token))  {
 				if(!await tryRefreshAccessToken()) {
 					//Refreshing did not succeed. Refresh token expired or revoked.
 					localStorage.removeItem(oauth2.refresh_token);

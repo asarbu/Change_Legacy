@@ -154,7 +154,7 @@ class Spendings {
 		const thCategory = create("th", {innerText: "Category"});
 		const thSpending = create("th", {innerText: "Spending"});
 		const thBudget = create("th", {innerText: "Budget"});
-		const thPercentage = create("th", {innerText: "Percentage"});
+		const thPercentage = create("th", {innerText: "Percent"});
 		const tBody = create("tbody");
 		const a = create("a", {innerText: "Close", classes: ["modal-close", "waves-effect", "waves-green", "btn-flat"]});
 
@@ -508,7 +508,7 @@ class Spendings {
 			count++;
 		}
 		const options = { useBold: true, readonly: true, index: -1, color: getColorForPercentage(totalPercent/count)};
-		this.appendToSummaryTable(["Total", totalSpent, totalBudget, totalPercent/count], options);
+		this.appendToSummaryTable(["Total", totalSpent, totalBudget, parseInt(totalPercent/count)], options);
 	}
 
 	insertSpending(spending) {

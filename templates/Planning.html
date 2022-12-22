@@ -2,45 +2,24 @@
 
 {% block tabs %}
 <li class="tab">
-	<a class="active" href="#IncomeTab"><h6>Income</h6></a>
+	<a class="active" href="#VitalExpensesTab"><h6>Vital expenses</h6></a>
+</li>
+<li class="tab">
+	<a href="#OptionalExpensesTab"><h6>Optional expenses</h6></a>
 </li>
 <li class="tab">
 	<a href="#DebtTab"><h6>Debt</h6></a>
 </li>
 <li class="tab">
-	<a href="#VitalExpensesTab"><h6>Vital expenses</h6></a>
-</li>
-<li class="tab">
-	<a href="#OptionalExpensesTab"><h6>Optional expenses</h6></a>
+	<a href="#IncomeTab"><h6>Income</h6></a>
 </li>
 {% endblock %}
 
 {% block content %}
-<div id="IncomeTab" class="container">
-	<div class="section no-pad-bot">
-		<div class="container">
-			<h1 class="header center orange-text">Income</h1>
-			<div class="row center">
-				<h5 class="header col s12 light">Values added in each cell will recompute the others on the same row</h5>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div id="DebtTab" class="container">
-	<div class="section no-pad-bot">
-		<div class="container">
-			<h1 class="header center orange-text">Debt</h1>
-			<div class="row center">
-				<h5 class="header col s12 light">Small debts should pe repaid in increasing order</h5>
-			</div>
-		</div>
-	</div>
-</div>
 <div id="VitalExpensesTab" class="container">
 	<div class="section no-pad-bot">
 		<div class="container">
-			<h1 class="header center orange-text">Vital expenses</h1>
+			<h1 class="header center red-text">Vital expenses</h1>
 			<div class="row center">
 				<h5 class="header col s12 light">Pay yourself first! Save some money before paying the restof expenses</h5>
 			</div>
@@ -51,9 +30,29 @@
 <div id="OptionalExpensesTab" class="container">
 	<div class="section no-pad-bot">
 		<div class="container">
-			<h1 class="header center orange-text">Optional Expenses</h1>
+			<h1 class="header center red-text">Optional Expenses</h1>
 			<div class="row center">
 				<h5 class="header col s12 light">If hobbies consume more than 10% of your optional expenses, you should consider monetizing your hobby</h5>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="DebtTab" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center red-text">Debt</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">Small debts should pe repaid in increasing order</h5>
+			</div>
+		</div>
+	</div>
+</div>
+<div id="IncomeTab" class="container">
+	<div class="section no-pad-bot">
+		<div class="container">
+			<h1 class="header center red-text">Income</h1>
+			<div class="row center">
+				<h5 class="header col s12 light">Values added in each cell will recompute the others on the same row</h5>
 			</div>
 		</div>
 	</div>
