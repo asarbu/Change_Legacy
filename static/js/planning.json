@@ -302,7 +302,7 @@
 	},
 	"WastedMoney": {
 		"name":"Wasted Money",
-		"tab": "WastedMoneyTab",
+		"tab": "OptionalExpensesTab",
 		"type": "Expense",
 		"data": [
 			{
@@ -319,6 +319,61 @@
 			},
 			{
 				"name": "Hobbies",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			}
+		]
+	},
+	"Other expenses": {
+		"name":"Other expenses",
+		"tab": "OptionalExpensesTab",
+		"type": "Expense",
+		"data": [
+			{
+				"name": "Vacations",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Haircuts",
+				"daily": "0",
+				"monthly": "60",
+				"yearly": "0"
+			},
+			{
+				"name": "Night outs",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "House maintenance",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Clothes",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Gifts",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Electronics",
+				"daily": "0",
+				"monthly": "0",
+				"yearly": "0"
+			},
+			{
+				"name": "Pension fund",
 				"daily": "0",
 				"monthly": "0",
 				"yearly": "0"

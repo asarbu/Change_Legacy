@@ -14,11 +14,11 @@ def planning(name="Change!"):
     
 @app.route('/index.html', methods=['GET'])
 def indexHtml(name="Change!"):
-    return render_template('index.html', name=name)
+    return render_template('Index.html', name=name)
 
-@app.route('/auth.html', methods=['GET'])
+@app.route('/Settings', methods=['GET'])
 def authHtml(name="Change!"):
-    return render_template('Auth.html', name=name)
+    return render_template('Settings.html', name=name)
     
 @app.route('/sw.js')
 def sw():

@@ -4370,9 +4370,8 @@ nav .sidenav-trigger {
   margin: 0 18px;
 }
 
-nav .sidenav-trigger i {
-  height: 56px;
-  line-height: 56px;
+nav .sidenav-trigger img {
+  transform: scale(0.75);
 }
 
 nav .brand-logo {

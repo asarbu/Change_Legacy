@@ -60,6 +60,7 @@ class Idb {
 	}
 
 	put(storeName, value, key) {
+		console.log("IDB put:", storeName, value, key);
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
 
@@ -137,6 +138,7 @@ class Idb {
 
 	populateStoreFromTemplate(storeName, planningFile) {
 		for (const [key, value] of Object.entries(planningFile)) {
+			//this.get(storeName, key).catch(err => this.put(storeName, value, key));
 			this.put(storeName, value, key);
 		}
 	}
@@ -155,7 +157,7 @@ class Idb {
 //-------------------------- PLANNING SPECIFIC LOGIC --------------------------//
 //-------------------------- USED FROM MULTIPLE JS ----------------------------//
 const PLANNING_STORE_NAME = 'Planning';
-const PLANNING_TEMPLATE_URI = 'static/js/Planning.json';
+const PLANNING_TEMPLATE_URI = 'static/js/planning.json';
 function upgradePlanningDatabase(db, oldVersion) {
 	if (oldVersion == 0) {
 		let store = db.createObjectStore('Planning', { autoIncrement: true });

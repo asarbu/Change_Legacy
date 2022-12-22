@@ -1,8 +1,8 @@
 function createImageButton(text, href, classList, src) {
-	const btn = document.createElement("button");
+	const btn = create("button");
 	btn.classList.add(...classList);
 	btn.setAttribute("href",href);
-	const img = document.createElement("img");
+	const img = create("img");
 	img.classList.add("white-fill");
 	img.innerText = text;
 	img.alt = text;
@@ -51,10 +51,10 @@ function createRow(table, data, options) {
 
 	if (options.deletable) {	
 		const buttonsCell = row.insertCell(-1);
-		const btn = document.createElement("button");
+		const btn = create("button");
 		btn.classList.add("waves-effect", "waves-light", "red", "btn-small");
 		buttonsCell.appendChild(btn);
-		const img = document.createElement("img");
+		const img = create("img");
 		img.classList.add("white-fill");
 		img.innerHTML = "Delete";
 		img.alt = "Delete";
