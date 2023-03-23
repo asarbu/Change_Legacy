@@ -11,7 +11,7 @@ const assets = [
 	"static/js/planning.js",
 	"static/js/settings.js",
 	"static/manifest.json",
-	"static/modules/gdrive.mjs",
+	"static/js/gDrive.js",
 
 	"static/icons/icon-144x144.png",
 	"static/icons/menu.svg",

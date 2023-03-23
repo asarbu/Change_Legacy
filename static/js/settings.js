@@ -27,7 +27,6 @@ function initSettings() {
 	gdriveCheckbox.addEventListener("click", onClickGdriveSync);
 	gdriveKeepLoggedInCheckbox.addEventListener("click", onClickGdriveKeepLoggedIn);
 
-
 	const buttonRow = create("div", {classes:["row", "center"]});
 	const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
 	saveBtn.addEventListener("click", onClickSave);
@@ -95,15 +94,4 @@ function onClickSave() {
 		localStorage.removeItem(settings.GDRIVE_KEEP_LOGGED_IN);
 
 	M.toast({html: 'Saved!', classes: 'rounded'});
-}
-
-if(gdriveSync) {
-	var head = document.getElementsByTagName('head')[0];
-
-	var script = document.createElement('script');
-	script.src = "/static/modules/gdrive.mjs";
-	script.type="module";
-	//script.type = 'text/javascript';
-
-	head.appendChild(script)
 }

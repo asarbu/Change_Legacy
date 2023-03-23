@@ -114,7 +114,8 @@ class Idb {
 			let query = store.delete(key);
 
 			query.onsuccess = function (event) {
-				console.log("Deleted ", key)
+				console.log("Deleted ", key);
+				//console.trace();
 				resolve();
 			};
 
@@ -151,18 +152,5 @@ class Idb {
 		const store = txn.objectStore(storeName);
 
 		return [store, txn];
-	}
-}
-
-//-------------------------- PLANNING SPECIFIC LOGIC --------------------------//
-//-------------------------- USED FROM MULTIPLE JS ----------------------------//
-const PLANNING_STORE_NAME = 'Planning';
-const PLANNING_TEMPLATE_URI = 'static/js/planning.json';
-function upgradePlanningDatabase(db, oldVersion) {
-	if (oldVersion == 0) {
-		let store = db.createObjectStore('Planning', { autoIncrement: true });
-		store.createIndex('byType', 'type', { unique: false });
-
-		return;
 	}
 }

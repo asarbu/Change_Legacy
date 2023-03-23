@@ -5,8 +5,7 @@ const PLANNING_FILE_NAME = "planning.json";
 
 async function initPlanning() {	
 	if(gdriveSync) { 
-		gdrive = await import('./../modules/gdrive.mjs');
-		gdrive.setRedirectUri("https://asarbu.loca.lt/Planning");
+		gdrive = await import('./gDrive.js');
 	}
 	var sideNavs = document.querySelectorAll('.sidenav');
 	M.Sidenav.init(sideNavs, {});

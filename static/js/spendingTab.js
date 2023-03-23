@@ -1,59 +1,15 @@
-const SPENDINGS_STORE_NAME = 'Spendings';
-
-var gdrive;
-
-async function initSpending() {
-	if (!window.indexedDB) {
-		console.error(`Your browser doesn't support IndexedDB`);
-		return;
-	}
-
-	if(gdriveSync) {
-		gdrive = await import('/static/modules/gdrive.mjs');
-		gdrive.setRedirectUri("https://asarbu.loca.lt/");
-		const driveMonths = gdrive.getChildren();
-	}
-
-	const now = new Date();
-	const currentMonth = now.toLocaleString("en-US", {month: "short"});
-	const currentYear =  now.toLocaleString("en-US", {year: "numeric"});
-	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-	months.forEach(month => { 
-		const active = (currentYear === currentYear && month === currentMonth);
-		const monthlySpendings = new Spendings(currentYear, month);
-		monthlySpendings.init(active);
-	});
-}
-
-class Spendings {
-	constructor(year, month) {
-		this.idb = new Idb("Spendings", 1, this.upgradeSpendingsDb);
-		this.pdb = new Idb("Planning", 1, upgradePlanningDatabase);
+class SpendingTab {
+	constructor(month, focused, spendingCache, planningCache) {
 		this.month = month;
-		this.year = year;
+		this.focused = focused;
+		this.spendingCache = spendingCache;
+		this.planningCache = planningCache;
+		this.init(focused);
 	}
 
-	async init(active) {
-		await this.idb.init();
-		await this.pdb.init()
-			.then(pdb => pdb.fetchTemplateToStore(PLANNING_TEMPLATE_URI, PLANNING_STORE_NAME));
-
-		var currentMonthSpendings = await this.hasSpendings();
-		if(currentMonthSpendings.length > 0 || active) {
-			if(gdriveSync) {
-				await this.syncSpendingsToNetwork();
-			}
-
-			currentMonthSpendings = await this.getAllSpendings();
-			this.createTab(this.month, active);
-			await this.processSpendings(currentMonthSpendings);
-		} 		
-	}
-
-	//#region DOM generation
-	createTab(monthName, active) {
-		//console.log("Creating tab for:", monthName);
-		const tab = create("div", {id: monthName, classes: ["container"]});
+	init(focused) {
+		const tab = create("div", {id: this.month, classes: ["container"]});
+		this.tab = tab;
 		const section = create("div", {clsses: ["section", "no-pad-bot"]});
 		const container = create("div", {classes: ["container"]});
 		//const h1 = create("h1", {classes: ["header", "center", "red-text"], innerText: monthName});
@@ -61,14 +17,14 @@ class Spendings {
 		const h5 = create("h5", {classes: ["header", "col", "s12", "light"], innerText: "Monthly spendings"});
 		const li = create("li", {classes: ["tab"]});
 		const a = create("a");
-		const h6 = create("h6", {innerText: monthName});
+		const h6 = create("h6", {innerText: this.month});
 		const buttonRow = create("div", {classes:["row", "center"]});
 		const editBtn = createImageButton("EditBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.edit);
 		const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
 
-		a.setAttribute("href", "#" + monthName);
+		a.setAttribute("href", "#" + this.month);
 	
-		if(active) {
+		if(this.focused) {
 			a.classList.add("active");
 		}
 	
@@ -291,233 +247,17 @@ class Spendings {
 		this.drawCategoryList();
 		return categoryModal;
 	}
-	//#endregion
 
-	async syncSpendingsToNetwork() {
-		await this.mergeLocalSpendingsToNetwork();
-	}
-
-	async mergeLocalSpendingsToNetwork() {
-		//console.log("Merging local spendings to network...");
-		var needsMerge = false;
-		const spendingFileName = this.year + this.month;
-		let networkFileId = localStorage.getItem(spendingFileName);
-		//Not found in memory, look on drive
-		if(!networkFileId) {
-			const monthFile = this.month + ".json";
-			const yearFolder = await this.getSpendingsFileParent();
-			networkFileId = await gdrive.findFile(monthFile, yearFolder);
-		}
-		//Not found in memory, write empty
-		if(!networkFileId) {
-			//No spending file found, write current data to network, but do not overwrite
-			networkFileId = await this.persistToNetwork();
-			
-			if(!networkFileId) {
-				console.error("Could not retrieve or create spendings file from newtork: " + spendingFileName);
-			}
-			
-			return;
-		}
-
-		const networkSpendings = await gdrive.readFile(networkFileId);
-		const localSpendings = await this.idb.openCursor(SPENDINGS_STORE_NAME);
-
-		//console.log("Network spendings:", networkSpendings);
-		for(const [networkKey, networkSpending] of networkSpendings) {
-			const localSpending = localSpendings.get(networkKey);
-			if(!localSpending) {
-				//Somebody else created a spending. Store locally
-				this.idb.put(SPENDINGS_STORE_NAME, networkSpending, networkKey);
-				localSpendings[networkKey] = networkSpending;
-				continue;
-			}
-			if(!this.areEqual(localSpending, networkSpending)) {
-				needsMerge = true;
-				if(localSpending.added) {
-					//Conflict of keys. Add the network spending at the end of our idb
-					this.idb.put(SPENDINGS_STORE_NAME, networkSpending);
-				} else  if (localSpending.edited) {
-					//We made changes, no need to edit anything
-				} else {
-					//Found a spending modified by somebody else, network is more reliable
-					this.idb.put(SPENDINGS_STORE_NAME, networkSpending, networkKey);
-				}
-			}
-		}
-
-		for(const [localKey, localSpending] of localSpendings.entries()) {
-			//Delete takes precedence. It does not matter if the entry was edited or added if it's deleted
-			if(localSpending.deleted) {
-				needsMerge = true;
-				localSpendings.delete(localKey);
-				this.idb.delete(SPENDINGS_STORE_NAME, localKey);
-				continue;
-			} else if(localSpending.edited) {
-				needsMerge = true;
-				delete localSpending.edited;
-				this.idb.put(SPENDINGS_STORE_NAME, localSpending, localKey);
-				continue;
-			} else if(localSpending.added) {
-				needsMerge = true;
-				delete localSpending.added;
-				this.idb.put(SPENDINGS_STORE_NAME, localSpending, localKey);
-				continue;
-			} 
-			
-			//Deleted from network by someone else
-			if(!networkSpendings.get(localKey)) {
-				this.idb.delete(SPENDINGS_STORE_NAME, localKey);
-			}
-		}
-
-		//console.log("No merge needed. Returning...");
-		if(!needsMerge) return;
-
-		const fileId = await this.persistToNetwork();
-		return localSpendings;
-
-	}
-
-	async persistToNetwork() {
-		//console.log("Persist spending to network:");
-		const spendings = await this.getAllSpendings(this.month);
-		//console.log("Spendings", spendings);
-		const yearFolder = await this.getSpendingsFileParent();
-		if(!yearFolder) return;
-
-		const fileName = this.month + ".json";
-		console.log(yearFolder, fileName, spendings)
-		const fileId = await gdrive.writeFile(yearFolder, fileName, spendings, true);
-
-		if(fileId) {
-			//Store for fast retrieval
-			const fileKey = this.year + this.month;
-			localStorage.setItem(fileKey, fileId);
-		}
-	}
-
-	async getSpendingsFileParent() {
-		if(localStorage.getItem(this.year)) {
-			return localStorage.getItem(this.year);
-		}
-
-		const APP_FOLDER = "Change!";
-		var topFolder = await gdrive.findFolder(APP_FOLDER);
-
-		if (!topFolder) {
-			topFolder = await gdrive.createFolder(APP_FOLDER);
-		}
-		if(!topFolder) return;
-
-		var yearFolder = await gdrive.findFolder(this.year, topFolder);
-		if(!yearFolder) {
-			yearFolder = await gdrive.createFolder(this.year, topFolder);
-		}
-
-		localStorage.setItem(this.year, yearFolder);
-		return yearFolder;
-	}
-
-	async getAllSpendings(month) {
-		const spendings = await this.idb.openCursor(SPENDINGS_STORE_NAME);
-		const monthlySpendings = [];
-		for (const [key, value] of spendings) {
-			if (value.bought_date.includes(this.month)) {
-				monthlySpendings.push([key, value]);
-			}
-		}
-		return monthlySpendings;
-	}
-	
-	areEqual(thisSpending, thatSpending) {
-		return thisSpending.bought_date === thatSpending.bought_date &&
-			thisSpending.category === thatSpending.category &&
-			thisSpending.description === thatSpending.description &&
-			thisSpending.price === thatSpending.price &&
-			thisSpending.type === thatSpending.type;
-	}
-
-	async hasSpendings() {
-		const spendings = await this.idb.openCursor(SPENDINGS_STORE_NAME);
-		const monthlySpendings = [];
-		for (const [key, value] of spendings) {
-			if (value.bought_date.includes(this.month)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	async drawSpendings() {
-		//console.log("Drawing spendings...");
-		for (const [id, spending] of this.spendingsMap) {
+	async refresh(data) {
+        //console.log("Refreshing spendings...");
+		//TODO replace this with creating a new tbody and replacing old one
+		this.spendingsTable.tBodies[0].innerHTML = "";
+		for (const [id, spending] of this.data) {
 			this.appendToSpendingTable([id, spending]);
 		}
 	}
 
-	async processSpendings(spendings) {
-		//console.log("Processing spendings", spendings);
-		this.spendingsMap = spendings;
-		this.spendings = Array.from(spendings.values());
-		this.drawSpendings();
-		this.categorizeSpendings();
-		await this.extractPlanningBudgets();
-		this.processSummary();
-	}
-
-	categorizeSpendings() {
-		this.totals = new Map();
-		for (const [id, spending] of this.spendings) {
-			if (!this.totals.has(spending.category)) {
-				this.totals.set(spending.category, 0);
-			}
-			this.totals.set(spending.category, this.totals.get(spending.category) + parseFloat(spending.price));
-		}
-	}
-
-	async extractPlanningBudgets() {
-		this.budgets = new Map();
-		const spendingTypes = new Set();
-	
-		for(const [id, spending] of this.spendings) {
-			spendingTypes.add(spending.type);
-		}
-
-		for (const spendingType of spendingTypes) {
-			const planningItem = await this.pdb.get(PLANNING_STORE_NAME, spendingType);
-			for (const planningBudget of planningItem.data) {
-				this.budgets.set(planningBudget.name, planningBudget.monthly);
-			}
-		}
-	}
-
-	processSummary() {
-		let totalSpent = 0;
-		let totalBudget = 0;
-		let totalPercent = 0.00;
-		let count = 0;
-		for (const [key, value] of this.totals) {
-			const planningBudget = this.budgets.get(key)
-			const percentage = value / parseFloat(planningBudget);
-			this.appendToSummaryTable([key, value, planningBudget, parseInt(percentage * 100)], { readonly: true, color: getColorForPercentage(percentage) });
-			
-			totalBudget = totalBudget + parseInt(planningBudget);
-			totalSpent = totalSpent + parseInt(value);
-			totalPercent = totalPercent + parseInt(percentage * 100);
-			count++;
-		}
-		const options = { useBold: true, readonly: true, index: -1, color: getColorForPercentage(totalPercent/count)};
-		this.appendToSummaryTable(["Total", totalSpent, totalBudget, parseInt(totalPercent/count)], options);
-	}
-
-	insertSpending(spending) {
-		spending.added = true;
-		this.idb.put(SPENDINGS_STORE_NAME, spending).then(this.appendToSpendingTable.bind(this));
-		this.syncSpendingsToNetwork();
-	}
-
-	appendToSpendingTable(spendingResult) {
+    appendToSpendingTable(spendingResult) {
 		const key = spendingResult[0];
 		const value = spendingResult[1];
 		var row = this.appendRowToTable(this.spendingsTable, 
@@ -531,6 +271,7 @@ class Spendings {
 		if (options.index) {
 			index = options.index;
 		}
+
 		const row = table.tBodies[0].insertRow(index);
 		var dataCell;
 	
@@ -569,7 +310,7 @@ class Spendings {
 	}
 
 	async drawCategoryList() {
-		const categories = await this.pdb.openCursor(PLANNING_STORE_NAME);
+		const categories = await this.planningCache.openCursor(PLANNING_STORE_NAME);
 		for (const [key, value] of categories.entries()) {
 			if (value.type == "Expense") {
 				const li = create("li");
@@ -592,14 +333,7 @@ class Spendings {
 			}
 		}
 	}
-
-	upgradeSpendingsDb(db, oldVersion) {
-		if (oldVersion === 0) {
-			let store = db.createObjectStore(SPENDINGS_STORE_NAME, { autoIncrement: true });
-			store.createIndex('byCategory', 'category', { unique: false });
-		}
-	}
-
+	
 	//#region GUI handlers
 	onClickCategory(event) {
 		this.categoryInput.value = event.target.innerHTML;
@@ -676,5 +410,3 @@ class Spendings {
 
 	//#endregion
 }
-
-document.addEventListener("DOMContentLoaded", initSpending);
