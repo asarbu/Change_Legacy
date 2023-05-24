@@ -1,3 +1,8 @@
+# fix windows registry mismatched types
+import mimetypes
+mimetypes.add_type('application/javascript', '.js')
+mimetypes.add_type('text/css', '.css')
+
 from flask import Flask
 from flask import render_template, make_response, send_from_directory
 

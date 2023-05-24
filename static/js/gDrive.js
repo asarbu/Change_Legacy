@@ -1,5 +1,5 @@
 class GDrive {
-	constructor() {
+	constructor(suffix) {
 		if(GDrive.instance) {
 			return GDrive.instance;
 		}
@@ -11,13 +11,14 @@ class GDrive {
 		this.CLIENT_SECRET = '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';
 		this.FILES_API = "https://www.googleapis.com/drive/v3/files";
 		this.ROOT = "root";
-		this.redirectUri = 'https://asarbu.loca.lt/';
+		this.suffix = suffix;
+		this.redirectUri = window.location.href;
 
 		this.oauth2 = {
 			name : "oauth2",
 			token : "oauth2_token",
-			access_token : "access_token",
-			refresh_token : "oauth2_refresh_token",
+			accessToken : "access_token",
+			refreshToken : "oauth2_refresh_token",
 			state : "change-application-nonce"
 		}
 	}
@@ -32,31 +33,32 @@ class GDrive {
 		if(useServerFlow) {
 			await this.processOAuth2OfflineFlow();
 		} else {
-			processOAuth2OnlineFlow();
+			this.processOAuth2OnlineFlow();
 		}
 	}
 
 	async processOAuth2OfflineFlow() {
-		var locationString = location.href;
-		console.log("Processing OAuth2 offline flow " + locationString)
+		var locationString = window.location.href;
+		console.log("Processing OAuth2 offline flow " + locationString);
 		let paramString = new RegExp('(.*)[?](.*)').exec(locationString);
-		if (null == paramString) {
+		if (null == paramString && this.loggedIn()) {
+			console.log("No parameters found. Returning...");
 			return
 		}
 
 		// Parse query string to see if page request is coming from OAuth 2.0 server.
 		var params = {};
 		var regex = /([^&=]+)=([^&]*)/g, match;
-		redirectUri = paramString[1];
+		this.redirectUri = paramString[1];
 		while (match = regex.exec(paramString[2])) {
 			params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
 		}
 		if (Object.keys(params).length > 0) {
-			if (params['state'] && params['state'] == oauth2.state) {
-				if(localStorage.getItem(oauth2.refresh_token) === null) {
-					await getRefreshToken(params);
+			if (params['state'] && params['state'] == this.oauth2.state) {
+				if(localStorage.getItem(this.oauth2.refreshToken) === null) {
+					await this.getRefreshToken(params);
 				} else {
-					await tryRefreshAccessToken();
+					await this.tryRefreshAccessToken();
 				}
 			}
 		}
@@ -72,26 +74,25 @@ class GDrive {
 			params[decodeURIComponent(m[1])] = decodeURIComponent(m[2]);
 		}
 		if (Object.keys(params).length > 0) {
-			if (params['state'] && params['state'] == oauth2.state) {
+			if (params['state'] && params['state'] == this.oauth2.state) {
 				params['refreshed_at'] = new Date().getTime();
 				params['expires_at'] = params['refreshed_at'] + params['expires_in'] * 1000;
-				localStorage.setItem(oauth2.token, JSON.stringify(params) );
+				localStorage.setItem(this.oauth2.token, JSON.stringify(params) );
 			}
 		} else {
-			if(!localStorage.getItem(oauth2.token)) {
-				oauth2OnlineSignIn();
+			if(!localStorage.getItem(this.oauth2.token)) {
+				this.oauth2OnlineSignIn();
 			}
 		}
 	}
 
 	async getRefreshToken(authorizationCode) {
-		//TDO: Use actual href here
-		console.log("Getting refresh token. Redirect URI ",window.location.href);
+		//console.log("Getting refresh token. Redirect URI ",window.location.href);
 		var data = {
 			"code": authorizationCode.code,
-			"client_id": CLIENT_ID,
-			"client_secret" : CLIENT_SECRET,
-			"redirect_uri": redirectUri,
+			"client_id": this.CLIENT_ID,
+			"client_secret" : this.CLIENT_SECRET,
+			"redirect_uri": this.redirectUri,
 			"grant_type" : 'authorization_code',
 		};	
 		//console.log("Data:" , data)
@@ -107,7 +108,8 @@ class GDrive {
 			body: JSON.stringify(data),
 		};
 
-		console.log(JSON.stringify(request));
+		//console.log(JSON.stringify(request));
+
 		const json = await fetch(url, request)
 		.then(response => response.json()) 
 		.then(json => json)
@@ -126,15 +128,15 @@ class GDrive {
 			}
 		});
 
-		console.log("Received token", json);
+		//console.log("Received token", json);
 		if(json.refresh_token) {
-			localStorage.setItem(oauth2.refresh_token, json.refresh_token);
+			localStorage.setItem(this.oauth2.refreshToken, json.refresh_token);
 			delete json.refresh_token;
 		}
 		json.refreshed_at = new Date().getTime();
 		json.expires_at = json.refreshed_at + json.expires_in * 1000;
 
-		localStorage.setItem(oauth2.token, JSON.stringify(json));
+		localStorage.setItem(this.oauth2.token, JSON.stringify(json));
 	}
 
 	async getAccessToken() {
@@ -143,7 +145,7 @@ class GDrive {
 			const params = JSON.parse(localStorage.getItem(this.oauth2.token));
 			if(!params) 
 				return false;
-			const access_token = params[this.oauth2.access_token];
+			const access_token = params[this.oauth2.accessToken];
 			return access_token;
 		}
 	}
@@ -153,23 +155,23 @@ class GDrive {
 		if(gdriveKeepLoggedin) {
 			if(localStorage.getItem(this.oauth2.token) === null) {
 				console.log("No token found. Requesting one from server");
-				return await tryRefreshAccessToken();
+				return await this.tryRefreshAccessToken();
 			} else {
 				const token = JSON.parse(localStorage.getItem(this.oauth2.token));
 				if(this.tokenExpired(token))  {
 					console.log("Token expired")
 					if(!await this.tryRefreshAccessToken()) {
 						//Refreshing did not succeed. Refresh token expired or revoked.
-						localStorage.removeItem(this.oauth2.refresh_token);
+						localStorage.removeItem(this.oauth2.refreshToken);
 						localStorage.removeItem(this.oauth2.token);
-						processOAuth2Flow();
+						this.processOAuth2Flow();
 					}
 				}
 			}
 		} else {
 			const token = localStorage.getItem(this.oauth2.token);
 			if(!token || this.tokenExpired(JSON.parse(token))) {
-				oauth2OnlineSignIn();
+				this.oauth2OnlineSignIn();
 			}
 		}
 		return true;
@@ -187,12 +189,12 @@ class GDrive {
 	async tryRefreshAccessToken() {
 		console.log("Refreshing access token")
 		//If there is no refresh token, we cannot get an access token.
-		if(localStorage.getItem(this.oauth2.refresh_token) === null) {
-			console.log("Cannot request from server. No refresh token found")
+		if(localStorage.getItem(this.oauth2.refreshToken) === null) {
+			console.log("No refresh token on local storage. Doing offline sign in")
 			this.oauth2OfflineSignIn();
 			return false;
 		}
-		var refresh_token = localStorage.getItem(this.oauth2.refresh_token);
+		var refresh_token = localStorage.getItem(this.oauth2.refreshToken);
 		var data = {
 			"client_id": this.CLIENT_ID,
 			"client_secret" : this.CLIENT_SECRET,
@@ -239,8 +241,8 @@ class GDrive {
 
 		// Parameters to pass to OAuth 2.0 endpoint.
 		var params = {
-			'client_id': CLIENT_ID,
-			'redirect_uri': redirectUri,
+			'client_id': this.CLIENT_ID,
+			'redirect_uri': this.redirectUri,
 			'scope': 'https://www.googleapis.com/auth/drive',
 			'state': 'change-application-nonce',
 			'include_granted_scopes': 'true',
@@ -260,6 +262,7 @@ class GDrive {
 		}
 
 		// Add form to page and submit it to open the OAuth 2.0 endpoint.
+		console.log("Sumbitting form: ", params);
 		document.body.appendChild(form);
 		form.submit();
 	}
@@ -277,8 +280,8 @@ class GDrive {
 
 		// Parameters to pass to OAuth 2.0 endpoint.
 		var params = {
-			'client_id': CLIENT_ID,
-			'redirect_uri': redirectUri,
+			'client_id': this.CLIENT_ID,
+			'redirect_uri': this.redirectUri,
 			'scope': 'https://www.googleapis.com/auth/drive',
 			'state': 'change-application-nonce',
 			'include_granted_scopes': 'true',
@@ -300,7 +303,9 @@ class GDrive {
 	}
 
 	async writeFile(parent, fileName, data, overwrite) {
-		var fileId = await this.findFile(fileName, parent);
+		var fileId = localStorage.getItem(fileName);
+		if(!fileId)
+			fileId = await this.findFile(fileName, parent);
 		if(!fileId) {
 			fileId = await this.write(fileName, parent, data);
 		} else if(overwrite) {
@@ -476,7 +481,8 @@ class GDrive {
 			const form = new FormData();
 			form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
 			form.append('file', file);
-			fetch(url, {
+
+			const fileId = fetch(url, {
 				method: "POST",
 				headers: header,
 				body: form,
@@ -485,6 +491,27 @@ class GDrive {
 			}).then(json => {
 				return json.id;
 			});
+			return fileId;
+		}
+	}
+
+	async readFileMetadata(fileId, fields) {
+		const token = await this.getAccessToken();
+		if(token) {
+			if(!fileId) {
+				console.error("No file id provided: ");
+			}
+
+			const header = await this.getHeader();
+			const url = new URL(this.FILES_API + '/' + fileId);
+			url.searchParams.append("fields", fields);
+			
+			const response = await fetch(url, {
+				method: "GET",
+				headers: header
+			})
+			const json = await response.json();
+			return json;
 		}
 	}
 
@@ -499,24 +526,12 @@ class GDrive {
 			const url = new URL(this.FILES_API + '/' + fileId);
 			url.searchParams.append('alt', 'media');
 			
-			const contents = await fetch(url, {
+			const response = await fetch(url, {
 				method: "GET",
 				headers: header
 			})
-			.then(response => response.json()) 
-			.then(json => {
-				const map = new Map();
-				json.forEach(object => {
-					map.set(object[0], object[1]);
-				});
-				return map;
-			})
-			.catch(err => console.log(err));
-
-			return contents;
+			const json = await response.json();
+			return json;
 		}
 	}
 }
-
-const gDrive = new GDrive();
-gDrive.init();

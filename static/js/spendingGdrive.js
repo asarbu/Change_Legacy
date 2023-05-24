@@ -1,19 +1,14 @@
 class SpendingGdrive {
-    constructor(year, month, spendingsCache) {
+    constructor(year, month, spendingsCache, forceCreate) {
 		this.gdrive = new GDrive();
 		this.year = year;
 		this.month = month;
 		this.spendingsCache = spendingsCache;
+		this.forceCreate = forceCreate;
     }
 
     init() {
-		this.getSpendingsFile()
-		const driveMonths = this.gdrive.getChildren();
     }
-
-	async syncSpendingsToNetwork() {
-		await this.mergeLocalSpendingsToNetwork();
-	}
 
 	async mergeLocalSpendingsToNetwork() {
 		//console.log("Merging local spendings to network...");
@@ -24,6 +19,13 @@ class SpendingGdrive {
 		if(!networkFileId) {
 			networkFileId = await this.getSpendingsFile();
 		}
+
+		const hasSpendings = await this.spendingsCache.hasSpendings();
+		//console.log("GDrive Month", this.month, networkFileId, hasSpendings, this.forceCreate)
+		if(!networkFileId && !hasSpendings && !this.forceCreate) {
+			return false;
+		}
+
 		//Not found in drive, write empty
 		if(!networkFileId) {
 			//No spending file found, write current data to network, but do not overwrite
@@ -37,32 +39,27 @@ class SpendingGdrive {
 		}
 
 		const networkSpendings = await this.gdrive.readFile(networkFileId);
-		console.log(this.month + " " + this.networkFileId + " " + networkSpendings)
-		console.log("NetworkSpendings:", networkSpendings);
-		const localSpendings = await this.spendingsCache.getAllSpendings();
-		console.log("LocalSpendings",localSpendings)
+		const localSpendings = await this.spendingsCache.getAll();
 
 		//console.log("Network spendings:", networkSpendings);
-		if(localSpendings.length > 0) {
-			for(const [networkKey, networkSpending] of networkSpendings) {
-				const localSpending = localSpendings.get(networkKey);
-				if(!localSpending) {
-					//Somebody else created a spending. Store locally
-					this.idb.put(SPENDINGS_STORE_NAME, networkSpending, networkKey);
-					localSpendings[networkKey] = networkSpending;
-					continue;
-				}
-				if(!this.areEqual(localSpending, networkSpending)) {
-					needsMerge = true;
-					if(localSpending.added) {
-						//Conflict of keys. Add the network spending at the end of our idb
-						this.idb.put(SPENDINGS_STORE_NAME, networkSpending);
-					} else  if (localSpending.edited) {
-						//We made changes, no need to edit anything
-					} else {
-						//Found a spending modified by somebody else, network is more reliable
-						this.idb.put(SPENDINGS_STORE_NAME, networkSpending, networkKey);
-					}
+		for(const [networkKey, networkSpending] of networkSpendings) {
+			const localSpending = localSpendings.get(networkKey);
+			if(!localSpending) {
+				//Somebody else created a spending. Store locally
+				await this.spendingsCache.insert(networkSpending, networkKey);
+				localSpendings[networkKey] = networkSpending;
+				continue;
+			}
+			if(!this.equals(localSpending, networkSpending)) {
+				needsMerge = true;
+				if(localSpending.added) {
+					//Conflict of keys. Add the network spending at the end of our idb
+					await this.spendingsCache.insert(networkSpending);
+				} else  if (localSpending.edited) {
+					//We made changes, no need to edit anything
+				} else {
+					//Found a spending modified by somebody else, network is more reliable
+					await this.spendingsCache.insert(networkSpending, networkKey);
 				}
 			}
 		}
@@ -73,23 +70,23 @@ class SpendingGdrive {
 				if(localSpending.deleted) {
 					needsMerge = true;
 					localSpendings.delete(localKey);
-					this.idb.delete(SPENDINGS_STORE_NAME, localKey);
+					this.spendingsCache.delete(localKey);
 					continue;
 				} else if(localSpending.edited) {
 					needsMerge = true;
 					delete localSpending.edited;
-					this.idb.put(SPENDINGS_STORE_NAME, localSpending, localKey);
+					this.spendingsCache.insert(localSpending, localKey);
 					continue;
 				} else if(localSpending.added) {
 					needsMerge = true;
 					delete localSpending.added;
-					this.idb.put(SPENDINGS_STORE_NAME, localSpending, localKey);
+					this.spendingsCache.insert(localSpending, localKey);
 					continue;
 				} 
 				
 				//Deleted from network by someone else
 				if(!networkSpendings.get(localKey)) {
-					this.idb.delete(SPENDINGS_STORE_NAME, localKey);
+					this.spendingsCache.delete(localKey);
 				}
 			}
 		}
@@ -103,7 +100,7 @@ class SpendingGdrive {
 
 	async persistToNetwork() {
 		//console.log("Persist spending to network:");
-		const spendings = await this.spendingsCache.getAllSpendings(this.month);
+		const spendings = await this.spendingsCache.getAll();
 		//console.log("Spendings", spendings);
 		const yearFolder = await this.getSpendingsFileParent();
 		if(!yearFolder) return;
@@ -116,18 +113,18 @@ class SpendingGdrive {
 		if(fileId) {
 			//Store for fast retrieval
 			const fileKey = this.year + this.month;
+			console.log("Setting localstorage", fileKey, fileId)
 			localStorage.setItem(fileKey, fileId);
 		}
 	}
 
 	async getSpendingsFile() {
-		if(this.spendingFile) {
+		/*if(this.spendingFile) {
 			return this.spendingFile;
-		}
+		}*/
 		const monthFile = this.month + ".json";
 		const yearFolder = await this.getSpendingsFileParent();
 		this.spendingFile =  await this.gdrive.findFile(monthFile, yearFolder);
-		
 		return this.spendingFile;
 	}
 
@@ -151,5 +148,18 @@ class SpendingGdrive {
 
 		localStorage.setItem(this.year, yearFolder);
 		return yearFolder;
+	}
+	
+	equals(thisSpending, thatSpending) {
+		return thisSpending.bought_date === thatSpending.bought_date &&
+			thisSpending.category === thatSpending.category &&
+			thisSpending.description === thatSpending.description &&
+			thisSpending.price === thatSpending.price &&
+			thisSpending.type === thatSpending.type;
+	}
+
+	async insert(values, key) {
+		await this.spendingsCache.insert(values, key);
+		await this.mergeLocalSpendingsToNetwork();
 	}
 }

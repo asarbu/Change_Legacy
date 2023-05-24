@@ -72,7 +72,7 @@ class Idb {
 			}
 
 			query.onsuccess = function (event) {
-				resolve([event.target.result, value ]);
+				resolve([event.target.result, value]);
 			};
 
 			query.onerror = function (event) {
@@ -94,6 +94,28 @@ class Idb {
 					resolve(value);
 				}
 			};
+		});
+	}
+
+	getAllByIndex(storeName, index, key) {
+		return new Promise((resolve, reject) => {
+			const store = this.getStoreTransaction(storeName, 'readonly')[0];
+			
+			var query;
+			if(key) {
+				query = objectStore.index(index).get(key);
+			}
+			else {
+				query = objectStore.index(index).getAll();
+			}
+			query.onsuccess = function (event) {
+				console.log(event)
+				resolve([event.target.result, value]);
+			};
+
+			query.onerror = function (event) {
+				reject(event.target.errorCode);
+			}
 		});
 	}
 
@@ -126,20 +148,11 @@ class Idb {
 		});
 	}
 
-	async fetchTemplateToStore(templateUri, storeName) {
-		const storeCount = await this.count(PLANNING_STORE_NAME);
-		if (storeCount == 0) {
-			await fetch(templateUri)
-				.then(response => {
-					return response.json();
-				})
-				.then(planningFile => this.populateStoreFromTemplate(storeName, planningFile));
-		}
-	}
-
-	populateStoreFromTemplate(storeName, planningFile) {
-		for (const [key, value] of Object.entries(planningFile)) {
+	populateStore(storeName, data) {
+		//console.log("Adding to store", storeName, data)
+		for (const [key, value] of Object.entries(data)) {
 			//this.get(storeName, key).catch(err => this.put(storeName, value, key));
+			//console.log("put", key, value)
 			this.put(storeName, value, key);
 		}
 	}

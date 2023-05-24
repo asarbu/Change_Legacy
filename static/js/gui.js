@@ -66,7 +66,7 @@ function createRow(table, data, options) {
 			buttonsCell.style.display = 'none';
 		}
 	}
-	console.log("Created row", row)
+	//console.log("Created row", row)
 	return row;
 }
 

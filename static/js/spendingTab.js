@@ -1,13 +1,36 @@
 class SpendingTab {
-	constructor(month, focused, spendingCache, planningCache) {
+	constructor(year, month, forceCreate) {
+		this.year = year;
 		this.month = month;
-		this.focused = focused;
-		this.spendingCache = spendingCache;
-		this.planningCache = planningCache;
-		this.init(focused);
+		this.forceCreate = forceCreate;
 	}
 
-	init(focused) {
+	async init() {
+		this.spendingCache = new SpendingCache(this.month);
+		this.planningCache = new PlanningCache();
+		await this.spendingCache.init();
+		await this.planningCache.init();
+		
+		if(gdriveSync) {
+			this.spendingsGdrive = new SpendingGdrive(this.year, this.month, this.spendingCache, this.forceCreate);
+		}
+
+		const hasSpendings = await this.spendingCache.hasSpendings();
+		if(!hasSpendings && !this.forceCreate) {
+			if(gdriveSync) {
+				const existsOnGDrive = await this.spendingsGdrive.getSpendingsFile();
+				if(!existsOnGDrive) {
+					return;
+				}
+			} else {
+				return;
+			}
+		}
+
+		if(gdriveSync) {
+			await this.spendingsGdrive.mergeLocalSpendingsToNetwork();
+		}
+
 		const tab = create("div", {id: this.month, classes: ["container"]});
 		this.tab = tab;
 		const section = create("div", {clsses: ["section", "no-pad-bot"]});
@@ -24,7 +47,7 @@ class SpendingTab {
 
 		a.setAttribute("href", "#" + this.month);
 	
-		if(this.focused) {
+		if(this.forceCreate) {
 			a.classList.add("active");
 		}
 	
@@ -69,8 +92,8 @@ class SpendingTab {
 		if(loadingTab) {
 			loadingTab.parentNode.removeChild(loadingTab);
 		}
-
-		M.AutoInit();
+		
+		await this.refresh();
 	}
 	
 	createSpendingsTable() {
@@ -248,13 +271,21 @@ class SpendingTab {
 		return categoryModal;
 	}
 
-	async refresh(data) {
+	async refresh() {
         //console.log("Refreshing spendings...");
 		//TODO replace this with creating a new tbody and replacing old one
 		this.spendingsTable.tBodies[0].innerHTML = "";
-		for (const [id, spending] of this.data) {
+		
+		const spendingsMap = await this.spendingCache.getAll();
+		this.spendings = Array.from(spendingsMap.values());
+
+		for (const [id, spending] of this.spendings.entries()) {
 			this.appendToSpendingTable([id, spending]);
 		}
+		
+		this.categorizeSpendings();
+		await this.extractPlanningBudgets();
+		this.processSummary();
 	}
 
     appendToSpendingTable(spendingResult) {
@@ -310,7 +341,7 @@ class SpendingTab {
 	}
 
 	async drawCategoryList() {
-		const categories = await this.planningCache.openCursor(PLANNING_STORE_NAME);
+		const categories = await this.planningCache.getAll();
 		for (const [key, value] of categories.entries()) {
 			if (value.type == "Expense") {
 				const li = create("li");
@@ -333,6 +364,54 @@ class SpendingTab {
 			}
 		}
 	}
+
+	categorizeSpendings() {
+		this.totals = new Map();
+		
+		for (const [id, spending] of this.spendings.entries()) {
+			if (!this.totals.has(spending.category)) {
+				this.totals.set(spending.category, 0);
+			}
+			this.totals.set(spending.category, this.totals.get(spending.category) + parseFloat(spending.price));
+		}
+	}
+
+	async extractPlanningBudgets() {
+		this.budgets = new Map();
+		const spendingTypes = new Set();
+	
+		for(const [id, spending] of this.spendings.entries()) {
+			spendingTypes.add(spending.type);
+		}
+
+		for (const spendingType of spendingTypes) {
+			const planningItem = await this.planningCache.get(spendingType);
+			for (const planningBudget of planningItem.data) {
+				this.budgets.set(planningBudget.name, planningBudget.monthly);
+			}
+		}
+	}
+
+	processSummary() {
+		let totalSpent = 0;
+		let totalBudget = 0;
+		let totalPercent = 0.00;
+		let count = 0;
+		//TODO replace this with creating a new tbody and replacing old one
+		this.summaryTable.tBodies[0].innerHTML = "";
+		for (const [key, value] of this.totals) {
+			const planningBudget = this.budgets.get(key)
+			const percentage = value / parseFloat(planningBudget);
+			this.appendToSummaryTable([key, value, planningBudget, parseInt(percentage * 100)], { readonly: true, color: getColorForPercentage(percentage) });
+			
+			totalBudget = totalBudget + parseInt(planningBudget);
+			totalSpent = totalSpent + parseInt(value);
+			totalPercent = totalPercent + parseInt(percentage * 100);
+			count++;
+		}
+		const options = { useBold: true, readonly: true, index: -1, color: getColorForPercentage(totalPercent/count)};
+		this.appendToSummaryTable(["Total", totalSpent, totalBudget, parseInt(totalPercent/count)], options);
+	}
 	
 	//#region GUI handlers
 	onClickCategory(event) {
@@ -349,7 +428,7 @@ class SpendingTab {
 		var description_var = this.descriptionInput.value;
 		var price_var = this.priceInput.value;
 
-		this.insertSpending({
+		this.spendingCache.insert({
 			type: expenseType,
 			bought_date: bought_date_var,
 			description: description_var,
