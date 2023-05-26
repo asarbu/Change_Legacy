@@ -1,7 +1,8 @@
 class PlanningCache {
+    static PLANNING_STORE_NAME = 'Planning';
+    static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
+
     constructor() {
-        PlanningCache.PLANNING_STORE_NAME = 'Planning';
-        PlanningCache.PLANNING_TEMPLATE_URI = 'static/js/planning.json';
 		this.pdb = new Idb(PlanningCache.PLANNING_STORE_NAME, 1, this.upgradePlanningDatabase);
     }
 
@@ -28,7 +29,8 @@ class PlanningCache {
     }
 
     async updateAll(planningCollections) {
-        
+        await this.pdb.clear(PlanningCache.PLANNING_STORE_NAME);
+		await this.pdb.populateStore(PlanningCache.PLANNING_STORE_NAME, planningCollections);
     }
 
     async getCategories() {
@@ -39,11 +41,15 @@ class PlanningCache {
         return await this.pdb.get(PlanningCache.PLANNING_STORE_NAME, key);
     }
     
+    async update(key, value) {
+        await this.pdb.put(PlanningCache.PLANNING_STORE_NAME, value, key);
+    }
+
     upgradePlanningDatabase(db, oldVersion) {
         if (oldVersion == 0) {
             let store = db.createObjectStore(PlanningCache.PLANNING_STORE_NAME, { autoIncrement: true });
             store.createIndex('byType', 'type', { unique: false });
-            store.createIndex('byGroup', 'groups.name', { unique: false, multiEntry: true });
+            //store.createIndex('byGroup', 'groups.name', { unique: false, multiEntry: true });
 
             return;
         }

@@ -1,7 +1,19 @@
 class PlanningGDrive {
-	#MODIFIED_TIME = "modifiedTime";
-    constructor() {
-		this.gdrive = new GDrive("Planning");
+	static MODIFIED_TIME = "modifiedTime";
+	/**
+	 * #planningCache used during sync process
+	 * @type {PlanningCache}
+	 * @public
+	 */
+	#planningCache = undefined;
+
+	/**
+	 * 
+	 * @param {PlanningCache} planningCache - Cache to use during sync process
+	 */
+    constructor(planningCache) {
+		this.planningCache = planningCache;
+		this.gdrive = new GDrive();
     }
 
     async init() {
@@ -38,7 +50,45 @@ class PlanningGDrive {
 		return await this.gdrive.readFile(networkFileId);		
 	}
 
-	
+	async updateAll(planningCollections) {
+		await this.write(planningCollections);
+	}
+
+	/**
+	 * Synchronizes the local planning cache to GDrive
+	 * @returns {bool} Needs GUI refresh
+	 */
+	async syncGDrive() {
+		const networkCollections = await this.readAll();
+		if(!networkCollections) {
+			//We don't know if the collections are not present because the file is empty or because it does not exist
+			await this.write(localCollections);
+		} else {
+			const cacheModifiedTime = localStorage.getItem(PlanningGDrive.MODIFIED_TIME);
+			const gDriveModifiedTime = await this.getGdriveModifiedTime();
+			//console.log(cacheModifiedTime, gDriveModifiedTime)
+
+			if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
+				await this.planningCache.updateAll(networkCollections);
+				localStorage.setItem(PlanningGDrive.MODIFIED_TIME, gDriveModifiedTime);
+				console.log("Returns true");
+				console.trace()
+				return true;
+			} else if(cacheModifiedTime > gDriveModifiedTime) {
+				const localCollections = await this.planningCache.readAll();
+				await this.updateAll(localCollections);
+				localStorage.setItem(PlanningGDrive.MODIFIED_TIME, await this.getGdriveModifiedTime());
+			}
+		}
+		return false;
+	}
+
+	async getGdriveModifiedTime() {
+		const networkFileId = await this.getGdriveFileId();
+		const metadata = await this.gdrive.readFileMetadata(networkFileId, PlanningGDrive.MODIFIED_TIME);
+		return metadata[PlanningGDrive.MODIFIED_TIME];
+	}
+
 	//#endregion
 
 	async getGdriveFileId() {
@@ -62,7 +112,7 @@ class PlanningGDrive {
 		localStorage.setItem(PLANNING_FILE_NAME, fileId);
 		return fileId;
 	}
-
+/*
 	async mergeLocalPlanningToNetwork(overwrite = false) {
 		//console.log("Merging local planning to network...")
 		var needsMerge = false;
@@ -178,4 +228,5 @@ class PlanningGDrive {
 
 		return false;
 	}
+	*/
 }

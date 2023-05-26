@@ -1,5 +1,5 @@
 class GDrive {
-	constructor(suffix) {
+	constructor() {
 		if(GDrive.instance) {
 			return GDrive.instance;
 		}
@@ -11,7 +11,6 @@ class GDrive {
 		this.CLIENT_SECRET = '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';
 		this.FILES_API = "https://www.googleapis.com/drive/v3/files";
 		this.ROOT = "root";
-		this.suffix = suffix;
 		this.redirectUri = window.location.href;
 
 		this.oauth2 = {

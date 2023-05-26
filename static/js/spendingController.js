@@ -1,11 +1,15 @@
-const SPENDINGS_STORE_NAME = 'Spendings';
-
 async function initSpending() {
 	if (!window.indexedDB) {
 		console.error(`Your browser doesn't support IndexedDB`);
 		return;
 	}
 
+	if(gdriveSync) { 
+		gdrive = await import('./gDrive.js');
+	}
+	const spending = new Spending();
+	spending.init();
+/*
 	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 	const now = new Date();
 	const currentYear =  now.toLocaleString("en-US", {year: "numeric"});
@@ -21,11 +25,11 @@ async function initSpending() {
 		monthCount++;
 		monthIndex--;
 	}
-	
-	M.AutoInit();
+	*/
 }
 
 class Spending {
+	#spendingCache = undefined;
 	constructor(year, month, forceCreate) {
 		this.month = month;
 		this.year = year;
@@ -33,10 +37,41 @@ class Spending {
 	}
 
 	async init() {
-		//console.log("Init " + this.month);
+		//console.log("Init spending for month" + this.month);
 		
+		this.spendingCache = new SpendingCache();
+		this.planningCache = new PlanningCache();
+		await this.spendingCache.init();
+		await this.planningCache.init();
+		
+		/*
+		const hasSpendings = await this.spendingCache.hasSpendings();
+		if(!hasSpendings && !this.forceCreate) {
+			if(gdriveSync) {
+				const existsOnGDrive = await this.spendingsGdrive.getSpendingsFile();
+				if(!existsOnGDrive) {
+					return;
+				}
+			} else {
+				return;
+			}
+		}
+*/
+		if(gdriveSync) {
+			this.spendingsGdrive = new SpendingGdrive(this.year, this.month, this.spendingCache, this.forceCreate);
+		}
+
 		this.tab = new SpendingTab(this.year, this.month, this.forceCreate);
-		await this.tab.init();
+		this.tab.init();
+		this.tab.onClickCreate = this.onClickCreate().bind(this);
+
+		if(gdriveSync) {
+			
+		}
+	}
+
+	onClickCreate(spending) {
+		this.spendingCache.insert(year, month, spending);
 	}
 }
 

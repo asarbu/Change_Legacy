@@ -1,4 +1,6 @@
 class Idb {
+	static #READ_ONLY = "readonly";
+	static #READ_WRITE = "readwrite"
 	constructor(dbName, dbVersion, upgradeCallback) {
 		this.dbName = dbName;
 		this.dbVersion = dbVersion;
@@ -40,7 +42,7 @@ class Idb {
 
 	openCursor(storeName) {
 		return new Promise((resolve, reject) => {
-			const st = this.getStoreTransaction(storeName, "readonly");
+			const st = this.getStoreTransaction(storeName, Idb.#READ_ONLY);
 			const store = st[0];
 			const txn = st[1];
 
@@ -62,7 +64,7 @@ class Idb {
 	put(storeName, value, key) {
 		console.log("IDB put:", storeName, value, key);
 		return new Promise((resolve, reject) => {
-			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
+			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
 
 			var query;
 			if (key) {
@@ -83,7 +85,7 @@ class Idb {
 
 	get(storeName, key) {
 		return new Promise((resolve, reject) => {
-			const store = this.getStoreTransaction(storeName, 'readonly')[0];
+			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
 			let query = store.get(key);
 
 			query.onsuccess = (event) => {
@@ -99,7 +101,7 @@ class Idb {
 
 	getAllByIndex(storeName, index, key) {
 		return new Promise((resolve, reject) => {
-			const store = this.getStoreTransaction(storeName, 'readonly')[0];
+			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
 			
 			var query;
 			if(key) {
@@ -121,7 +123,7 @@ class Idb {
 
 	count(storeName) {
 		return new Promise((resolve, reject) => {
-			const store = this.getStoreTransaction(storeName, 'readonly')[0];
+			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
 
 			let query = store.count();
 			query.onsuccess = (event) => {
@@ -130,9 +132,23 @@ class Idb {
 		});
 	}
 
+	clear(storeName) {
+		return new Promise((resolve, reject) => {
+			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
+
+			let query = store.clear();
+			query.onsuccess = (event) => {
+				resolve(true);
+			};
+			query.onerror = (event) => {
+				reject(event.target.errorCode);
+			}
+		});
+	}
+
 	delete(storeName, key) {
 		return new Promise((resolve, reject) => {
-			const store = this.getStoreTransaction(storeName, 'readwrite')[0];
+			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
 			let query = store.delete(key);
 
 			query.onsuccess = function (event) {
@@ -148,12 +164,17 @@ class Idb {
 		});
 	}
 
-	populateStore(storeName, data) {
+	async populateStore(storeName, data) {
 		//console.log("Adding to store", storeName, data)
 		for (const [key, value] of Object.entries(data)) {
-			//this.get(storeName, key).catch(err => this.put(storeName, value, key));
 			//console.log("put", key, value)
-			this.put(storeName, value, key);
+			await this.put(storeName, value, key);
+		}
+	}
+
+	objectStoreExists(storeName) {
+		if (this.db.objectStoreNames.contains(storeName)) {
+			return true;
 		}
 	}
 

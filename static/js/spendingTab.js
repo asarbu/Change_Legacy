@@ -5,32 +5,14 @@ class SpendingTab {
 		this.forceCreate = forceCreate;
 	}
 
-	async init() {
-		this.spendingCache = new SpendingCache(this.month);
-		this.planningCache = new PlanningCache();
-		await this.spendingCache.init();
-		await this.planningCache.init();
+	init() {
+		console.log("Init spending tab")
+		this.createTab();
 		
-		if(gdriveSync) {
-			this.spendingsGdrive = new SpendingGdrive(this.year, this.month, this.spendingCache, this.forceCreate);
-		}
+		M.AutoInit();
+	}
 
-		const hasSpendings = await this.spendingCache.hasSpendings();
-		if(!hasSpendings && !this.forceCreate) {
-			if(gdriveSync) {
-				const existsOnGDrive = await this.spendingsGdrive.getSpendingsFile();
-				if(!existsOnGDrive) {
-					return;
-				}
-			} else {
-				return;
-			}
-		}
-
-		if(gdriveSync) {
-			await this.spendingsGdrive.mergeLocalSpendingsToNetwork();
-		}
-
+	createTab() {
 		const tab = create("div", {id: this.month, classes: ["container"]});
 		this.tab = tab;
 		const section = create("div", {clsses: ["section", "no-pad-bot"]});
@@ -62,25 +44,25 @@ class SpendingTab {
 		buttonRow.appendChild(saveBtn);
 	
 		const table = this.createSpendingsTable();
-		const summaryModal = this.createSummaryModal();
-		const newSpendingModal = this.createNewSpendingModal();
 		const fabs = this.createFloatingActionButtons();
-		const categoryModal = this.createCategoryModal();
+		/*const summaryModal = this.createSummaryModal();
+		const newSpendingModal = this.createNewSpendingModal();
+		const categoryModal = this.createCategoryModal();*/
 
 		editBtn.addEventListener("click", this.onClickEdit.bind(this));
 		saveBtn.addEventListener("click", this.onClickSave.bind(this));
 		saveBtn.style.display = "none";
 
 		this.spendingsTable = table;
-		this.summaryModal = summaryModal;
-		this.categoryModal = categoryModal;
+		/*this.summaryModal = summaryModal;
+		this.categoryModal = categoryModal;*/
 		this.editBtn = editBtn;
 		this.saveBtn = saveBtn;
 
 		tab.appendChild(table);
-		tab.appendChild(summaryModal);
+		/*tab.appendChild(summaryModal);
 		tab.appendChild(newSpendingModal);
-		tab.appendChild(categoryModal);
+		tab.appendChild(categoryModal);*/
 		tab.appendChild(fabs);
 		tab.appendChild(buttonRow);
 
@@ -92,8 +74,6 @@ class SpendingTab {
 		if(loadingTab) {
 			loadingTab.parentNode.removeChild(loadingTab);
 		}
-		
-		await this.refresh();
 	}
 	
 	createSpendingsTable() {
