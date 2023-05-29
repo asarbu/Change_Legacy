@@ -15,7 +15,7 @@ class PlanningCache {
                 .then(response => {
                     return response.json();
                 })
-                .then(planningFile => this.pdb.populateStore(PlanningCache.PLANNING_STORE_NAME, planningFile));
+                .then(planningFile => this.pdb.putAll(PlanningCache.PLANNING_STORE_NAME, planningFile));
         }
     }
 
@@ -30,7 +30,7 @@ class PlanningCache {
 
     async updateAll(planningCollections) {
         await this.pdb.clear(PlanningCache.PLANNING_STORE_NAME);
-		await this.pdb.populateStore(PlanningCache.PLANNING_STORE_NAME, planningCollections);
+		await this.pdb.putAll(PlanningCache.PLANNING_STORE_NAME, planningCollections);
     }
 
     async getCategories() {

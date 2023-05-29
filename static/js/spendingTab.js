@@ -1,13 +1,17 @@
 class SpendingTab {
-	constructor(year, month, forceCreate) {
+	onClickCreateSpending = undefined;
+	spendings = undefined;
+	constructor(year, month, forceCreate, spendings) {
 		this.year = year;
 		this.month = month;
 		this.forceCreate = forceCreate;
+		this.spendings = spendings;
 	}
 
 	init() {
 		console.log("Init spending tab")
 		this.createTab();
+		this.refresh(this.spendings);
 		
 		M.AutoInit();
 	}
@@ -45,8 +49,8 @@ class SpendingTab {
 	
 		const table = this.createSpendingsTable();
 		const fabs = this.createFloatingActionButtons();
-		/*const summaryModal = this.createSummaryModal();
 		const newSpendingModal = this.createNewSpendingModal();
+		/*const summaryModal = this.createSummaryModal();
 		const categoryModal = this.createCategoryModal();*/
 
 		editBtn.addEventListener("click", this.onClickEdit.bind(this));
@@ -54,15 +58,15 @@ class SpendingTab {
 		saveBtn.style.display = "none";
 
 		this.spendingsTable = table;
-		/*this.summaryModal = summaryModal;
-		this.categoryModal = categoryModal;*/
+		//this.summaryModal = summaryModal;
+		//this.categoryModal = categoryModal;
 		this.editBtn = editBtn;
 		this.saveBtn = saveBtn;
 
 		tab.appendChild(table);
 		/*tab.appendChild(summaryModal);
-		tab.appendChild(newSpendingModal);
 		tab.appendChild(categoryModal);*/
+		tab.appendChild(newSpendingModal);
 		tab.appendChild(fabs);
 		tab.appendChild(buttonRow);
 
@@ -251,26 +255,28 @@ class SpendingTab {
 		return categoryModal;
 	}
 
-	async refresh() {
-        //console.log("Refreshing spendings...");
+	async refresh(spendings) {
+        //console.log("Refreshing spendings...", spendings);
+		if(!spendings) console.trace();
 		//TODO replace this with creating a new tbody and replacing old one
 		this.spendingsTable.tBodies[0].innerHTML = "";
+		this.spendings = spendings;
 		
-		const spendingsMap = await this.spendingCache.getAll();
-		this.spendings = Array.from(spendingsMap.values());
+		// const spendingsMap = await this.spendingCache.getAll();
+		// this.spendings = Array.from(spendingsMap.values());
 
-		for (const [id, spending] of this.spendings.entries()) {
-			this.appendToSpendingTable([id, spending]);
+		for (const spending of this.spendings) {
+			this.appendToSpendingTable(spending.key, spending.value);
 		}
-		
+		/*
 		this.categorizeSpendings();
 		await this.extractPlanningBudgets();
 		this.processSummary();
+		*/
 	}
 
-    appendToSpendingTable(spendingResult) {
-		const key = spendingResult[0];
-		const value = spendingResult[1];
+    appendToSpendingTable(key, value) {
+		// console.log("Append to spending table", key, value)
 		var row = this.appendRowToTable(this.spendingsTable, 
 			[value.description, value.bought_date, value.category, value.price], 
 			{ hidden:true, deletable:true, readonly: true });
@@ -402,19 +408,19 @@ class SpendingTab {
 	}
 
 	onClickModalSave(event) {
-		var expenseType = this.expenseTypeInput.value;
-		var bought_date_var = this.boughtInput.value;
-		var category_var = this.categoryInput.value;
-		var description_var = this.descriptionInput.value;
-		var price_var = this.priceInput.value;
+		const boughtDate = this.boughtInput.value;
+		const newSpending = {
+			type: this.expenseTypeInput.value,
+			boughtDate: boughtDate,
+			month: boughtDate.substring(0, 3),
+			description: this.descriptionInput.value,
+			category: this.categoryInput.value,
+			price: this.priceInput.value
+		}
 
-		this.spendingCache.insert({
-			type: expenseType,
-			bought_date: bought_date_var,
-			description: description_var,
-			category: category_var,
-			price: price_var
-		});
+		if(this.onClickCreateSpending) {
+			this.onClickCreateSpending(newSpending)
+		}
 	}
 
 	async onClickDelete(event) {
@@ -464,7 +470,8 @@ class SpendingTab {
 		for (var i = 0; i < trs.length; ++i) {
 			trs[i].style.display = 'none';
 		}
-		this.mergeLocalSpendingsToNetwork();
+		
+		//this.mergeLocalSpendingsToNetwork();
 	}
 
 	//#endregion

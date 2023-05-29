@@ -1,14 +1,57 @@
 class SpendingGdrive {
-    constructor(year, month, spendingsCache, forceCreate) {
+	/**
+	 * Used for quick access of local data.
+	 * @type {SpendingCache}
+	 */
+	#spendingsCache = undefined;
+    constructor(spendingsCache) {
 		this.gdrive = new GDrive();
-		this.year = year;
-		this.month = month;
-		this.spendingsCache = spendingsCache;
-		this.forceCreate = forceCreate;
+		this.#spendingsCache = spendingsCache;
     }
 
     init() {
     }
+
+	async createEmptyMonthFile() {
+
+	}
+
+	/**
+	 * Synchronizes the local planning cache to GDrive
+	 * @returns {bool} Needs GUI refresh
+	 */
+	async syncGDrive(year, month, forceCreate) {
+		const localSpendings = await this.#spendingsCache.readAll(year, month);
+
+		if(localSpendings.length > 0) {
+			const monthFileId = this.getMonthFileId(year, month);
+			if(!monthFileId) {
+				const yearFolderId = this.getYearFolderId(year);
+				const networkCollections = await this.readAll(monthFileId);
+				this.writeFile(yearFolderId, month + ".json", networkCollections);
+			} else {
+				const localStorageKey = year + month;
+				const cacheModifiedTime = localStorage.getItem(localStorageKey);
+				const gDriveModifiedTime = await this.getGdriveModifiedTime();
+
+				if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
+					localStorage.setItem(localStorageKey, gDriveModifiedTime);
+					//Update local cache
+					return true;
+				} else if(cacheModifiedTime > gDriveModifiedTime) {
+					const localCollections = await this.planningCache.readAll();
+					//await this.updateAll(localCollections);
+					localStorage.setItem(localStorageKey, await this.getGdriveModifiedTime());
+				}
+			}
+		} else if(forceCreate) {
+			this.writeFile(yearFolderId, month + ".json", []);
+		}
+	}
+
+	async readAll(monthFileId) {
+		return await this.gdrive.readFile(monthFileId);
+	}
 
 	async mergeLocalSpendingsToNetwork() {
 		//console.log("Merging local spendings to network...");
@@ -102,7 +145,7 @@ class SpendingGdrive {
 		//console.log("Persist spending to network:");
 		const spendings = await this.spendingsCache.getAll();
 		//console.log("Spendings", spendings);
-		const yearFolder = await this.getSpendingsFileParent();
+		const yearFolder = await this.getYearFolderId();
 		if(!yearFolder) return;
 
 		const fileName = this.month + ".json";
@@ -118,19 +161,9 @@ class SpendingGdrive {
 		}
 	}
 
-	async getSpendingsFile() {
-		/*if(this.spendingFile) {
-			return this.spendingFile;
-		}*/
-		const monthFile = this.month + ".json";
-		const yearFolder = await this.getSpendingsFileParent();
-		this.spendingFile =  await this.gdrive.findFile(monthFile, yearFolder);
-		return this.spendingFile;
-	}
-
-	async getSpendingsFileParent() {
-		if(localStorage.getItem(this.year)) {
-			return localStorage.getItem(this.year);
+	async getYearFolderId(year) {
+		if(localStorage.getItem(year)) {
+			return localStorage.getItem(year);
 		}
 
 		const APP_FOLDER = "Change!";
@@ -141,13 +174,24 @@ class SpendingGdrive {
 		}
 		if(!topFolder) return;
 
-		var yearFolder = await this.gdrive.findFolder(this.year, topFolder);
+		var yearFolder = await this.gdrive.findFolder(year, topFolder);
 		if(!yearFolder) {
-			yearFolder = await this.gdrive.createFolder(this.year, topFolder);
+			yearFolder = await this.gdrive.createFolder(year, topFolder);
 		}
 
-		localStorage.setItem(this.year, yearFolder);
+		localStorage.setItem(year, yearFolder);
 		return yearFolder;
+	}
+
+	async getMonthFileId(year, month) {
+		const localStorageKey = year + month;
+		let networkFileId = localStorage.getItem(localStorageKey);
+		//Not found in memory, look on drive
+		if(!networkFileId) {
+			const monthFileName = month + ".json";
+			const yearFolderId = await this.getYearFolderId(year);
+			networkFileId = await this.gdrive.findFile(monthFileName, yearFolderId);
+		}
 	}
 	
 	equals(thisSpending, thatSpending) {

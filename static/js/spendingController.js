@@ -7,71 +7,85 @@ async function initSpending() {
 	if(gdriveSync) { 
 		gdrive = await import('./gDrive.js');
 	}
-	const spending = new Spending();
+	const spending = new SpendingController();
 	spending.init();
-/*
-	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-	const now = new Date();
-	const currentYear =  now.toLocaleString("en-US", {year: "numeric"});
-	const currentMonth = now.toLocaleString("en-US", {month: "short"});
-	let monthIndex = months.indexOf(currentMonth);
-	let monthCount = 0;
-	while (monthIndex > 0 && monthCount < 3){
-		const month = months[monthIndex];
-		//console.log("Initializing " + month);
-		const forceCreate = (currentYear === currentYear && month === currentMonth);
-		const monthlySpendings = new Spending(currentYear, month, forceCreate);
-		await monthlySpendings.init();
-		monthCount++;
-		monthIndex--;
-	}
-	*/
 }
 
-class Spending {
+class SpendingController {
+	#MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 	#spendingCache = undefined;
-	constructor(year, month, forceCreate) {
-		this.month = month;
-		this.year = year;
-		this.forceCreate = forceCreate;
+	/**
+	 * Used to quickly access already created tabs
+	 * @type {Map<string, SpendingTab>}
+	 */
+	#tabs = undefined;
+	constructor() {
+		this.year = '2023';
+		this.spendingCache = new SpendingCache();
+		this.planningCache = new PlanningCache();
+		
+		if(gdriveSync) {
+			this.spendingGdrive = new SpendingGdrive(this.spendingCache);
+		}
+
+		this.#tabs = new Map();
 	}
 
 	async init() {
-		//console.log("Init spending for month" + this.month);
-		
-		this.spendingCache = new SpendingCache();
-		this.planningCache = new PlanningCache();
+		//console.log("Init spending");
 		await this.spendingCache.init();
 		await this.planningCache.init();
 		
-		/*
-		const hasSpendings = await this.spendingCache.hasSpendings();
-		if(!hasSpendings && !this.forceCreate) {
-			if(gdriveSync) {
-				const existsOnGDrive = await this.spendingsGdrive.getSpendingsFile();
-				if(!existsOnGDrive) {
-					return;
-				}
-			} else {
-				return;
-			}
-		}
-*/
 		if(gdriveSync) {
-			this.spendingsGdrive = new SpendingGdrive(this.year, this.month, this.spendingCache, this.forceCreate);
+			this.spendingGdrive.init();	
 		}
-
-		this.tab = new SpendingTab(this.year, this.month, this.forceCreate);
-		this.tab.init();
-		this.tab.onClickCreate = this.onClickCreate().bind(this);
-
-		if(gdriveSync) {
+		
+		// TODO Sepparate craetion of current month from rest
+		const now = new Date();
+		const currentYear =  now.toLocaleString("en-US", {year: "numeric"});
+		const currentMonth = now.toLocaleString("en-US", {month: "short"});
+		let monthIndex = this.#MONTHS.indexOf(currentMonth);
+		let monthCount = 0;
+		while (monthIndex >= 0 && monthCount < 4){
+			const month = this.#MONTHS[monthIndex];
+			console.log("Initializing " + month, monthIndex, monthCount);
+			const forceCreate = (currentYear === currentYear && month === currentMonth);
 			
+			const spendings = await this.spendingCache.readAll(currentYear, month);
+			if(spendings.length > 0) {
+				monthCount++;
+				const tab = new SpendingTab(currentYear, month, forceCreate, spendings);
+				tab.init();
+				tab.onClickCreateSpending = this.onClickCreateSpending.bind(this);
+				this.#tabs.set(month, tab);
+			}
+
+			if(gdriveSync) {
+				this.spendingGdrive.syncGDrive(currentYear, month).then(needsRefresh => {
+					if(needsRefresh) {
+						this.refreshTab(currentYear, month);
+					}
+				});
+			}
+			
+			monthIndex--;
 		}
 	}
 
-	onClickCreate(spending) {
-		this.spendingCache.insert(year, month, spending);
+	onClickCreateSpending(spending, year) {
+		//TODO implement year in caller functions
+		console.log("Creating new spending", spending);
+		this.spendingCache.insert(spending);
+		this.refreshTab(this.year, spending.month);
+	}
+
+	async refreshTab(year, month) {
+		const spendings = await this.spendingCache.readAll(year, spending.month);
+		if(this.#tabs.get(spending.month)) {
+			this.#tabs.get(spending.month).refresh(spendings);
+		} else {
+			window.location.reload();
+		}
 	}
 }
 

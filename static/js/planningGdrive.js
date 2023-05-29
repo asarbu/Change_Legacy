@@ -12,7 +12,7 @@ class PlanningGDrive {
 	 * @param {PlanningCache} planningCache - Cache to use during sync process
 	 */
     constructor(planningCache) {
-		this.planningCache = planningCache;
+		this.#planningCache = planningCache;
 		this.gdrive = new GDrive();
     }
 
@@ -62,6 +62,7 @@ class PlanningGDrive {
 		const networkCollections = await this.readAll();
 		if(!networkCollections) {
 			//We don't know if the collections are not present because the file is empty or because it does not exist
+			const localCollections = await this.#planningCache.readAll();
 			await this.write(localCollections);
 		} else {
 			const cacheModifiedTime = localStorage.getItem(PlanningGDrive.MODIFIED_TIME);
@@ -69,13 +70,11 @@ class PlanningGDrive {
 			//console.log(cacheModifiedTime, gDriveModifiedTime)
 
 			if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
-				await this.planningCache.updateAll(networkCollections);
+				await this.#planningCache.updateAll(networkCollections);
 				localStorage.setItem(PlanningGDrive.MODIFIED_TIME, gDriveModifiedTime);
-				console.log("Returns true");
-				console.trace()
 				return true;
 			} else if(cacheModifiedTime > gDriveModifiedTime) {
-				const localCollections = await this.planningCache.readAll();
+				const localCollections = await this.#planningCache.readAll();
 				await this.updateAll(localCollections);
 				localStorage.setItem(PlanningGDrive.MODIFIED_TIME, await this.getGdriveModifiedTime());
 			}

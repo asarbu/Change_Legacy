@@ -1,51 +1,25 @@
 class SpendingCache {
 	static SPENDINGS_DATABASE_NAME = 'Spendings';
+	/**
+	 * @type {Idb}
+	 */
+	#idb = undefined;
     constructor() {
-		this.idb = new Idb(SpendingCache.SPENDINGS_DATABASE_NAME, 1, this.upgradeSpendingsDb);
-		this.month = month;
+		this.idb = new Idb(SpendingCache.SPENDINGS_DATABASE_NAME, new Date().getFullYear(), this.upgradeSpendingsDb);
     }
 
     async init() {
 		await this.idb.init();
     }
 
-	async hasSpendings(year, month) {
-		if(!year)
-			return false;
-
-		const hasYearlySpendings = await this.idb.objectStoreExists(year);
-		if(!hasYearlySpendings) { return false; } 
-		if(!month) { return true}
-
-		const yearlySpendings = await this.db.openCursor(year);
-		if(yearlySpendings[month]) {
-			return true;
-		}
+	async readAll(year, month) {
+		const keyRange = IDBKeyRange.only(month);
+		return await this.idb.getAllByIndex(year, "byMonth", keyRange);
 	}
 
-    async getAll() {
-		const spendings = await this.idb.openCursor(SpendingCache.SPENDINGS_STORE_NAME);
-		const monthlySpendings = new Map();
-		for (const [key, value] of spendings) {
-			if (value.bought_date.includes(this.month)) {
-				monthlySpendings.set(key, value);
-			}
-		}
-		return monthlySpendings;
-	}
-
-	async getAllForYear(year) {
-		const spendings = await this.idb.openCursor(SpendingCache.SPENDINGS_STORE_NAME);
-		return spendings[year];
-	}
-
-	async getAllForMonth(year, month) {
-		this.getAllForYear(year)[month];
-	}
-
-	async insert(storeName, key, value) {
-		
-		await this.idb.put(storeName, spending, key);
+	async insert(spending) {
+		const year = spending.boughtDate.substring(spending.boughtDate.length-4, spending.boughtDate.length);
+		await this.idb.put(year, spending, new Date().toISOString());
 	}
 
 	async delete(key) {
@@ -59,10 +33,14 @@ class SpendingCache {
 		this.syncSpendingsToNetwork();
 	}*/
 
-	upgradeSpendingsDb(db, oldVersion) {
-		if (oldVersion === 0) {
-			let store = db.createObjectStore(SpendingCache.SPENDINGS_STORE_NAME, { autoIncrement: true });
+	upgradeSpendingsDb(db, oldVersion, newVersion) {
+		console.log("Upgrading to version", new Date().getFullYear());
+
+		if (oldVersion < newVersion) {
+			let store = db.createObjectStore(newVersion + "", { autoIncrement: true });
 			store.createIndex('byCategory', 'category', { unique: false });
+			store.createIndex('byMonth', 'month', { unique: false });
+			store.createIndex('byMonthAndCategory', ['month', 'category'], { unique: false });
 		}
 	}
 }

@@ -8,6 +8,7 @@ class Idb {
 	}
 
 	async init() {
+		console.log("Init", this.dbName)
 		this.db = await this.open(this.dbName, this.dbVersion, this.upgradeCallback);
 		return this;
 	}
@@ -32,7 +33,7 @@ class Idb {
 			request.onupgradeneeded = (event) => {
 				const db = event.target.result;
 				if (upgradeCallback) {
-					upgradeCallback(db, event.oldVersion);
+					upgradeCallback(db, event.oldVersion, event.newVersion);
 				} else {
 					console.error(dbName + " upgrade callback not provided");
 				}
@@ -40,21 +41,30 @@ class Idb {
 		});
 	}
 
-	openCursor(storeName) {
+	openCursor(storeName, key) {
 		return new Promise((resolve, reject) => {
 			const st = this.getStoreTransaction(storeName, Idb.#READ_ONLY);
 			const store = st[0];
 			const txn = st[1];
 
 			var values = new Map();
-			store.openCursor().onsuccess = (event) => {
-				let cursor = event.target.result;
-				if (cursor) {
-					values.set(cursor.key, cursor.value);
-					cursor.continue();
-				}
-			};
-
+			if(key) {
+				store.openCursor(key).onsuccess = (event) => {
+					let cursor = event.target.result;
+					if (cursor) {
+						values.set(cursor.key, cursor.value);
+						cursor.continue();
+					}
+				};
+			} else {
+				store.openCursor().onsuccess = (event) => {
+					let cursor = event.target.result;
+					if (cursor) {
+						values.set(cursor.key, cursor.value);
+						cursor.continue();
+					}
+				};
+			}
 			txn.oncomplete = function () {
 				resolve(values);
 			};
@@ -101,23 +111,23 @@ class Idb {
 
 	getAllByIndex(storeName, index, key) {
 		return new Promise((resolve, reject) => {
-			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
-			
-			var query;
-			if(key) {
-				query = objectStore.index(index).get(key);
-			}
-			else {
-				query = objectStore.index(index).getAll();
-			}
-			query.onsuccess = function (event) {
-				console.log(event)
-				resolve([event.target.result, value]);
+			const st = this.getStoreTransaction(storeName, Idb.#READ_ONLY);
+			const store = st[0];
+			const txn = st[1];
+
+			//console.log("Getting all by index", storeName, index, key)
+			var values = [];
+			store.index(index).openCursor(key).onsuccess = (event) => {
+				let cursor = event.target.result;
+				if (cursor) {
+					values.push({key: cursor.primaryKey, value: cursor.value});
+					cursor.continue();
+				}
 			};
 
-			query.onerror = function (event) {
-				reject(event.target.errorCode);
-			}
+			txn.oncomplete = function () {
+				resolve(values);
+			};
 		});
 	}
 
@@ -164,15 +174,39 @@ class Idb {
 		});
 	}
 
-	async populateStore(storeName, data) {
+	/**
+	 * Puts all of the properties of the object in the store.
+	 * Function is using the property name as store key and property value as store value
+	 * @param {string} storeName 
+	 * @param {Enumerator<key, value>} data enumerator returned by Object.entries(...)
+	 * @returns 
+	 */
+	async putAll(storeName, data) {
 		//console.log("Adding to store", storeName, data)
-		for (const [key, value] of Object.entries(data)) {
-			//console.log("put", key, value)
-			await this.put(storeName, value, key);
-		}
+		console.log("IDB put all:", storeName, value, key);
+		return new Promise((resolve, reject) => {
+			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
+
+			for (const [key, value] of data) {
+				var query;
+				if (key) {
+					query = store.put(value, key);
+				} else {
+					query = store.put(value);
+				}
+			}
+			
+			transaction.oncomplete = function (event) {
+				resolve([event.target.result]);
+			};
+
+			query.onerror = function (event) {
+				reject(event.target.errorCode);
+			}
+		});
 	}
 
-	objectStoreExists(storeName) {
+	hasObjectStore(storeName) {
 		if (this.db.objectStoreNames.contains(storeName)) {
 			return true;
 		}

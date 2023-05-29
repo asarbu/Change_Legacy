@@ -1,5 +1,5 @@
 class PlanningTab {
-	onUpdate = undefined;
+	onClickUpdate = undefined;
     constructor(id, planningCollection) {
 		this.planningCollection = planningCollection;
 		this.id = id;
@@ -257,8 +257,8 @@ class PlanningTab {
 			trs[i].style.display = 'none';
 		}
 		
-		if(this.onUpdate) {
-			this.onUpdate(this.id, this.planningCollection);
+		if(this.onClickUpdate) {
+			this.onClickUpdate(this.id, this.planningCollection);
 		}
 
 		this.editMode = false;
