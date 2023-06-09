@@ -3,7 +3,7 @@ class SpendingCache {
 	/**
 	 * @type {Idb}
 	 */
-	#idb = undefined;
+	idb = undefined;
     constructor() {
 		this.idb = new Idb(SpendingCache.SPENDINGS_DATABASE_NAME, new Date().getFullYear(), this.upgradeSpendingsDb);
     }
@@ -13,13 +13,16 @@ class SpendingCache {
     }
 
 	async readAll(year, month) {
-		const keyRange = IDBKeyRange.only(month);
-		return await this.idb.getAllByIndex(year, "byMonth", keyRange);
+		/*const keyRange = IDBKeyRange.only(month);
+		return await this.idb.getAllByIndex(year, "byMonth", keyRange);*/
+		
+		//Hack from https://stackoverflow.com/questions/9791219/indexeddb-search-using-wildcards
+		const keyRange = IDBKeyRange.bound(month, month + '\uffff');
+		return await this.idb.getAllByIndex(year, 'byBoughtDate', keyRange)
 	}
 
-	async insert(spending) {
-		const year = spending.boughtDate.substring(spending.boughtDate.length-4, spending.boughtDate.length);
-		await this.idb.put(year, spending, new Date().toISOString());
+	async insert(year, creationDateTime, spending) {
+		await this.idb.put(year, spending, creationDateTime);
 	}
 
 	async delete(key) {
@@ -38,6 +41,7 @@ class SpendingCache {
 
 		if (oldVersion < newVersion) {
 			let store = db.createObjectStore(newVersion + "", { autoIncrement: true });
+			store.createIndex('byBoughtDate', 'boughtDate', { unique: false });
 			store.createIndex('byCategory', 'category', { unique: false });
 			store.createIndex('byMonth', 'month', { unique: false });
 			store.createIndex('byMonthAndCategory', ['month', 'category'], { unique: false });

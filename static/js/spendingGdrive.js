@@ -4,17 +4,18 @@ class SpendingGdrive {
 	 * @type {SpendingCache}
 	 */
 	#spendingsCache = undefined;
+	/**
+	 * @type {GDrive}
+	 */
+	#gDrive = undefined;
     constructor(spendingsCache) {
-		this.gdrive = new GDrive();
+		this.#gDrive = new GDrive();
 		this.#spendingsCache = spendingsCache;
     }
 
-    init() {
+    async init() {
+		await this.#gDrive.init();
     }
-
-	async createEmptyMonthFile() {
-
-	}
 
 	/**
 	 * Synchronizes the local planning cache to GDrive
@@ -24,24 +25,34 @@ class SpendingGdrive {
 		const localSpendings = await this.#spendingsCache.readAll(year, month);
 
 		if(localSpendings.length > 0) {
-			const monthFileId = this.getMonthFileId(year, month);
+			const monthFileId = await this.getMonthFileId(year, month);
+
 			if(!monthFileId) {
-				const yearFolderId = this.getYearFolderId(year);
-				const networkCollections = await this.readAll(monthFileId);
-				this.writeFile(yearFolderId, month + ".json", networkCollections);
+				const yearFolderId = await this.getYearFolderId(year);
+				this.#gDrive.writeFile(yearFolderId, month + ".json", localSpendings);
 			} else {
 				const localStorageKey = year + month;
-				const cacheModifiedTime = localStorage.getItem(localStorageKey);
-				const gDriveModifiedTime = await this.getGdriveModifiedTime();
+				const spendingGDriveData = JSON.parse(localStorage.getItem(localStorageKey));
+				const gDriveModifiedTime = await this.getGdriveModifiedTime(year, month);
 
-				if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
-					localStorage.setItem(localStorageKey, gDriveModifiedTime);
+				if(!gDriveModifiedTime)
+					return;
+
+				console.log("Spending data", spendingGDriveData)
+
+				if(!spendingGDriveData || !spendingGDriveData.modifiedTime || 
+					spendingGDriveData.modifiedTime < gDriveModifiedTime) {
+					console.log("Found newer information on drive. updating local")
 					//Update local cache
+					spendingGDriveData.modifiedTime = gDriveModifiedTime;
+					localStorage.setItem(localStorageKey, JSON.stringify(spendingGDriveData));
 					return true;
-				} else if(cacheModifiedTime > gDriveModifiedTime) {
+				} else if(spendingGDriveData.modifiedTime > gDriveModifiedTime) {
+					console.log("Found newer information on local Udating gdrive")
 					const localCollections = await this.planningCache.readAll();
 					//await this.updateAll(localCollections);
-					localStorage.setItem(localStorageKey, await this.getGdriveModifiedTime());
+					spendingGDriveData.modifiedTime = await this.getGdriveModifiedTime();
+					localStorage.setItem(localStorageKey, JSON.stringify(spendingGDriveData));
 				}
 			}
 		} else if(forceCreate) {
@@ -49,8 +60,15 @@ class SpendingGdrive {
 		}
 	}
 
+	async getGdriveModifiedTime(year, month) {
+		const networkFileId = await this.getMonthFileId(year, month);
+		const metadata = await this.#gDrive.readFileMetadata(networkFileId, GDrive.MODIFIED_TIME_FIELD);
+		if(metadata)
+			return metadata[GDrive.MODIFIED_TIME_FIELD];
+	}
+
 	async readAll(monthFileId) {
-		return await this.gdrive.readFile(monthFileId);
+		return await this.#gDrive.readFile(monthFileId);
 	}
 
 	async mergeLocalSpendingsToNetwork() {
@@ -81,7 +99,7 @@ class SpendingGdrive {
 			return false;
 		}
 
-		const networkSpendings = await this.gdrive.readFile(networkFileId);
+		const networkSpendings = await this.#gDrive.readFile(networkFileId);
 		const localSpendings = await this.spendingsCache.getAll();
 
 		//console.log("Network spendings:", networkSpendings);
@@ -151,13 +169,12 @@ class SpendingGdrive {
 		const fileName = this.month + ".json";
 		console.trace();
 		console.log(yearFolder, fileName, spendings)
-		const fileId = await this.gdrive.writeFile(yearFolder, fileName, spendings, true);
+		const fileId = await this.#gDrive.writeFile(yearFolder, fileName, spendings, true);
 
 		if(fileId) {
 			//Store for fast retrieval
 			const fileKey = this.year + this.month;
-			console.log("Setting localstorage", fileKey, fileId)
-			localStorage.setItem(fileKey, fileId);
+			const spendingGDriveData = {id: fileId};
 		}
 	}
 
@@ -167,16 +184,16 @@ class SpendingGdrive {
 		}
 
 		const APP_FOLDER = "Change!";
-		var topFolder = await this.gdrive.findFolder(APP_FOLDER);
+		var topFolder = await this.#gDrive.findFolder(APP_FOLDER);
 
 		if (!topFolder) {
-			topFolder = await this.gdrive.createFolder(APP_FOLDER);
+			topFolder = await this.#gDrive.createFolder(APP_FOLDER);
 		}
 		if(!topFolder) return;
 
-		var yearFolder = await this.gdrive.findFolder(year, topFolder);
+		var yearFolder = await this.#gDrive.findFolder(year, topFolder);
 		if(!yearFolder) {
-			yearFolder = await this.gdrive.createFolder(year, topFolder);
+			yearFolder = await this.#gDrive.createFolder(year, topFolder);
 		}
 
 		localStorage.setItem(year, yearFolder);
@@ -185,13 +202,21 @@ class SpendingGdrive {
 
 	async getMonthFileId(year, month) {
 		const localStorageKey = year + month;
-		let networkFileId = localStorage.getItem(localStorageKey);
+		let spendingGDriveData = JSON.parse(localStorage.getItem(localStorageKey));
+		
 		//Not found in memory, look on drive
-		if(!networkFileId) {
+		if(!spendingGDriveData || !spendingGDriveData.id) {
 			const monthFileName = month + ".json";
 			const yearFolderId = await this.getYearFolderId(year);
-			networkFileId = await this.gdrive.findFile(monthFileName, yearFolderId);
+			const networkFileId = await this.#gDrive.findFile(monthFileName, yearFolderId);
+				
+			if(!networkFileId) return;
+			
+			const spendingGDriveData = {id: networkFileId};
+			localStorage.setItem(localStorageKey, JSON.stringify(spendingGDriveData));
+			return networkFileId;
 		}
+		return spendingGDriveData.id;
 	}
 	
 	equals(thisSpending, thatSpending) {

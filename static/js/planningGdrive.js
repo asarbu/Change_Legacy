@@ -1,5 +1,4 @@
 class PlanningGDrive {
-	static MODIFIED_TIME = "modifiedTime";
 	/**
 	 * #planningCache used during sync process
 	 * @type {PlanningCache}
@@ -65,18 +64,18 @@ class PlanningGDrive {
 			const localCollections = await this.#planningCache.readAll();
 			await this.write(localCollections);
 		} else {
-			const cacheModifiedTime = localStorage.getItem(PlanningGDrive.MODIFIED_TIME);
+			const cacheModifiedTime = localStorage.getItem(GDrive.MODIFIED_TIME_FIELD);
 			const gDriveModifiedTime = await this.getGdriveModifiedTime();
 			//console.log(cacheModifiedTime, gDriveModifiedTime)
 
 			if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
 				await this.#planningCache.updateAll(networkCollections);
-				localStorage.setItem(PlanningGDrive.MODIFIED_TIME, gDriveModifiedTime);
+				localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, gDriveModifiedTime);
 				return true;
 			} else if(cacheModifiedTime > gDriveModifiedTime) {
 				const localCollections = await this.#planningCache.readAll();
 				await this.updateAll(localCollections);
-				localStorage.setItem(PlanningGDrive.MODIFIED_TIME, await this.getGdriveModifiedTime());
+				localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, await this.getGdriveModifiedTime());
 			}
 		}
 		return false;
@@ -84,8 +83,8 @@ class PlanningGDrive {
 
 	async getGdriveModifiedTime() {
 		const networkFileId = await this.getGdriveFileId();
-		const metadata = await this.gdrive.readFileMetadata(networkFileId, PlanningGDrive.MODIFIED_TIME);
-		return metadata[PlanningGDrive.MODIFIED_TIME];
+		const metadata = await this.gdrive.readFileMetadata(networkFileId, GDrive.MODIFIED_TIME_FIELD);
+		return metadata[GDrive.MODIFIED_TIME_FIELD];
 	}
 
 	//#endregion

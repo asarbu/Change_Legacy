@@ -213,9 +213,11 @@ class Idb {
 	}
 
 	getStoreTransaction(storeName, mode) {
-		/*if (!this.db.objectStoreNames.contains(storeName)) {
-			this.db.createObjectStore(storeName, { autoIncrement: true });
-		}*/
+		if (!this.db.objectStoreNames.contains(storeName)) {
+			console.log("Error at getting store with name", storeName)
+			console.trace();
+			//this.db.createObjectStore(storeName, { autoIncrement: true });
+		}
 		const txn = this.db.transaction(storeName, mode);
 		const store = txn.objectStore(storeName);
 

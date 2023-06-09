@@ -1,4 +1,5 @@
 class GDrive {
+	static MODIFIED_TIME_FIELD = "modifiedTime";
 	constructor() {
 		if(GDrive.instance) {
 			return GDrive.instance;
@@ -23,7 +24,10 @@ class GDrive {
 	}
 
 	async init() {
-		this.processOAuth2Flow();
+		if(this.initialized)
+			return;
+		await this.processOAuth2Flow();
+		this.initialized = true;
 	}
 
 	async processOAuth2Flow() {
@@ -229,7 +233,7 @@ class GDrive {
 	}
 
 	oauth2OfflineSignIn() {
-		console.log("OAuth 2.0 sign in")
+		console.log("OAuth 2.0 offline sign in")
 		// Google's OAuth 2.0 endpoint for requesting an access token
 		var oauth2Endpoint = 'https://accounts.google.com/o/oauth2/v2/auth';
 
@@ -263,6 +267,8 @@ class GDrive {
 		// Add form to page and submit it to open the OAuth 2.0 endpoint.
 		console.log("Sumbitting form: ", params);
 		document.body.appendChild(form);
+		/*console.trace();
+		alert(this.redirectUri)*/
 		form.submit();
 	}
 
@@ -519,6 +525,7 @@ class GDrive {
 		if(token) {
 			if(!fileId) {
 				console.error("No file id provided: ");
+				console.trace();
 			}
 
 			const header = await this.getHeader();

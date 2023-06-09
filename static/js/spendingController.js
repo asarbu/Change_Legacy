@@ -8,7 +8,7 @@ async function initSpending() {
 		gdrive = await import('./gDrive.js');
 	}
 	const spending = new SpendingController();
-	spending.init();
+	await spending.init();
 }
 
 class SpendingController {
@@ -37,33 +37,34 @@ class SpendingController {
 		await this.planningCache.init();
 		
 		if(gdriveSync) {
-			this.spendingGdrive.init();	
+			await this.spendingGdrive.init();	
 		}
 		
-		// TODO Sepparate craetion of current month from rest
+		// TODO Separate craetion of current month from rest
 		const now = new Date();
-		const currentYear =  now.toLocaleString("en-US", {year: "numeric"});
+		this.year =  now.toLocaleString("en-US", {year: "numeric"});
 		const currentMonth = now.toLocaleString("en-US", {month: "short"});
 		let monthIndex = this.#MONTHS.indexOf(currentMonth);
 		let monthCount = 0;
 		while (monthIndex >= 0 && monthCount < 4){
 			const month = this.#MONTHS[monthIndex];
-			console.log("Initializing " + month, monthIndex, monthCount);
-			const forceCreate = (currentYear === currentYear && month === currentMonth);
-			
-			const spendings = await this.spendingCache.readAll(currentYear, month);
-			if(spendings.length > 0) {
+			//Create even if empty. We need at least one tab
+			const forceCreate = (month === currentMonth);
+			const spendings = await this.spendingCache.readAll(this.year, month);
+
+			if(spendings.length > 0 || forceCreate) {
 				monthCount++;
-				const tab = new SpendingTab(currentYear, month, forceCreate, spendings);
+				const tab = new SpendingTab(this.year, month, forceCreate, spendings);
 				tab.init();
 				tab.onClickCreateSpending = this.onClickCreateSpending.bind(this);
 				this.#tabs.set(month, tab);
 			}
 
 			if(gdriveSync) {
-				this.spendingGdrive.syncGDrive(currentYear, month).then(needsRefresh => {
-					if(needsRefresh) {
-						this.refreshTab(currentYear, month);
+				await this.spendingGdrive.init();
+				this.spendingGdrive.syncGDrive(this.year, month).then(needsRefresh => {
+					if(this.#tabs.has(month)) {
+						this.refreshTab(this.year, month);
 					}
 				});
 			}
@@ -72,19 +73,32 @@ class SpendingController {
 		}
 	}
 
-	onClickCreateSpending(spending, year) {
-		//TODO implement year in caller functions
-		console.log("Creating new spending", spending);
-		this.spendingCache.insert(spending);
-		this.refreshTab(this.year, spending.month);
+	async onClickCreateSpending(spending, creationDateTime) {
+		const boughtDate = spending.boughtDate;
+		const month = boughtDate.substring(0, 3);
+		const year = boughtDate.substring(boughtDate.length-4, boughtDate.length);
+		this.spendingCache.insert(spending, creationDateTime);
+		if(this.year === year)
+			this.refreshTab(spending.month);
+
+		if(gdriveSync) {
+			//localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, new Date().toISOString());
+			const needsUpdate = await this.spendingGdrive.syncGDrive(year, spending.month);
+			if(needsUpdate ) {
+				this.refreshTab(month);
+				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
+			}
+		}
 	}
 
-	async refreshTab(year, month) {
-		const spendings = await this.spendingCache.readAll(year, spending.month);
-		if(this.#tabs.get(spending.month)) {
-			this.#tabs.get(spending.month).refresh(spendings);
+	async refreshTab(month) {
+		const spendings = await this.spendingCache.readAll(this.year, month);
+		if(this.#tabs.get(month)) {
+			this.#tabs.get(month).refresh(spendings);
 		} else {
-			window.location.reload();
+			//TODO this might trigger a reload before gdrive updated
+			//window.location.reload();
+			console.log("Trigger reload for ", month)
 		}
 	}
 }

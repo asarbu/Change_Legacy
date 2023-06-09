@@ -9,10 +9,9 @@ class SpendingTab {
 	}
 
 	init() {
-		console.log("Init spending tab")
+		//console.log("Init spending tab")
 		this.createTab();
 		this.refresh(this.spendings);
-		
 		M.AutoInit();
 	}
 
@@ -48,6 +47,7 @@ class SpendingTab {
 		buttonRow.appendChild(saveBtn);
 	
 		const table = this.createSpendingsTable();
+		//TODO move add spending fabs outside of this tab?
 		const fabs = this.createFloatingActionButtons();
 		const newSpendingModal = this.createNewSpendingModal();
 		/*const summaryModal = this.createSummaryModal();
@@ -255,7 +255,7 @@ class SpendingTab {
 		return categoryModal;
 	}
 
-	async refresh(spendings) {
+	refresh(spendings) {
         //console.log("Refreshing spendings...", spendings);
 		if(!spendings) console.trace();
 		//TODO replace this with creating a new tbody and replacing old one
@@ -278,7 +278,7 @@ class SpendingTab {
     appendToSpendingTable(key, value) {
 		// console.log("Append to spending table", key, value)
 		var row = this.appendRowToTable(this.spendingsTable, 
-			[value.description, value.bought_date, value.category, value.price], 
+			[value.description, value.boughtDate, value.category, value.price], 
 			{ hidden:true, deletable:true, readonly: true });
 		row.setAttribute("db_id", key);
 	}
@@ -418,8 +418,11 @@ class SpendingTab {
 			price: this.priceInput.value
 		}
 
+		const creationDateTime = new Date().toISOString();
+		this.appendToSpendingTable(creationDateTime, newSpending);
+
 		if(this.onClickCreateSpending) {
-			this.onClickCreateSpending(newSpending)
+			this.onClickCreateSpending(newSpending,	creationDateTime);
 		}
 	}
 
