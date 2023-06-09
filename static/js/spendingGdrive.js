@@ -38,7 +38,7 @@ class SpendingGdrive {
 				if(!gDriveModifiedTime)
 					return;
 
-				console.log("Spending data", spendingGDriveData)
+				//console.log("Spending data", spendingGDriveData)
 
 				if(!spendingGDriveData || !spendingGDriveData.modifiedTime || 
 					spendingGDriveData.modifiedTime < gDriveModifiedTime) {

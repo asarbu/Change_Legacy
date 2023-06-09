@@ -33,6 +33,11 @@ class PlanningCache {
 		await this.pdb.putAll(PlanningCache.PLANNING_STORE_NAME, planningCollections);
     }
 
+    async getExpenses() {
+        const keyRange = IDBKeyRange.only("Expense");
+		return await this.pdb.getAllByIndex(PlanningCache.PLANNING_STORE_NAME, 'byType', keyRange);
+    }
+
     async getCategories() {
         return await this.pdb.openCursor(PlanningCache.PLANNING_STORE_NAME)
     }

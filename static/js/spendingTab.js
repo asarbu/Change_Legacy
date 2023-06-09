@@ -1,11 +1,11 @@
 class SpendingTab {
 	onClickCreateSpending = undefined;
 	spendings = undefined;
-	constructor(year, month, forceCreate, spendings) {
-		this.year = year;
+	constructor(month, spendings, plannings, categories) {
 		this.month = month;
-		this.forceCreate = forceCreate;
 		this.spendings = spendings;
+		this.plannings = plannings;
+		this.categories = categories;
 	}
 
 	init() {
@@ -31,11 +31,7 @@ class SpendingTab {
 		const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
 
 		a.setAttribute("href", "#" + this.month);
-	
-		if(this.forceCreate) {
-			a.classList.add("active");
-		}
-	
+		
 		//container.appendChild(h1);
 		row.appendChild(h5);
 		container.appendChild(row);
@@ -50,22 +46,22 @@ class SpendingTab {
 		//TODO move add spending fabs outside of this tab?
 		const fabs = this.createFloatingActionButtons();
 		const newSpendingModal = this.createNewSpendingModal();
-		/*const summaryModal = this.createSummaryModal();
-		const categoryModal = this.createCategoryModal();*/
+		const summaryModal = this.createSummaryModal();
+		const categoryModal = this.createCategoryModal();
 
 		editBtn.addEventListener("click", this.onClickEdit.bind(this));
 		saveBtn.addEventListener("click", this.onClickSave.bind(this));
 		saveBtn.style.display = "none";
 
 		this.spendingsTable = table;
-		//this.summaryModal = summaryModal;
-		//this.categoryModal = categoryModal;
+		this.summaryModal = summaryModal;
+		this.categoryModal = categoryModal;
 		this.editBtn = editBtn;
 		this.saveBtn = saveBtn;
 
 		tab.appendChild(table);
-		/*tab.appendChild(summaryModal);
-		tab.appendChild(categoryModal);*/
+		tab.appendChild(summaryModal);
+		tab.appendChild(categoryModal);
 		tab.appendChild(newSpendingModal);
 		tab.appendChild(fabs);
 		tab.appendChild(buttonRow);
@@ -270,9 +266,10 @@ class SpendingTab {
 		}
 		/*
 		this.categorizeSpendings();
-		await this.extractPlanningBudgets();
-		this.processSummary();
 		*/
+		//await this.extractPlanningBudgets();
+		this.categorizeSpendings();
+		this.processSummary();
 	}
 
     appendToSpendingTable(key, value) {
@@ -283,13 +280,13 @@ class SpendingTab {
 		row.setAttribute("db_id", key);
 	}
 
-	appendRowToTable(table, data, options) {
+	appendRowToTBody(tbody, data, options) {
 		var index = -1;
 		if (options.index) {
 			index = options.index;
 		}
 
-		const row = table.tBodies[0].insertRow(index);
+		const row = tbody.insertRow(index);
 		var dataCell;
 	
 		for (const dataCtn of data) {
@@ -322,59 +319,43 @@ class SpendingTab {
 		return row;
 	}
 
+	appendRowToTable(table, data, options) {
+		return this.appendRowToTBody(table.tBodies[0], data, options);
+	}
+
 	appendToSummaryTable(data, options) {
 		this.appendRowToTable(this.summaryTable, data, options);
 	}
 
 	async drawCategoryList() {
-		const categories = await this.planningCache.getAll();
-		for (const [key, value] of categories.entries()) {
-			if (value.type == "Expense") {
-				const li = create("li");
-				const header = create("div", {innerText: key, classes: ["collapsible-header"]});
-				const body = create("div", {classes: ["collapsible-body"]});
-				const span = create("span");
-				const ul = create("ul", {classes: ["card", "collection"]});
+		for (const [key, value] of this.categories.entries()) {
+			const li = create("li");
+			const header = create("div", {innerText: key, classes: ["collapsible-header"]});
+			const body = create("div", {classes: ["collapsible-body"]});
+			const span = create("span");
+			const ul = create("ul", {classes: ["card", "collection"]});
 
-				for (const [dataKey, data] of Object.entries(value.data)) {
-					const li = create("li", {innerText: data.name, classes: ["collection-item", "modal-close"]});
-					li.addEventListener("click", this.onClickCategory.bind(this), false);
-					ul.appendChild(li);
-				}
-
-				span.appendChild(ul);
-				body.appendChild(span);
-				li.appendChild(header);
-				li.appendChild(body);
-				this.categoryList.appendChild(li);
+			for (const data of value) {
+				const li = create("li", {innerText: data, classes: ["collection-item", "modal-close"]});
+				li.addEventListener("click", this.onClickCategory.bind(this), false);
+				ul.appendChild(li);
 			}
+
+			span.appendChild(ul);
+			body.appendChild(span);
+			li.appendChild(header);
+			li.appendChild(body);
+			this.categoryList.appendChild(li);
 		}
 	}
 
 	categorizeSpendings() {
 		this.totals = new Map();
-		
-		for (const [id, spending] of this.spendings.entries()) {
+		for (const spending of this.spendings) {
 			if (!this.totals.has(spending.category)) {
 				this.totals.set(spending.category, 0);
 			}
 			this.totals.set(spending.category, this.totals.get(spending.category) + parseFloat(spending.price));
-		}
-	}
-
-	async extractPlanningBudgets() {
-		this.budgets = new Map();
-		const spendingTypes = new Set();
-	
-		for(const [id, spending] of this.spendings.entries()) {
-			spendingTypes.add(spending.type);
-		}
-
-		for (const spendingType of spendingTypes) {
-			const planningItem = await this.planningCache.get(spendingType);
-			for (const planningBudget of planningItem.data) {
-				this.budgets.set(planningBudget.name, planningBudget.monthly);
-			}
 		}
 	}
 
@@ -383,12 +364,14 @@ class SpendingTab {
 		let totalBudget = 0;
 		let totalPercent = 0.00;
 		let count = 0;
-		//TODO replace this with creating a new tbody and replacing old one
-		this.summaryTable.tBodies[0].innerHTML = "";
+
+		const fragment = document.createDocumentFragment();
+		const tBody = create("tbody");
+		fragment.appendChild(tBody);
 		for (const [key, value] of this.totals) {
-			const planningBudget = this.budgets.get(key)
+			const planningBudget = this.plannings.get(key);
 			const percentage = value / parseFloat(planningBudget);
-			this.appendToSummaryTable([key, value, planningBudget, parseInt(percentage * 100)], { readonly: true, color: getColorForPercentage(percentage) });
+			this.appendRowToTBody(tBody, [key, value, planningBudget, parseInt(percentage * 100)], { readonly: true, color: getColorForPercentage(percentage) });
 			
 			totalBudget = totalBudget + parseInt(planningBudget);
 			totalSpent = totalSpent + parseInt(value);
@@ -396,7 +379,8 @@ class SpendingTab {
 			count++;
 		}
 		const options = { useBold: true, readonly: true, index: -1, color: getColorForPercentage(totalPercent/count)};
-		this.appendToSummaryTable(["Total", totalSpent, totalBudget, parseInt(totalPercent/count)], options);
+		this.appendRowToTBody(tBody, ["Total", totalSpent, totalBudget, parseInt(totalPercent/count)], options);
+		this.summaryTable.replaceChild(fragment, this.summaryTable.tBodies[0]);
 	}
 	
 	//#region GUI handlers
