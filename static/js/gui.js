@@ -4,7 +4,7 @@ function createImageButton(text, href, classList, src) {
 	btn.setAttribute("href",href);
 	const img = create("img");
 	img.classList.add("white-fill");
-	img.innerText = text;
+	img.textContent = text;
 	img.alt = text;
 	img.src = src;
 	btn.appendChild(img);
@@ -56,7 +56,7 @@ function createRow(table, data, options) {
 		buttonsCell.appendChild(btn);
 		const img = create("img");
 		img.classList.add("white-fill");
-		img.innerHTML = "Delete";
+		img.innerText = "Delete";
 		img.alt = "Delete";
 		img.src = icons.delete;
 		btn.appendChild(img)

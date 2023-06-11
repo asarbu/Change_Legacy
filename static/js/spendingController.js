@@ -43,11 +43,6 @@ class SpendingController {
 		await this.#spendingCache.init();
 		await this.#planningCache.init();
 		
-		if(gdriveSync) {
-			await this.spendingGDrive.init();
-			await this.planningGDrive.init();
-		}
-
 		const planningCollections = await this.#planningCache.getExpenses();
 		const expenseBudgets = new Map();
 		const categories = new Map();
@@ -77,15 +72,22 @@ class SpendingController {
 			}
 
 			if(gdriveSync) {
-				await this.spendingGDrive.init();
-				this.spendingGDrive.syncGDrive(this.currentYear, monthName).then(needsRefresh => {
-					if(this.#tabs.has(monthName)) {
-						this.refreshTab(monthName);
-					}
-				});
+				this.initGDrive(monthName);
 			}
 			
 			monthIndex--;
+		}
+		
+		M.AutoInit();
+	}
+
+	async initGDrive(monthName) {
+		await this.planningGDrive.init();
+		await this.spendingGDrive.init();
+		const needsRefresh = await this.spendingGDrive.syncGDrive(this.currentYear, monthName);
+
+		if (needsRefresh && this.#tabs.has(monthName)) {
+			this.refreshTab(monthName);
 		}
 	}
 

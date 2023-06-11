@@ -15,9 +15,10 @@ class PlanningTab {
 		
 	//#region DOM creation
     createPlanningTable(collection) {
-		console.log("Creating table for: ", collection, " in tab ", this.name, " with id ", this.id)
 		for (const [groupId, group] of Object.entries(collection.groups)) {
+			const tableFragment = document.createDocumentFragment();
 			const table = create('table', {id: groupId, classes: ["striped", "table-content", "row"]});
+			tableFragment.appendChild(table);
 			const thead = create('thead');
 			const tbody = create('tbody');
 
@@ -34,10 +35,10 @@ class PlanningTab {
 			const button = createImageButton('Add Row', "", ["waves-effect", "waves-light", "btn", "red"], icons.add_row);
 			button.addEventListener("click", this.onClickAddRow.bind(this), false);
 
-			nameCol.innerHTML = group.groupName;
-			daily.innerHTML = "Daily";
-			monthly.innerHTML = "Monthly";
-			yearly.innerHTML = "Yearly";
+			nameCol.innerText = group.groupName;
+			daily.innerText = "Daily";
+			monthly.innerText = "Monthly";
+			yearly.innerText = "Yearly";
 
 			buttons.setAttribute("hideable", "true");
 			buttons.style.display = "none";
@@ -56,7 +57,7 @@ class PlanningTab {
 			}
 			this.recomputeTotal(table, true);
 
-			this.tab.appendChild(table);
+			this.tab.appendChild(tableFragment);
 		}
 
 		const buttonRow = create("div", {classes:["row", "center"]});
@@ -80,9 +81,9 @@ class PlanningTab {
 		const tab = create("div", {id: this.id, classes: ["container"]});
 		const section = create("div", { classes: ["section", "no-pad-bot"]});
 		const container = create("div", { classes: ["container"]});
-		const h1 = create("h1", { classes: ["header", "center", "red-text"], innerHTML: this.name});
+		const h1 = create("h1", { classes: ["header", "center", "red-text"], innerText: this.name});
 		const row = create("div", { classes: ["row", "center"]});
-		const h5 = create("h5", { classes: ["header", "col", "s12", "light"], innerHTML: this.description});
+		const h5 = create("h5", { classes: ["header", "col", "s12", "light"], innerText: this.description});
 
 		row.appendChild(h5);
 		container.appendChild(h1);
@@ -94,7 +95,7 @@ class PlanningTab {
 
 		const li = create("li", {classes: ["tab"]});
 		const a = create("a", { href: "#"+this.id });
-		const h6 = create("h6", { innerHTML: this.name });
+		const h6 = create("h6", { innerText: this.name });
 
 		a.appendChild(h6);
 		li.appendChild(a);
@@ -189,14 +190,14 @@ class PlanningTab {
 
 		for (let rowIndex = 0; rowIndex < table.tBodies[0].rows.length - 1; rowIndex++) {
 			const row = table.tBodies[0].rows[rowIndex];
-			totalDaily += parseInt(row.cells[1].innerHTML);
-			totalMonthly += parseInt(row.cells[2].innerHTML);
-			totalYearly += parseInt(row.cells[3].innerHTML);
+			totalDaily += parseInt(row.cells[1].innerText);
+			totalMonthly += parseInt(row.cells[2].innerText);
+			totalYearly += parseInt(row.cells[3].innerText);
 		}
 
-		lastRow.cells[1].innerHTML = totalDaily;
-		lastRow.cells[2].innerHTML = totalMonthly;
-		lastRow.cells[3].innerHTML = totalYearly;
+		lastRow.cells[1].innerText = totalDaily;
+		lastRow.cells[2].innerText = totalMonthly;
+		lastRow.cells[3].innerText = totalYearly;
 	}
 
 	//#endregion

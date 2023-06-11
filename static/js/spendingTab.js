@@ -12,7 +12,6 @@ class SpendingTab {
 		//console.log("Init spending tab")
 		this.createTab();
 		this.refresh(this.spendings);
-		M.AutoInit();
 	}
 
 	createTab() {
@@ -20,12 +19,12 @@ class SpendingTab {
 		this.tab = tab;
 		const section = create("div", {clsses: ["section", "no-pad-bot"]});
 		const container = create("div", {classes: ["container"]});
-		//const h1 = create("h1", {classes: ["header", "center", "red-text"], innerText: monthName});
+		//const h1 = create("h1", {classes: ["header", "center", "red-text"], textContent: monthName});
 		const row = create("div", {classes: ["row", "center"]});
-		const h5 = create("h5", {classes: ["header", "col", "s12", "light"], innerText: "Monthly spendings"});
+		const h5 = create("h5", {classes: ["header", "col", "s12", "light"], textContent: "Monthly spendings"});
 		const li = create("li", {classes: ["tab"]});
 		const a = create("a");
-		const h6 = create("h6", {innerText: this.month});
+		const h6 = create("h6", {textContent: this.month});
 		const buttonRow = create("div", {classes:["row", "center"]});
 		const editBtn = createImageButton("EditBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.edit);
 		const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
@@ -80,11 +79,11 @@ class SpendingTab {
 		const table = create("table", {id: this.month, classes: ["striped", "row", "table-content"]});
 		const thead = create("thead");
 		const tr = create("tr");
-		const thMonthName = create("th", {innerText: this.month});
-		const thDate = create("th", {innerText: "Date"});
-		const thCategory = create("th", {innerText: "Category"});
-		const thAmount = create("th", {innerText: "Amount"});
-		const thEdit = create("th", {innerText: "Edit"});
+		const thMonthName = create("th", {textContent: this.month});
+		const thDate = create("th", {textContent: "Date"});
+		const thCategory = create("th", {textContent: "Category"});
+		const thAmount = create("th", {textContent: "Amount"});
+		const thEdit = create("th", {textContent: "Edit"});
 		const tBody = create("tbody");
 
 		thEdit.setAttribute("hideable", true);
@@ -106,16 +105,16 @@ class SpendingTab {
 		const modal = create("div", {id: "summary-modal-" + this.month, classes: ["modal", "bottom-sheet"]});
 		const modalContent = create("div", {classes: ["modal-content"]});
 		const modalFooter = create("div", {classes: ["modal-footer"]});
-		const h4 = create("h4", {innerText: "Expenses vs. planning summary"});
+		const h4 = create("h4", {textContent: "Expenses vs. planning summary"});
 		const table = create("table", {id: "summary-table-" + this.month, classes: ["striped", "row", "table-content"]});
 		const tHead = create("thead");
 		const tr = create("tr");
-		const thCategory = create("th", {innerText: "Category"});
-		const thSpending = create("th", {innerText: "Spending"});
-		const thBudget = create("th", {innerText: "Budget"});
-		const thPercentage = create("th", {innerText: "Percent"});
+		const thCategory = create("th", {textContent: "Category"});
+		const thSpending = create("th", {textContent: "Spending"});
+		const thBudget = create("th", {textContent: "Budget"});
+		const thPercentage = create("th", {textContent: "Percent"});
 		const tBody = create("tbody");
-		const a = create("a", {innerText: "Close", classes: ["modal-close", "waves-effect", "waves-green", "btn-flat"]});
+		const a = create("a", {textContent: "Close", classes: ["modal-close", "waves-effect", "waves-green", "btn-flat"]});
 
 		a.setAttribute("href", "#!");
 
@@ -172,17 +171,17 @@ class SpendingTab {
 	createNewSpendingModal() {
 		const modal = create("div", {id: "new-spending-modal-" + this.month, classes: ["modal", "bottom-sheet"]});
 		const modalContent = create("div", {classes: ["modal-content"]});
-		const h4 = create("h4", {innerText: "New Spending"});
+		const h4 = create("h4", {textContent: "New Spending"});
 		const card = create("div", {classes: ["card"]});
 		const cardContent = create("div", {classes: ["card-content", "container"]});
 		const modalFooter = create("div", {classes: ["modal-footer"]});
 		const saveButton = create("button", {classes: ["modal-close", "waves-effect", "waves-green", "btn-flat", "save-modal"]});
-		saveButton.innerText = "Save";
+		saveButton.textContent = "Save";
 		saveButton.addEventListener("click", this.onClickModalSave.bind(this), false);
 
 		const boughtInputField = create("div", {classes: ["input-field"]});
 		const boughtInput = create("input", {id: "bought_date" + this.month, type: "text", classes:["datepicker", "valid"]});
-		const boughtLabel = create("label", {innerText: "Bought date:", classes:["active"]});
+		const boughtLabel = create("label", {textContent: "Bought date:", classes:["active"]});
 		var options = { year: 'numeric', month: 'short', day: 'numeric' };
 		var today = new Date();
 		boughtInput.value = today.toLocaleDateString("en-US", options);
@@ -190,19 +189,19 @@ class SpendingTab {
 
 		const descriptionInputField = create("div", {classes: ["input-field"]});
 		const descriptionInput = create("input", {id: "description" + this.month, type: "text", classes:["validate"]});
-		const descriptionLabel = create("label", {innerText: "Description:"});
+		const descriptionLabel = create("label", {textContent: "Description:"});
 		descriptionLabel.setAttribute("for", "description" + this.month);
 
 		const categoryInputField = create("div", {classes: ["input-field", "modal-trigger"]});
 		const categoryInput = create("input", {id: "category"+ this.month, type: "text", classes:["validate"]});
 		const expenseTypeInput = create("input", {id: "expense_type"+ this.month, type: "hidden"});
-		const categoryLabel = create("label", {innerText: "Category:"});
+		const categoryLabel = create("label", {textContent: "Category:"});
 		categoryInputField.setAttribute("href", "#category-modal-" + this.month);
 		categoryLabel.setAttribute("for",  "category"+ this.month);
 
 		const priceInputField = create("div", {classes: ["input-field"]});
 		const priceInput = create("input", {id: "price"+ this.month, type: "number", step: "0.01", classes:["validate"]});
-		const priceLabel = create("label", {innerText: "Price:"});
+		const priceLabel = create("label", {textContent: "Price:"});
 		priceLabel.setAttribute("for", "price"+ this.month);
 
 		boughtInputField.appendChild(boughtInput);
@@ -238,7 +237,7 @@ class SpendingTab {
 		const categoryModal = create("div", { id: "category-modal-" + this.month, classes: ["modal", "bottom-sheet"]});
 		const modalContent = create("div", { classes: ["modal-content"]});
 		const modalFooter = create("div", { classes: ["modal-footer"]});
-		const a = create("a", {id: "categoryModalClose", innerText: "Close", href: "#!", classes: ["modal-close", "waves-effect", "waves-green", "btn-flat"]});
+		const a = create("a", {id: "categoryModalClose", textContent: "Close", href: "#!", classes: ["modal-close", "waves-effect", "waves-green", "btn-flat"]});
 		const categoryList = create("ul", {id: "categoryList", classes: ["collapsible", "popout"]});
 
 		modalFooter.appendChild(a);
@@ -254,24 +253,21 @@ class SpendingTab {
 	refresh(spendings) {
         //console.log("Refreshing spendings...", spendings);
 		if(!spendings) console.trace();
+		this.spendings = spendings;
 		//TODO replace this with creating a new tbody and replacing old one
 		this.spendingsTable.tBodies[0].innerHTML = "";
-		this.spendings = spendings;
 		
-		// const spendingsMap = await this.spendingCache.getAll();
-		// this.spendings = Array.from(spendingsMap.values());
-
 		this.totals = new Map();
 		for (const spending of this.spendings) {
 			const spendingValue = spending.value;
 			if (!this.totals.has(spendingValue.category)) {
 				this.totals.set(spendingValue.category, 0);
 			}
-			this.totals.set(spendingValue.category, this.totals.get(spendingValue.category) + parseFloat(spendingValue.price));
+			const newTotal = this.totals.get(spendingValue.category) + parseFloat(spendingValue.price);
+			this.totals.set(spendingValue.category, newTotal);
 			this.appendToSpendingTable(spending.key, spending.value);
 		}
 		
-		//this.categorizeSpendings();
 		this.processSummary();
 	}
 
@@ -333,13 +329,13 @@ class SpendingTab {
 	async drawCategoryList() {
 		for (const [key, value] of this.categories.entries()) {
 			const li = create("li");
-			const header = create("div", {innerText: key, classes: ["collapsible-header"]});
+			const header = create("div", {textContent: key, classes: ["collapsible-header"]});
 			const body = create("div", {classes: ["collapsible-body"]});
 			const span = create("span");
 			const ul = create("ul", {classes: ["card", "collection"]});
 
 			for (const data of value) {
-				const li = create("li", {innerText: data, classes: ["collection-item", "modal-close"]});
+				const li = create("li", {textContent: data, classes: ["collection-item", "modal-close"]});
 				li.addEventListener("click", this.onClickCategory.bind(this), false);
 				ul.appendChild(li);
 			}
@@ -349,17 +345,6 @@ class SpendingTab {
 			li.appendChild(header);
 			li.appendChild(body);
 			this.categoryList.appendChild(li);
-		}
-	}
-
-	categorizeSpendings() {
-		this.totals = new Map();
-		for (const spending of this.spendings) {
-			const spendingValue = spending.value;
-			if (!this.totals.has(spendingValue.category)) {
-				this.totals.set(spendingValue.category, 0);
-			}
-			this.totals.set(spendingValue.category, this.totals.get(spendingValue.category) + parseFloat(spendingValue.price));
 		}
 	}
 
@@ -389,9 +374,9 @@ class SpendingTab {
 	
 	//#region GUI handlers
 	onClickCategory(event) {
-		this.categoryInput.value = event.target.innerHTML;
+		this.categoryInput.value = event.target.innerText;
 		this.categoryInput.classList.add('valid');
-		this.expenseTypeInput.value = (event.target.parentNode.parentNode.parentNode.parentNode.firstElementChild.innerHTML);
+		this.expenseTypeInput.value = (event.target.parentNode.parentNode.parentNode.parentNode.firstElementChild.innerText);
 		M.updateTextFields();
 	}
 

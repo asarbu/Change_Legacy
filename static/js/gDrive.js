@@ -500,10 +500,6 @@ class GDrive {
 		}
 	}
 
-	async fileExists() {
-
-	}
-
 	async readFileMetadata(fileId, fields) {
 		const token = await this.getAccessToken();
 		if(token) {
@@ -542,19 +538,20 @@ class GDrive {
 			const url = new URL(this.FILES_API + '/' + fileId);
 			url.searchParams.append('alt', 'media');
 			
-			console.trace()
-
 			const response = await fetch(url, {
 				method: "GET",
 				headers: header
 			})
 
 			if(!response.ok) {
-				return
+				return;
 			}
 
-			const json = await response.json();
-			return json;
+			//const json = await response.json();
+			//return json;
+			const text = await response.text();
+			//console.log(text);
+			return JSON.parse(text)
 		}
 	}
 }

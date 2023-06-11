@@ -58,7 +58,9 @@ class PlanningGDrive {
 	 * @returns {bool} Needs GUI refresh
 	 */
 	async syncGDrive() {
+		console.log("Syncing GDrive");
 		const networkCollections = await this.readAll();
+		//console.log("Network collections", networkCollections)
 		if(!networkCollections) {
 			//We don't know if the collections are not present because the file is empty or because it does not exist
 			const localCollections = await this.#planningCache.readAll();
@@ -69,12 +71,15 @@ class PlanningGDrive {
 			//console.log(cacheModifiedTime, gDriveModifiedTime)
 
 			if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
+				console.log("Updating local with data from GDrive")
 				await this.#planningCache.updateAll(networkCollections);
 				localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, gDriveModifiedTime);
 				return true;
 			} else if(cacheModifiedTime > gDriveModifiedTime) {
+				console.log("Updating GDrive with data from local")
 				const localCollections = await this.#planningCache.readAll();
 				await this.updateAll(localCollections);
+				//console.log("Updated gdrive with", localCollections);
 				localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, await this.getGdriveModifiedTime());
 			}
 		}

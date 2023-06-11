@@ -73,7 +73,6 @@ class Idb {
 
 	put(storeName, value, key) {
 		console.log("IDB put:", storeName, value, key);
-		console.trace()
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
 

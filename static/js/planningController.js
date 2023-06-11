@@ -2,9 +2,6 @@ const APP_FOLDER = "Change!";
 const PLANNING_FILE_NAME = "planning.json";
 
 async function initPlanning() {	
-	if(gdriveSync) { 
-		gdrive = await import('./gDrive.js');
-	}
 	var sideNavs = document.querySelectorAll('.sidenav');
 	M.Sidenav.init(sideNavs, {});
 
@@ -40,25 +37,30 @@ class PlanningController {
 		}
 
 		if(gdriveSync) {
-			await this.planningGDrive.init();
-			const needsUpdate = await this.planningGDrive.syncGDrive();
-			if(needsUpdate) {
-				const localCollections = await this.planningCache.readAll();
-				for (const [id, planningCollection] of Object.entries(localCollections)) {
-					this.#tabs.get(id).update(planningCollection);
-				}
-				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
-			}
+			this.initGDrive();
 		}
 		var el = document.querySelector('.tabs')
 		M.Tabs.init(el, {})
 	}
 
+	async initGDrive() {
+		await this.planningGDrive.init();
+		const needsUpdate = await this.planningGDrive.syncGDrive();
+		if(needsUpdate) {
+			const localCollections = await this.planningCache.readAll();
+			for (const [id, planningCollection] of Object.entries(localCollections)) {
+				this.#tabs.get(id).update(planningCollection);
+			}
+			M.toast({html: 'Updated from GDrive', classes: 'rounded'});
+		}
+	}
+
 	async onClickUpdate(id, planningCollection) {
+		//console.log("OnClickUpdate");
 		await this.planningCache.update(id, planningCollection);
 		
 		if(gdriveSync) {
-			localStorage.setItem(PlanningGDrive.MODIFIED_TIME, new Date().toISOString());
+			localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, new Date().toISOString());
 			const needsUpdate = await this.planningGDrive.syncGDrive();
 			if(needsUpdate) {
 				this.#tabs.get(id).update(planningCollection);
