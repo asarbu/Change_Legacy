@@ -13,12 +13,16 @@ class SpendingCache {
     }
 
 	async readAll(year, month) {
-		/*const keyRange = IDBKeyRange.only(month);
-		return await this.idb.getAllByIndex(year, "byMonth", keyRange);*/
-		
 		//Hack from https://stackoverflow.com/questions/9791219/indexeddb-search-using-wildcards
 		const keyRange = IDBKeyRange.bound(month, month + '\uffff');
 		return await this.idb.getAllByIndex(year, 'byBoughtDate', keyRange)
+	}
+
+	async updateAll(year, spendings) {
+		// for(const [key, spending] of spendings) {
+		// 	await this.insert(year, key, spending);
+		// }
+		await this.idb.updateAll(year, spendings)
 	}
 
 	async insert(year, creationDateTime, spending) {
@@ -28,13 +32,6 @@ class SpendingCache {
 	async delete(key) {
 		await this.idb.delete(SpendingCache.SPENDINGS_STORE_NAME, key);
 	}
-
-	/*
-	insertSpending(spending) {
-		spending.added = true;
-		this.idb.put(SpendingCache.SPENDINGS_STORE_NAME, spending).then(this.appendToSpendingTable.bind(this));
-		this.syncSpendingsToNetwork();
-	}*/
 
 	upgradeSpendingsDb(db, oldVersion, newVersion) {
 		console.log("Upgrading to version", new Date().getFullYear());

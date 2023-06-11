@@ -215,7 +215,7 @@ class GDrive {
 			body: JSON.stringify(data),
 		});
 		//console.log(response);
-		if(response.status != 200) {
+		if(!response.ok) {
 			return false;
 		}
 
@@ -500,6 +500,10 @@ class GDrive {
 		}
 	}
 
+	async fileExists() {
+
+	}
+
 	async readFileMetadata(fileId, fields) {
 		const token = await this.getAccessToken();
 		if(token) {
@@ -514,9 +518,15 @@ class GDrive {
 			const response = await fetch(url, {
 				method: "GET",
 				headers: header
-			})
+			});
+
+			if(!response.ok)  {
+				return;
+			}
+
 			const json = await response.json();
 			return json;
+			
 		}
 	}
 
@@ -532,10 +542,17 @@ class GDrive {
 			const url = new URL(this.FILES_API + '/' + fileId);
 			url.searchParams.append('alt', 'media');
 			
+			console.trace()
+
 			const response = await fetch(url, {
 				method: "GET",
 				headers: header
 			})
+
+			if(!response.ok) {
+				return
+			}
+
 			const json = await response.json();
 			return json;
 		}

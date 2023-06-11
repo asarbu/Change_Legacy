@@ -15,7 +15,7 @@ class PlanningTab {
 		
 	//#region DOM creation
     createPlanningTable(collection) {
-		//console.log("Creating table for: ", collection, " in tab ", this.name, " with id ", this.id)
+		console.log("Creating table for: ", collection, " in tab ", this.name, " with id ", this.id)
 		for (const [groupId, group] of Object.entries(collection.groups)) {
 			const table = create('table', {id: groupId, classes: ["striped", "table-content", "row"]});
 			const thead = create('thead');

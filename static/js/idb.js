@@ -73,6 +73,7 @@ class Idb {
 
 	put(storeName, value, key) {
 		console.log("IDB put:", storeName, value, key);
+		console.trace()
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
 
@@ -178,15 +179,13 @@ class Idb {
 	 * Puts all of the properties of the object in the store.
 	 * Function is using the property name as store key and property value as store value
 	 * @param {string} storeName 
-	 * @param {Enumerator<key, value>} data enumerator returned by Object.entries(...)
+	 * @param {Array<String, any>} data enumerator returned by Object.entries(...)
 	 * @returns 
 	 */
 	async putAll(storeName, data) {
-		//console.log("Adding to store", storeName, data)
-		console.log("IDB put all:", storeName, value, key);
+		//console.log("IDB put all:", storeName, data);
 		return new Promise((resolve, reject) => {
-			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
-
+			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE);
 			for (const [key, value] of data) {
 				var query;
 				if (key) {
@@ -199,10 +198,21 @@ class Idb {
 			transaction.oncomplete = function (event) {
 				resolve([event.target.result]);
 			};
+		});
+	}
 
-			query.onerror = function (event) {
-				reject(event.target.errorCode);
+	//TDO make put and update work. Maybe remove Object. entries from equation
+	async updateAll(storeName, data) {
+		//console.log("IDB put all:", storeName, data);
+		return new Promise((resolve, reject) => {
+			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE);
+			for (const item of data) {
+				store.put(item.value, item.key);
 			}
+			
+			transaction.oncomplete = function (event) {
+				resolve([event.target.result]);
+			};
 		});
 	}
 

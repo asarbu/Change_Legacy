@@ -261,14 +261,17 @@ class SpendingTab {
 		// const spendingsMap = await this.spendingCache.getAll();
 		// this.spendings = Array.from(spendingsMap.values());
 
+		this.totals = new Map();
 		for (const spending of this.spendings) {
+			const spendingValue = spending.value;
+			if (!this.totals.has(spendingValue.category)) {
+				this.totals.set(spendingValue.category, 0);
+			}
+			this.totals.set(spendingValue.category, this.totals.get(spendingValue.category) + parseFloat(spendingValue.price));
 			this.appendToSpendingTable(spending.key, spending.value);
 		}
-		/*
-		this.categorizeSpendings();
-		*/
-		//await this.extractPlanningBudgets();
-		this.categorizeSpendings();
+		
+		//this.categorizeSpendings();
 		this.processSummary();
 	}
 
@@ -352,10 +355,11 @@ class SpendingTab {
 	categorizeSpendings() {
 		this.totals = new Map();
 		for (const spending of this.spendings) {
-			if (!this.totals.has(spending.category)) {
-				this.totals.set(spending.category, 0);
+			const spendingValue = spending.value;
+			if (!this.totals.has(spendingValue.category)) {
+				this.totals.set(spendingValue.category, 0);
 			}
-			this.totals.set(spending.category, this.totals.get(spending.category) + parseFloat(spending.price));
+			this.totals.set(spendingValue.category, this.totals.get(spendingValue.category) + parseFloat(spendingValue.price));
 		}
 	}
 
