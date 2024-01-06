@@ -98,7 +98,10 @@ class SpendingGDrive {
 
 	async createFile(year, month, localSpendings) {
 		const yearFolderId = await this.getYearFolderId(year);
-		const fileId = this.#gDrive.writeFile(yearFolderId, month + ".json", localSpendings);
+		const fileId = await this.#gDrive.writeFile(yearFolderId, month + ".json", localSpendings);
+		if(!fileId) {
+			console.log("No file id generated", yearFolderId, month, localSpendings)
+		}
 		await this.setLocalStorageFileMetaData(year, month, fileId);
 	}
 

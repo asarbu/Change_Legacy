@@ -1,5 +1,7 @@
 class SpendingTab {
 	onClickCreateSpending = undefined;
+	onClickDeleteSpending = undefined;
+	onClickSaveSpendings = undefined;
 	spendings = undefined;
 	constructor(month, spendings, plannings, categories) {
 		this.month = month;
@@ -388,7 +390,8 @@ class SpendingTab {
 			month: boughtDate.substring(0, 3),
 			description: this.descriptionInput.value,
 			category: this.categoryInput.value,
-			price: this.priceInput.value
+			price: this.priceInput.value,
+			isDeleted: false
 		}
 
 		const creationDateTime = new Date().toISOString();
@@ -401,10 +404,12 @@ class SpendingTab {
 
 	async onClickDelete(event) {
 		const row = event.target.parentNode.parentNode;
-		const key = parseInt(row.getAttribute("db_id"));
-		const localSpending = await this.idb.get(SPENDINGS_STORE_NAME, key);
-		localSpending.deleted = true;
-		this.idb.put(SPENDINGS_STORE_NAME, localSpending, key);
+		const key = row.getAttribute("db_id");
+		
+		if(this.onClickDeleteSpending) {
+			this.onClickDeleteSpending(key);
+		}
+
 		row.parentNode.removeChild(row);
 	}
 
@@ -447,7 +452,9 @@ class SpendingTab {
 			trs[i].style.display = 'none';
 		}
 		
-		//this.mergeLocalSpendingsToNetwork();
+		if(this.onClickSaveSpendings) {
+			this.onClickSaveSpendings(this.month);
+		}
 	}
 
 	//#endregion

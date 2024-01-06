@@ -517,6 +517,8 @@ class GDrive {
 			});
 
 			if(!response.ok)  {
+				console.log(fileId, fields)
+				console.trace();
 				return;
 			}
 

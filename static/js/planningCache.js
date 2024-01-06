@@ -15,7 +15,9 @@ class PlanningCache {
                 .then(response => {
                     return response.json();
                 })
-                .then(planningFile => this.pdb.putAllValuesOf(planningFile, PlanningCache.PLANNING_STORE_NAME,));
+                .then(planningFile => 
+                    this.pdb.putAll(PlanningCache.PLANNING_STORE_NAME, Object.entries(planningFile))
+                );
         }
     }
 

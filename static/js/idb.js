@@ -182,9 +182,10 @@ class Idb {
 	 * @returns 
 	 */
 	async putAll(storeName, data) {
-		//console.log("IDB put all:", storeName, data);
+		console.log("IDB put all:", storeName, data);
 		return new Promise((resolve, reject) => {
 			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE);
+			
 			for (const [key, value] of data) {
 				var query;
 				if (key) {

@@ -67,6 +67,8 @@ class SpendingController {
 				const tab = new SpendingTab(monthName, spendings, expenseBudgets, categories);
 				tab.init();
 				tab.onClickCreateSpending = this.onClickCreateSpending.bind(this);
+				tab.onClickDeleteSpending = this.onClickDeleteSpending.bind(this);
+				tab.onClickSaveSpendings = this.onClickSaveSpendings.bind(this);
 				this.#tabs.set(monthName, tab);
 				monthCount++;
 			}
@@ -97,13 +99,36 @@ class SpendingController {
 		const boughtDate = spending.boughtDate;
 		const month = boughtDate.substring(0, 3);
 		const year = boughtDate.substring(boughtDate.length-4, boughtDate.length);
-		const day = undefined;
+		spending.boughtDate = spending.boughtDate.split(',')[0];
 		this.#spendingCache.insert(year, creationDateTime, spending);
 		if(this.currentYear === year)
 			this.refreshTab(spending.month);
 
 		if(gdriveSync) {
 			const needsUpdate = await this.spendingGDrive.syncGDrive(year, spending.month);
+			if(needsUpdate) {
+				this.refreshTab(month);
+				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
+			}
+		}
+	}
+
+	async onClickDeleteSpending(key) {
+		console.log("Delete spending", key);
+		
+		const localSpending = await this.#spendingCache.read(key);
+		localSpending.isDeleted = 1;
+		this.#spendingCache.insert(undefined, key, localSpending);
+	}
+
+	async onClickSaveSpendings(month) {
+		const deletedSpendings = await this.#spendingCache.readAllDeleted(this.currentYear, month);
+		for(const spending of deletedSpendings) {
+			this.#spendingCache.delete(spending.key)
+		}
+
+		if(gdriveSync) {
+			const needsUpdate = await this.spendingGDrive.syncGDrive(this.currentYear, month);
 			if(needsUpdate) {
 				this.refreshTab(month);
 				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
