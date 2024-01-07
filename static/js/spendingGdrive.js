@@ -46,7 +46,7 @@ class SpendingGDrive {
 	} 
 
 	async getLastUpdatedTime(year, month) {
-		console.log("spendingGdrive.getLastUpdatedTime", year, month);
+		//console.log("spendingGdrive.getLastUpdatedTime", year, month);
 		const fileId = await this.getMonthFileId(year, month);
 		if(!fileId) {
 			console.error("No file id provided!");

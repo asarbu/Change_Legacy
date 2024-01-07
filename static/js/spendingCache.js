@@ -41,8 +41,8 @@ class SpendingCache {
 		this.setLastUpdatedTime(this.year, spending.month);
 	}
 
-	async delete(key) {
-		await this.idb.delete(this.year, key);		
+	async delete(spending) {
+		await this.idb.delete(this.year, spending.key);		
 		this.setLastUpdatedTime(this.year, spending.month);
 	}
 
@@ -53,7 +53,11 @@ class SpendingCache {
 		return new Date().toISOString();
 	}
 
-	setLastUpdatedTime(year, month) {
+	setLastUpdatedTime(year, month, time) {
+		if(time) {	
+			localStorage.setItem("Cache_modified_" + year + month, time);
+			return;
+		}
 		localStorage.setItem("Cache_modified_" + year + month, new Date().toISOString());
 	}
 

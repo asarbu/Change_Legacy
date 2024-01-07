@@ -95,27 +95,28 @@ class SpendingController {
 		const gdriveLastUpdatedTime = await this.spendingGDrive.getLastUpdatedTime(this.currentYear, monthName);
 
 		if(cacheLastUpdatedTime < gdriveLastUpdatedTime) {
-			console.log("Found newer information on GDrive. Updating local cache");
-			this.spendingGDrive.fetchGDriveToCache(this.currentYear, monthName);
+			console.log("Found newer information on GDrive. Updating local cache", gdriveLastUpdatedTime, cacheLastUpdatedTime);
+			await this.spendingGDrive.fetchGDriveToCache(this.currentYear, monthName);
+			this.#spendingCache.setLastUpdatedTime(this.currentYear, monthName, gdriveLastUpdatedTime);
 			if(this.#tabs.has(monthName)) {
 				this.refreshTab(monthName);
 				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
 			}
 		} else if(cacheLastUpdatedTime > gdriveLastUpdatedTime) {
-			console.log("Found newer information on local cache. Updating GDrive");
+			console.log("Found newer information on local cache. Updating GDrive", cacheLastUpdatedTime, gdriveLastUpdatedTime);
 			const spendings = await this.#spendingCache.readAll(this.currentYear, monthName);
 			this.spendingGDrive.fetchCacheToGDrive(this.currentYear, monthName, spendings);
 		}
 	}
 
 	async onClickCreateSpending(spending, creationDateTime) {
-		console.log("Creating spending", spending);
+		//console.log("Creating spending", spending);
 		//TODO split bought date into month, day, year. Store only month and day in object on caller to avoid processing here
 		const boughtDate = spending.boughtDate;
 		const month = boughtDate.substring(0, 3);
 		const year = boughtDate.substring(boughtDate.length-4, boughtDate.length);
 		spending.boughtDate = spending.boughtDate.split(',')[0];
-		this.#spendingCache.insert(year, creationDateTime, spending);
+		await this.#spendingCache.insert(year, creationDateTime, spending);
 		if(this.currentYear === year)
 			this.refreshTab(spending.month);
 
@@ -125,8 +126,7 @@ class SpendingController {
 	}
 
 	async onClickDeleteSpending(key) {
-		console.log("Delete spending", key);
-		
+		//console.log("Delete spending", key);
 		const localSpending = await this.#spendingCache.read(key);
 		localSpending.isDeleted = 1;
 		this.#spendingCache.insert(undefined, key, localSpending);
@@ -135,7 +135,7 @@ class SpendingController {
 	async onClickSaveSpendings(month) {
 		const deletedSpendings = await this.#spendingCache.readAllDeleted(this.currentYear, month);
 		for(const spending of deletedSpendings) {
-			this.#spendingCache.delete(spending.key)
+			this.#spendingCache.delete(spending)
 		}
 
 		if(gdriveSync) {
