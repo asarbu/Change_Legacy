@@ -18,50 +18,13 @@ class SpendingGDrive {
 		await this.#gDrive.init();
     }
 
-	/**
-	 * Synchronizes the local planning cache to GDrive
-	 * @returns {bool} Needs GUI refresh
-	 */
-	async syncGDrive(year, month) {
-		//console.log("Syncing to drive", year, month)
-		const localSpendings = await this.#spendingsCache.readAll(year, month);
-
-		if(localSpendings.length > 0) {
-			return await this.fetchCacheToGDrive(year, month, localSpendings);
-		} else {
-			return this.fetchGDriveToCache(year, month);
-		}
-	}
-
 	async fetchCacheToGDrive(year, month, localSpendings) {
 		const monthFileId = await this.getMonthFileId(year, month);
 
 		if(!monthFileId) {
 			await this.createFile(year, month, localSpendings);
 		} else {
-			const spendingGDriveData = this.getLocalStorageFileMetaData(year, month);
-			const gDriveModifiedTime = await this.getGdriveModifiedTime(monthFileId);
-
-			//File may have beed deleted meanwhile. Put the data from the cache.
-			if(!gDriveModifiedTime) {
-				const fileId = await this.createFile(year, month, localSpendings);
-				await this.setLocalStorageFileMetaData(year, month, fileId);
-			}
-
-			if(!spendingGDriveData || !spendingGDriveData.modifiedTime || 
-				spendingGDriveData.modifiedTime < gDriveModifiedTime) {
-				console.log("Found newer information on drive. Updating local cache")
-				const gDriveSpendings = this.#gDrive.readFile(spendingGDriveData.fileId);
-				this.#spendingsCache.updateAll(year, month, gDriveSpendings);
-
-				await this.setLocalStorageFileMetaData(year, month, monthFileId, gDriveModifiedTime);
-				return true;
-			} else if(spendingGDriveData.modifiedTime > gDriveModifiedTime) {
-				console.log("Found newer information on local. Updating GDrive");
-				await this.#gDrive.update(monthFileId, localSpendings);
-				
-				await this.setLocalStorageFileMetaData(year, month, monthFileId);
-			}
+			await this.#gDrive.update(monthFileId, localSpendings);
 		}
 	}
 
@@ -81,19 +44,28 @@ class SpendingGDrive {
 		this.#spendingsCache.updateAll(year, Object.values(gDriveSpendings));
 		return true;
 	} 
-	
-	async setLocalStorageFileMetaData(year, month, fileId, modifiedTime) {
-		const spendingGDriveData = {fileId: fileId};
-		if(modifiedTime)
-			spendingGDriveData.modifiedTime = modifiedTime;
-		else
-			spendingGDriveData.modifiedTime = await this.getGdriveModifiedTime(fileId);
 
-		localStorage.setItem(year + month, JSON.stringify(spendingGDriveData));
+	async getLastUpdatedTime(year, month) {
+		console.log("spendingGdrive.getLastUpdatedTime", year, month);
+		const fileId = await this.getMonthFileId(year, month);
+		if(!fileId) {
+			console.error("No file id provided!");
+			return new Date().toISOString();
+		}
+		
+		const metadata = await this.#gDrive.readFileMetadata(fileId, GDrive.MODIFIED_TIME_FIELD);
+		if(metadata)
+			return metadata[GDrive.MODIFIED_TIME_FIELD];
+
+		return new Date().toISOString();
 	}
 
-	getLocalStorageFileMetaData(year, month) {
-		return JSON.parse(localStorage.getItem(year + month));
+	getGdriveFileIdFromLocalStorage(year, month) {
+		return localStorage.getItem("gDrive_fileId_" + year + month);
+	}
+
+	setGdriveFileIdToLocalStorage(year, month, fileId) {
+		localStorage.setItem("gDrive_fileId_" + year + month, fileId);
 	}
 
 	async createFile(year, month, localSpendings) {
@@ -102,13 +74,7 @@ class SpendingGDrive {
 		if(!fileId) {
 			console.log("No file id generated", yearFolderId, month, localSpendings)
 		}
-		await this.setLocalStorageFileMetaData(year, month, fileId);
-	}
-
-	async getGdriveModifiedTime(fileId) {
-		const metadata = await this.#gDrive.readFileMetadata(fileId, GDrive.MODIFIED_TIME_FIELD);
-		if(metadata)
-			return metadata[GDrive.MODIFIED_TIME_FIELD];
+		await this.setGdriveFileIdToLocalStorage(year, month, fileId);
 	}
 
 	async readAll(monthFileId) {
@@ -138,20 +104,20 @@ class SpendingGDrive {
 	}
 
 	async getMonthFileId(year, month) {
-		let spendingGDriveData = this.getLocalStorageFileMetaData(year, month);
+		let spendingGDriveData = this.getGdriveFileIdFromLocalStorage(year, month);
 		
 		//Not found in memory, look on drive
-		if(!spendingGDriveData || !spendingGDriveData.id) {
+		if(!spendingGDriveData) {
 			const monthFileName = month + ".json";
 			const yearFolderId = await this.getYearFolderId(year);
 			const networkFileId = await this.#gDrive.findFile(monthFileName, yearFolderId);
 				
 			if(!networkFileId) return;
 			
-			this.setLocalStorageFileMetaData(year, month, networkFileId);
+			this.setGdriveFileIdToLocalStorage(year, month, networkFileId);
 			return networkFileId;
 		}
-		return spendingGDriveData.id;
+		return spendingGDriveData;
 	}
 	
 	equals(thisSpending, thatSpending) {

@@ -390,8 +390,7 @@ class SpendingTab {
 			month: boughtDate.substring(0, 3),
 			description: this.descriptionInput.value,
 			category: this.categoryInput.value,
-			price: this.priceInput.value,
-			isDeleted: false
+			price: this.priceInput.value
 		}
 
 		const creationDateTime = new Date().toISOString();

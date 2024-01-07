@@ -33,15 +33,28 @@ class SpendingCache {
 		// for(const [key, spending] of spendings) {
 		// 	await this.insert(year, key, spending);
 		// }
-		await this.idb.updateAll(year, spendings)
+		await this.idb.updateAll(year, spendings);
 	}
 
 	async insert(year, creationDateTime, spending) {
 		await this.idb.put(this.year, spending, creationDateTime);
+		this.setLastUpdatedTime(this.year, spending.month);
 	}
 
 	async delete(key) {
-		await this.idb.delete(this.year, key);
+		await this.idb.delete(this.year, key);		
+		this.setLastUpdatedTime(this.year, spending.month);
+	}
+
+	getLastUpdatedTime(year, month) {
+		if(localStorage.getItem("Cache_modified_" + year + month)) {
+			return localStorage.getItem("Cache_modified_" + year + month);
+		}
+		return new Date().toISOString();
+	}
+
+	setLastUpdatedTime(year, month) {
+		localStorage.setItem("Cache_modified_" + year + month, new Date().toISOString());
 	}
 
 	upgradeSpendingsDb(db, oldVersion, newVersion) {

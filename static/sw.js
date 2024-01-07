@@ -58,11 +58,11 @@ self.addEventListener("activate", activateEvent => {
 self.addEventListener("fetch", fetchEvent => {
 	fetchEvent.respondWith(
 	caches.match(fetchEvent.request).then(res => {
-		return res || fetch(fetchEvent.request).then(fetchRes => {
+		return res || fetch(fetchEvent.request); /*.then(fetchRes => {
 			return caches.open(dynamicCacheName).then(cache => {
 				cache.put(fetchEvent.request.url, fetchRes.clone());
 				return fetchRes; })
-			})
+			})*/
 		})
 	)
 })

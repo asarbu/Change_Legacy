@@ -86,10 +86,25 @@ class SpendingController {
 	async initGDrive(monthName) {
 		await this.planningGDrive.init();
 		await this.spendingGDrive.init();
-		const needsRefresh = await this.spendingGDrive.syncGDrive(this.currentYear, monthName);
 
-		if (needsRefresh && this.#tabs.has(monthName)) {
-			this.refreshTab(monthName);
+		await this.syncGDrive(monthName);
+	}
+
+	async syncGDrive(monthName) {
+		const cacheLastUpdatedTime = this.#spendingCache.getLastUpdatedTime(this.currentYear, monthName);
+		const gdriveLastUpdatedTime = await this.spendingGDrive.getLastUpdatedTime(this.currentYear, monthName);
+
+		if(cacheLastUpdatedTime < gdriveLastUpdatedTime) {
+			console.log("Found newer information on GDrive. Updating local cache");
+			this.spendingGDrive.fetchGDriveToCache(this.currentYear, monthName);
+			if(this.#tabs.has(monthName)) {
+				this.refreshTab(monthName);
+				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
+			}
+		} else if(cacheLastUpdatedTime > gdriveLastUpdatedTime) {
+			console.log("Found newer information on local cache. Updating GDrive");
+			const spendings = await this.#spendingCache.readAll(this.currentYear, monthName);
+			this.spendingGDrive.fetchCacheToGDrive(this.currentYear, monthName, spendings);
 		}
 	}
 
@@ -105,11 +120,7 @@ class SpendingController {
 			this.refreshTab(spending.month);
 
 		if(gdriveSync) {
-			const needsUpdate = await this.spendingGDrive.syncGDrive(year, spending.month);
-			if(needsUpdate) {
-				this.refreshTab(month);
-				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
-			}
+			this.syncGDrive(spending.month);
 		}
 	}
 
@@ -128,11 +139,7 @@ class SpendingController {
 		}
 
 		if(gdriveSync) {
-			const needsUpdate = await this.spendingGDrive.syncGDrive(this.currentYear, month);
-			if(needsUpdate) {
-				this.refreshTab(month);
-				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
-			}
+			await this.syncGDrive(month);
 		}
 	}
 
