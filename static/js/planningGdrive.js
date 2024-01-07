@@ -72,7 +72,7 @@ class PlanningGDrive {
 
 			if(!cacheModifiedTime || cacheModifiedTime < gDriveModifiedTime) {
 				console.log("Updating local with data from GDrive")
-				await this.#planningCache.updateAll(networkCollections);
+				await this.#planningCache.updateAll(Object.entries(networkCollections));
 				localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, gDriveModifiedTime);
 				return true;
 			} else if(cacheModifiedTime > gDriveModifiedTime) {

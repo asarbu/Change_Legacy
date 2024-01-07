@@ -1,17 +1,24 @@
-const staticCacheName = "change-app-static-v2"
-const dynamicCacheName = "change-app-dynamic-v2" 
+const staticCacheName = "change-app-static-v3"
+const dynamicCacheName = "change-app-dynamic-v3" 
 const assets = [
 	"static/css/materialize.css",
 	"static/js/app.js",
-	"static/js/materialize.js",
-	"static/js/orm.js",
+	"static/js/gDrive.js",
 	"static/js/gui.js",
 	"static/js/icons.js",
-	"static/js/spendings.js",
-	"static/js/planning.js",
+	"static/js/idb.js",
+	"static/js/init.js",
+	"static/js/materialize.js",
+	"static/js/planningCache.js",
+	"static/js/planningController.js",
+	"static/js/planningGdrive.js",
+	"static/js/planningTab.js",
 	"static/js/settings.js",
+	"static/js/spendingCache.js",
+	"static/js/spendingController.js",
+	"static/js/spendingGdrive.js",
+	"static/js/spendingTab.js",
 	"static/manifest.json",
-	"static/js/gDrive.js",
 
 	"static/icons/icon-144x144.png",
 	"static/icons/menu.svg",
@@ -51,11 +58,11 @@ self.addEventListener("activate", activateEvent => {
 self.addEventListener("fetch", fetchEvent => {
 	fetchEvent.respondWith(
 	caches.match(fetchEvent.request).then(res => {
-		return res || fetch(fetchEvent.request); /*.then(fetchRes => {
+		return res || fetch(fetchEvent.request).then(fetchRes => {
 			return caches.open(dynamicCacheName).then(cache => {
 				cache.put(fetchEvent.request.url, fetchRes.clone());
 				return fetchRes; })
-			})*/
+			})
 		})
 	)
 })
