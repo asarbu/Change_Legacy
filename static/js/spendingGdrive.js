@@ -87,7 +87,7 @@ class SpendingGDrive {
 		}
 
 		const APP_FOLDER = "Change!";
-		var topFolder = await this.#gDrive.findFolder(APP_FOLDER);
+		var topFolder = await this.#gDrive.findChangeAppFolder();
 
 		if (!topFolder) {
 			topFolder = await this.#gDrive.createFolder(APP_FOLDER);

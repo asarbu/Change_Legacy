@@ -330,7 +330,6 @@ class GDrive {
 		}
 	}
 
-
 	async find(name, parent, type) {	
 		const token = await this.getAccessToken();
 		if (token) {
@@ -364,6 +363,21 @@ class GDrive {
 			//console.log("Found ", name, " under ", parent, " with id ", id)
 			return id;
 		}
+	}
+
+	async findChangeAppFolder() {
+		const APP_FOLDER = "Change!";
+		const fileId = await this.find(APP_FOLDER);
+
+		const fileType = await this.readFileMetadata(fileId, "shortcutDetails, mimeType");
+		if(fileType.mimeType === "application/vnd.google-apps.folder") {
+			return fileId;
+		} else if (fileType.mimeType === "application/vnd.google-apps.shortcut") {
+			if (fileType.shortcutDetails?.targetMimeType === "application/vnd.google-apps.folder") {
+				return fileType.shortcutDetails.targetId;
+			}
+		}
+		return undefined;
 	}
 
 	async findFolder(name, parent) {
