@@ -50,7 +50,7 @@ class SpendingCache {
 		if(localStorage.getItem("Cache_modified_" + year + month)) {
 			return localStorage.getItem("Cache_modified_" + year + month);
 		}
-		return new Date().toISOString();
+		return new Date(0).toISOString();
 	}
 
 	setLastUpdatedTime(year, month, time) {
