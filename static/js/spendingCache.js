@@ -43,7 +43,7 @@ class SpendingCache {
 
 	async delete(spending) {
 		await this.idb.delete(this.year, spending.key);		
-		this.setLastUpdatedTime(this.year, spending.month);
+		this.setLastUpdatedTime(this.year, spending.value.month);
 	}
 
 	getLastUpdatedTime(year, month) {
@@ -54,6 +54,10 @@ class SpendingCache {
 	}
 
 	setLastUpdatedTime(year, month, time) {
+		if(!year || !month) {
+			console.error("Illegal arguments!", year, month, time);
+			return;
+		}
 		if(time) {	
 			localStorage.setItem("Cache_modified_" + year + month, time);
 			return;
