@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
 		<title>Change!</title>
 		<!-- CSS  -->
-		<link href="{{ url_for('static', filename='css/materialize.css') }}" type="text/css" rel="stylesheet" media="screen,projection" />
+		<link href="{{ url_for('static', filename='css/style.css') }}" type="text/css" rel="stylesheet" media="screen,projection" />
 		<link href="static/manifest.json" rel="manifest" />
 		<meta name="theme-color" content="#43a047"/>
 		<!-- iOS support -->
@@ -40,6 +40,9 @@
 					<li>
 						<a href="/Settings">Settings</a>
 					</li>
+					<li>
+						<a href="/v2">Change V2</a>
+					</li>
 				</ul>
 				<ul id="nav-mobile" class="sidenav">
 					<li>
@@ -73,7 +76,6 @@
 			</div>
 		</footer>
 		<!--  Scripts-->
-		<script src="{{ url_for('static', filename='js/materialize.js') }}"></script>
 		<script src="static/js/app.js"></script>
 		{% block script %}{% endblock %}
 	</body>

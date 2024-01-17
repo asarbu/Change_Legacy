@@ -9,6 +9,10 @@ from flask import render_template, make_response, send_from_directory
 app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+@app.route("/v2")
+def indexV2(name="Change!"):
+    return render_template('IndexV2.html', name=name)
+
 @app.route("/")
 def index(name="Change!"):
     return render_template('Index.html', name=name)

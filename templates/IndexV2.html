@@ -1,0 +1,24 @@
+{% extends "Base.html" %}
+{% block head %}
+<style>
+	
+</style>
+{% endblock %}
+{% block tabs %}
+<li id="loading_tab" class="tab">
+	<a><h6>Loading...</h6></a>
+</li>
+{% endblock %}
+
+{% block content %}
+
+{% endblock %}
+
+{% block script %}
+<script src='static/v2/js/persistence/idb.js'></script>
+<script src='static/v2/js/gui/gui.js'></script>
+<script src='static/v2/js/gui/icons.js'></script>
+<script src='static/v2/js/gui/planningTab.js'></script>
+<script src='static/v2/js/persistence/planningCache.js'></script>
+<script src='static/v2/js/controller/planningController.js'></script>
+{% endblock %}
