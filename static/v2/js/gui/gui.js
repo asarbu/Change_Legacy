@@ -1,9 +1,8 @@
-class Gui {
-	constructor() {
-		this.sliderContainer = document.querySelector('.container');
-		this.containerWidth = this.sliderContainer.clientWidth;
-		this.sliderWrapper = document.querySelector('.section');
-		this.lastIndex = this.sliderWrapper.children.length + 1;
+class GraphicEffects {
+	constructor(domElement) {
+		//this.sliderContainer = domElement.querySelector('.container');
+		this.rootContainer = domElement;
+		
 		
 		this.mouseDown = false;
 		this.scrolling = undefined;
@@ -13,6 +12,9 @@ class Gui {
 	}
 
 	init() {
+		this.containerWidth = this.rootContainer.clientWidth;
+		this.sliderWrapper = this.rootContainer.querySelector('.section');
+		this.lastIndex = this.sliderWrapper.children.length + 1;
 		// appened cloneNodes to the parent element.
 		const $clonedFirstChild = this.sliderWrapper.firstElementChild.cloneNode(true);
 		const $clonedLastChild = this.sliderWrapper.lastElementChild.cloneNode(true);
@@ -20,8 +22,8 @@ class Gui {
 		this.sliderWrapper.insertBefore($clonedLastChild, this.sliderWrapper.firstElementChild);
 		this.sliderWrapper.appendChild($clonedFirstChild);
 
-		const slices = document.querySelectorAll('.slice');
-		slices.forEach((el, i) => {
+		this.slices = this.rootContainer.querySelectorAll('.slice');
+		this.slices.forEach((el, i) => {
 			el.setAttribute('data-item-index', i);
 		});
 
@@ -45,9 +47,11 @@ class Gui {
 		this.sliderWrapper.addEventListener('touchmove', this.startSlider.bind(this), { passive: true });
 
 		// * when mouseup or touchend
+		// TODO This registers the event listener multiple times
 		window.addEventListener('mouseup', this.endSlider.bind(this));
 		window.addEventListener('touchend', this.endSlider.bind(this));
 		window.addEventListener('resize', this.refresh.bind(this), true);
+		this.setSlide(this.currentIndex);
 	}
 
 	setSlide(index) {
@@ -74,7 +78,7 @@ class Gui {
 		this.startY = e.clientY ? e.clientY : e.touches[0].screenY;
 		
 		this.sliderWrapper.removeEventListener('touchmove', this.startSlider.bind(this));
-		this.sliderContainer.addEventListener(e.clientX ? 'mousemove' : 'touchmove',
+		this.rootContainer.addEventListener(e.clientX ? 'mousemove' : 'touchmove',
 			this.moveSlider.bind(this), { passive: true	});
 	  };
 	  
@@ -131,7 +135,7 @@ class Gui {
 	};
 	
 	refresh() {
-		this.containerWidth = this.sliderContainer.clientWidth;
+		this.containerWidth = this.rootContainer.clientWidth;
 		this.setSlide(this.currentIndex);
 	};
 }

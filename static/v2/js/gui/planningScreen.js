@@ -1,4 +1,4 @@
-class PlanningTab {
+class PlanningScreen {
 	onClickUpdate = undefined;
     constructor(id, planningCollections) {
 		this.planningCollections = planningCollections;
@@ -8,16 +8,60 @@ class PlanningTab {
     }
 
     init() {
-		this.createTab();
-		const gui = new Gui();
-		gui.init();
+		const container = this.sketchAsFragment();
+		this.gfx = new GraphicEffects(container);
     }
 		
 	//#region DOM creation
-    createPlanningTables(planningCollection) {
+
+	/**
+	 * Creates all necessary objects needed to draw current screen
+	 * @returns {DocumentFragment}
+	 */
+	sketchAsFragment() {
+		const container = create("div", {id: this.id, classes: ["container"]});
+		const section = create("div", { classes: ["section", "no-pad-bot"]});
+		this.dropupContent = create("div", {classes: ["dropup-content", "top-round"]});
+
+		const entries = Object.entries(this.planningCollections);
+		const span = create("span", {innerText: "▲", classes: ["white-50"]});
+		this.slicesButton = create("button", {classes: ["nav-item"]});
+		this.slicesButton.innerText = entries[0][0] + " ";
+		this.slicesButton.appendChild(span);
+		this.slicesButton.addEventListener("click", this.onClickDropup.bind(this), false);
+
+		for (const [id, planningCollection] of entries) {
+			const slice = this.createSlice(id, planningCollection);
+			
+			const anchor = create("a", {innerText: planningCollection.collectionName});
+			this.dropupContent.appendChild(anchor);
+		
+			section.appendChild(slice);	
+		}
+		
+		container.appendChild(section);
+		container.appendChild(this.dropupContent);
+		
+		this.container = container;
+		return container;
+	}
+
+	createSlice(id , planningCollection) {
+		const slice = create("div", { classes: ["slice"]});
+		const h1 = create("h1", { innerText: id });
+		
+		slice.appendChild(h1);
+
+		const tables = this.createPlanningTables(planningCollection);
+		slice.appendChild(tables);
+
+		return slice;
+	}
+
+	createPlanningTables(planningCollection) {
 		const tableFragment = document.createDocumentFragment();
 		for (const [groupId, group] of Object.entries(planningCollection.groups)) {
-			const table = create('table', {id: groupId, classes: ["striped", "table-content", "row"]});
+			const table = create('table', {id: groupId});
 			tableFragment.appendChild(table);
 			const thead = create('thead');
 			const tbody = create('tbody');
@@ -32,7 +76,7 @@ class PlanningTab {
 			const monthly = create('th');
 			const yearly = create('th');
 			const buttons = create('th');
-			const button = createImageButton('Add Row', "", ["waves-effect", "waves-light", "btn", "red"], icons.add_row);
+			const button = createImageButton('Add Row', "", [], icons.add_row);
 			button.addEventListener("click", this.onClickAddRow.bind(this), false);
 
 			nameCol.innerText = group.groupName;
@@ -60,61 +104,6 @@ class PlanningTab {
 			//this.tab.appendChild(tableFragment);
 		}
 		return tableFragment;
-/*
-		const buttonRow = create("div", {classes:["row", "center"]});
-		const editBtn = createImageButton("EditBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.edit);
-		const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
-
-		editBtn.addEventListener("click", this.onClickEdit.bind(this));
-		saveBtn.addEventListener("click", this.onClickSave.bind(this));
-		saveBtn.style.display = "none";
-		
-		this.editBtn = editBtn;
-		this.saveBtn = saveBtn;
-
-		buttonRow.appendChild(editBtn);
-		buttonRow.appendChild(saveBtn);
-		this.tab.appendChild(buttonRow);
-		*/
-	}
-
-	createSlice(id , planningCollection) {
-		const slice = create("div", { classes: ["slice"]});
-		const h1 = create("h1", { innerText: id });
-		
-		slice.appendChild(h1);
-
-		const tables = this.createPlanningTables(planningCollection);
-		slice.appendChild(tables);
-
-		return slice;
-	}
-
-	createTab() {
-		const container = create("div", {id: this.id, classes: ["container"]});
-		const section = create("div", { classes: ["section", "no-pad-bot"]});
-		for (const [id, planningCollection] of Object.entries(this.planningCollections)) {
-			const slice = this.createSlice(id, planningCollection);
-			
-			section.appendChild(slice);	
-		}
-
-		//console.log(this.planningCollection)
-		
-		container.appendChild(section);
-		document.getElementById("main").appendChild(container);
-
-		/*
-		const li = create("li", {classes: ["tab"]});
-		const a = create("a", { href: "#"+this.id });
-		const h6 = create("h6", { innerText: this.name });
-
-		a.appendChild(h6);
-		li.appendChild(a);
-
-		//document.getElementById("tabs").appendChild(li);*/
-
-		this.container = container;
 	}
 
 	createRow(table, id, item, options) {
@@ -166,6 +155,19 @@ class PlanningTab {
 		}
 		return dataCell;
 	}
+	
+	activate() {
+		if(this.slicesButton) {
+			const slicesButton = document.getElementById("sliceName");
+			slicesButton.parentElement.replaceChild(this.slicesButton, slicesButton);
+		} else {
+			document.getElementById("sliceId").innerText = this.id;
+			document.getElementById("sliceName").innerText = this.name;
+		}
+		
+		document.getElementById("main").appendChild(this.container);
+		this.gfx.init();
+	}
 	//#endregion
 
 	//#region DOM manipulation
@@ -210,11 +212,6 @@ class PlanningTab {
 		lastRow.cells[1].innerText = totalDaily;
 		lastRow.cells[2].innerText = totalMonthly;
 		lastRow.cells[3].innerText = totalYearly;
-	}
-
-	activate() {
-		document.getElementById("sliceId").innerText = this.id;
-		document.getElementById("sliceName").innerText = this.name;
 	}
 	//#endregion
 
@@ -320,6 +317,14 @@ class PlanningTab {
 		this.recomputeTotal(table);		
 		this.planningCollection.groups[table.id].items[row.id] = item;
 
+	}
+
+	onClickDropup(event) {
+		if(this.dropupContent.style.display === "none") {
+			this.dropupContent.style.display = "block";
+		} else {
+			this.dropupContent.style.display = "none";
+		}
 	}
 
 	onClickAddRow(event) {

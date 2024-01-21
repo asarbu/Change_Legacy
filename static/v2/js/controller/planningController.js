@@ -9,7 +9,7 @@ async function initPlanning() {
 class PlanningController {
 	/**
 	 * Used for fast retrieval of GUI tabs by name 
-	 * @type {Map<string, PlanningTab>}
+	 * @type {Map<string, PlanningScreen>}
 	 * @private
 	 */
 	#tabs = undefined;
@@ -38,7 +38,7 @@ class PlanningController {
 		
 		for (const [storeName, planningCache] of this.#caches.entries()){
 			const localCollections = await planningCache.readAll();
-			const planningTab = new PlanningTab(storeName, localCollections);
+			const planningTab = new PlanningScreen(storeName, localCollections);
 			planningTab.onClickUpdate = this.onClickUpdate.bind(this);
 			planningTab.init();
 			this.#tabs.set(storeName, planningTab);
