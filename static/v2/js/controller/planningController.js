@@ -10,11 +10,21 @@ class PlanningController {
 	/**
 	 * Used for fast retrieval of GUI tabs by name 
 	 * @type {Map<string, PlanningTab>}
-	 * @public
+	 * @private
 	 */
 	#tabs = undefined;
+	/**
+	 * Planning year => planning collection => planning slice
+	 * @type {Map<numeric, <Map<String, PlanningTab>>}}
+	 */
+	#slices=undefined;
+	/**
+	 * Used for fast retreival of local caches.
+	 * @type {Map<String, PlanningCache>}
+	 * @private
+	 */
+	#caches = undefined;
 	constructor() {
-		this.planningCache = new PlanningCache();
 		/*if(gdriveSync) {
 			this.planningGDrive = new PlanningGDrive(this.planningCache);
 		}*/
@@ -22,16 +32,20 @@ class PlanningController {
 	}
 
 	async init() {
-		await this.planningCache.init();
+		const currentYear =  new Date().toLocaleString("en-US", {year: "numeric"});
+		this.#caches = await PlanningCache.getAll();
+		//const planningCaches = this.#caches.values();
 		
-		const localCollections = await this.planningCache.readAll();
-		//console.log(planningCollections)
-		for (const [id, planningCollection] of Object.entries(localCollections)) {
-			const planningTab = new PlanningTab(id, planningCollection);
+		for (const [storeName, planningCache] of this.#caches.entries()){
+			const localCollections = await planningCache.readAll();
+			const planningTab = new PlanningTab(storeName, localCollections);
 			planningTab.onClickUpdate = this.onClickUpdate.bind(this);
 			planningTab.init();
-			this.#tabs.set(planningTab.id, planningTab);
+			this.#tabs.set(storeName, planningTab);
+			//console.log(planningCollections)
 		}
+		
+		this.#tabs.get(currentYear).activate();
 
 		/*if(gdriveSync) {
 			this.initGDrive();

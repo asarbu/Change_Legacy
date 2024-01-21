@@ -1,22 +1,22 @@
 class PlanningTab {
 	onClickUpdate = undefined;
-    constructor(id, planningCollection) {
-		this.planningCollection = planningCollection;
+    constructor(id, planningCollections) {
+		this.planningCollections = planningCollections;
 		this.id = id;
-		this.name = planningCollection.collectionName;
+		//this.name = planningCollection.collectionName;
 		this.editMode = false;
     }
 
     init() {
 		this.createTab();
-		this.createPlanningTable(this.planningCollection);
+		const gui = new Gui();
+		gui.init();
     }
-
 		
 	//#region DOM creation
-    createPlanningTable(collection) {
-		for (const [groupId, group] of Object.entries(collection.groups)) {
-			const tableFragment = document.createDocumentFragment();
+    createPlanningTables(planningCollection) {
+		const tableFragment = document.createDocumentFragment();
+		for (const [groupId, group] of Object.entries(planningCollection.groups)) {
 			const table = create('table', {id: groupId, classes: ["striped", "table-content", "row"]});
 			tableFragment.appendChild(table);
 			const thead = create('thead');
@@ -57,9 +57,10 @@ class PlanningTab {
 			}
 			this.recomputeTotal(table, true);
 
-			this.tab.appendChild(tableFragment);
+			//this.tab.appendChild(tableFragment);
 		}
-
+		return tableFragment;
+/*
 		const buttonRow = create("div", {classes:["row", "center"]});
 		const editBtn = createImageButton("EditBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.edit);
 		const saveBtn = createImageButton("SaveBtn", "", ["waves-effect", "red", "waves-light", "btn"],	icons.save);
@@ -74,25 +75,36 @@ class PlanningTab {
 		buttonRow.appendChild(editBtn);
 		buttonRow.appendChild(saveBtn);
 		this.tab.appendChild(buttonRow);
+		*/
+	}
+
+	createSlice(id , planningCollection) {
+		const slice = create("div", { classes: ["slice"]});
+		const h1 = create("h1", { innerText: id });
+		
+		slice.appendChild(h1);
+
+		const tables = this.createPlanningTables(planningCollection);
+		slice.appendChild(tables);
+
+		return slice;
 	}
 
 	createTab() {
-		//console.log(this.planningCollection)
-		const tab = create("div", {id: this.id, classes: ["container"]});
+		const container = create("div", {id: this.id, classes: ["container"]});
 		const section = create("div", { classes: ["section", "no-pad-bot"]});
-		const container = create("div", { classes: ["container"]});
-		const h1 = create("h1", { classes: ["header", "center", "red-text"], innerText: this.name});
-		const row = create("div", { classes: ["row", "center"]});
-		const h5 = create("h5", { classes: ["header", "col", "s12", "light"], innerText: this.description});
+		for (const [id, planningCollection] of Object.entries(this.planningCollections)) {
+			const slice = this.createSlice(id, planningCollection);
+			
+			section.appendChild(slice);	
+		}
 
-		row.appendChild(h5);
-		container.appendChild(h1);
-		container.appendChild(row);
-		section.appendChild(container);
-		tab.appendChild(section);
+		//console.log(this.planningCollection)
 		
-		document.getElementById("main").appendChild(tab);
+		container.appendChild(section);
+		document.getElementById("main").appendChild(container);
 
+		/*
 		const li = create("li", {classes: ["tab"]});
 		const a = create("a", { href: "#"+this.id });
 		const h6 = create("h6", { innerText: this.name });
@@ -100,9 +112,9 @@ class PlanningTab {
 		a.appendChild(h6);
 		li.appendChild(a);
 
-		document.getElementById("tabs").appendChild(li);
+		//document.getElementById("tabs").appendChild(li);*/
 
-		this.tab = tab;
+		this.container = container;
 	}
 
 	createRow(table, id, item, options) {
@@ -160,7 +172,7 @@ class PlanningTab {
 	
 	update(planningCollection) {
 		this.planningCollection = planningCollection;
-		var tables = this.tab.getElementsByTagName("TABLE");
+		var tables = this.container.getElementsByTagName("TABLE");
 		for (var i=tables.length-1; i>=0;i-=1)
 		   if (tables[i]) tables[i].parentNode.removeChild(tables[i]);
 		this.createPlanningTable(this.planningCollection);
@@ -200,6 +212,10 @@ class PlanningTab {
 		lastRow.cells[3].innerText = totalYearly;
 	}
 
+	activate() {
+		document.getElementById("sliceId").innerText = this.id;
+		document.getElementById("sliceName").innerText = this.name;
+	}
 	//#endregion
 
 	//#region event handlers

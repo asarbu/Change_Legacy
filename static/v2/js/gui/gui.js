@@ -1,3 +1,141 @@
+class Gui {
+	constructor() {
+		this.sliderContainer = document.querySelector('.container');
+		this.containerWidth = this.sliderContainer.clientWidth;
+		this.sliderWrapper = document.querySelector('.section');
+		this.lastIndex = this.sliderWrapper.children.length + 1;
+		
+		this.mouseDown = false;
+		this.scrolling = undefined;
+		this.currentIndex = 1;
+		this.startX = 0;
+		this.startY = 0;
+	}
+
+	init() {
+		// appened cloneNodes to the parent element.
+		const $clonedFirstChild = this.sliderWrapper.firstElementChild.cloneNode(true);
+		const $clonedLastChild = this.sliderWrapper.lastElementChild.cloneNode(true);
+		//TODO: Do this after the user scrolled to the end, so that we also copy the scroll position
+		this.sliderWrapper.insertBefore($clonedLastChild, this.sliderWrapper.firstElementChild);
+		this.sliderWrapper.appendChild($clonedFirstChild);
+
+		const slices = document.querySelectorAll('.slice');
+		slices.forEach((el, i) => {
+			el.setAttribute('data-item-index', i);
+		});
+
+		/*
+		const $tabLinks = document.querySelectorAll('.tab');
+		$tabLinks.forEach((el, i) => {
+			el.addEventListener("click", () => {
+			document.body.style.backgroundColor = "rgb(0, 0, 0)";
+			setSlide(i+1);
+			});
+		tabs.push(el);
+		});*/
+
+		this.currentIndex = 1;
+
+		this.sliderWrapper.style.transition = 'transform 0s linear';
+		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`; 
+		
+		// * when mousedown or touchstart
+		this.sliderWrapper.addEventListener('mousedown', this.startSlider.bind(this));
+		this.sliderWrapper.addEventListener('touchmove', this.startSlider.bind(this), { passive: true });
+
+		// * when mouseup or touchend
+		window.addEventListener('mouseup', this.endSlider.bind(this));
+		window.addEventListener('touchend', this.endSlider.bind(this));
+		window.addEventListener('resize', this.refresh.bind(this), true);
+	}
+
+	setSlide(index) {
+		this.currentIndex = +index;
+		this.currentIndex = Math.min(this.currentIndex, this.lastIndex);
+		requestAnimationFrame(() => {
+			this.sliderWrapper.style.transition = 'transform 0.25s linear';
+			this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * index}px)`;  
+		});
+		/*
+		const $tabs = document.querySelectorAll('.tab');
+		
+		$tabs.forEach((el, i) => {
+		  el.classList.remove('active-tab');
+		});
+		tabs[index-1].classList.add('active-tab');*/
+	}
+
+	startSlider(e) {
+		this.mouseDown = true;
+	  
+		// check desktop or mobile
+		this.startX = e.clientX ? e.clientX : e.touches[0].screenX;
+		this.startY = e.clientY ? e.clientY : e.touches[0].screenY;
+		
+		this.sliderWrapper.removeEventListener('touchmove', this.startSlider.bind(this));
+		this.sliderContainer.addEventListener(e.clientX ? 'mousemove' : 'touchmove',
+			this.moveSlider.bind(this), { passive: true	});
+	  };
+	  
+	  moveSlider(e) {
+		if (!this.mouseDown) return;
+	  
+		let currentX = e.clientX || e.touches[0].screenX;
+		let currentY = e.clientY || e.touches[0].screenY;
+		requestAnimationFrame(() => {
+			if(!this.scrolling) {
+			  //Check scroll direction
+			  if(Math.abs(currentY - this.startY) > 10) { //Vertical
+				  //Needed to avoid glitches in horizontal scrolling
+				  this.scrolling = "vertical";
+				  //Reset horizontal scroll to zero, by resetting the slide index
+				  this.setSlide(this.currentIndex);
+				  return;
+			  } else if(Math.abs(currentX - this.startX) > 10) { //Horizontal
+				  this.scrolling = "horizontal";
+				  return;
+			  }
+			}
+			
+			//Allow horizontal scroll even if no scroll is present.
+			//Vertical is allowed by default.
+			if(this.scrolling === undefined || this.scrolling === "horizontal") {
+				this.sliderWrapper.style.transition = 'transform 0s linear';	  
+				this.sliderWrapper.style.transform = `translateX(${
+				  currentX - this.startX - this.containerWidth * this.currentIndex
+				}px)`;
+			}
+		});
+	  };
+	  
+	endSlider(e) {
+		if (!this.mouseDown || !e) return;
+		
+		this.mouseDown = false;
+		if(this.scrolling === "horizontal") {
+			let x = e.clientX;
+			//x evaluates to 0 if you drag left to the end of the body)
+			if(!x && e.changedTouches) {
+				x = e.changedTouches[0].screenX;
+			}
+			
+			const dist = x - this.startX || 0;
+	  
+			if (dist > 50 && this.currentIndex > 1) this.currentIndex--;
+			else if (dist < -50 && this.currentIndex < this.lastIndex -1) this.currentIndex++;
+			this.setSlide(this.currentIndex);
+		}
+		this.sliderWrapper.addEventListener('touchmove', this.startSlider.bind(this), { passive: true });
+		this.scrolling = undefined;
+	};
+	
+	refresh() {
+		this.containerWidth = this.sliderContainer.clientWidth;
+		this.setSlide(this.currentIndex);
+	};
+}
+
 function createImageButton(text, href, classList, src) {
 	const btn = create("button");
 	btn.classList.add(...classList);
@@ -13,17 +151,17 @@ function createImageButton(text, href, classList, src) {
 
 function create(element, properties) {
 	var elmt = document.createElement(element);
-    for (var prop in properties) {
+	for (var prop in properties) {
 		if(prop === "classes") {
 			elmt.classList.add(...properties[prop]);
 			continue;
 		}
 		//if(elmt[prop])
-	        elmt[prop] = properties[prop];
+			elmt[prop] = properties[prop];
 		//else
 		//	elmt.setAttribute(prop, properties[prop]);
-    }
-    return elmt;
+	}
+	return elmt;
 }
 
 function createRow(table, data, options) {

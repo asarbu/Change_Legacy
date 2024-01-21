@@ -1,64 +1,87 @@
 class PlanningCache {
-    static PLANNING_STORE_NAME = 'Planning';
-    static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
+	static DATABASE_NAME = 'Planning';
+	static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
+	
+	/**
+	 * Returns all planning caches in the database, initialized
+	 * @returns {Map<String, PlanningCache>}
+	 */
+	static async getAll() {
+		const currentYear =  new Date().toLocaleString("en-US", {year: "numeric"});
+		const idb = new Idb(PlanningCache.DATABASE_NAME, currentYear, PlanningCache.upgradePlanningDatabase);
+		await idb.init();
+		
+		const objectStores = idb.getObjectStores();
+		const planningCaches = new Map();
+		for (let index = 0; index < objectStores.length; index++) {
+			const storeName = objectStores[index];
+			const planningCache = new PlanningCache(storeName, idb);
+			await planningCache.init();
+			planningCaches.set(storeName, planningCache);	
+		}
+		return planningCaches;
+	}
 
-    constructor() {
-		this.pdb = new Idb(PlanningCache.PLANNING_STORE_NAME, 1, this.upgradePlanningDatabase);
-    }
+	static upgradePlanningDatabase(db, oldVersion, newVersion) {
+		if(!newVersion) {
+			console.error("No new version provided to create object store", db, newVersion);
+		}
 
-    async init() {
-        await this.pdb.init();
+		let store = db.createObjectStore(newVersion, { autoIncrement: true });
+		store.createIndex('byType', 'type', { unique: false });
+		//store.createIndex('byGroup', 'groups.name', { unique: false, multiEntry: true });
 
-        const storeCount = await this.pdb.count(PlanningCache.PLANNING_STORE_NAME);
-        if (storeCount == 0) {
-            await fetch(PlanningCache.PLANNING_TEMPLATE_URI)
-                .then(response => {
-                    return response.json();
-                })
-                .then(planningFile => 
-                    this.pdb.putAll(PlanningCache.PLANNING_STORE_NAME, Object.entries(planningFile))
-                );
-        }
-    }
+		return;
+	}
 
-    async readAll() {
-        const planningCollections = await this.pdb.openCursor(PlanningCache.PLANNING_STORE_NAME);
-        const plannings = {};
+	constructor(storeName, idb) {
+		this.idb = idb;
+		this.storeName = storeName;
+	}
+
+	async init() {
+		await this.idb.init();
+
+		const storeCount = await this.idb.count(this.storeName);
+		if (storeCount == 0) {
+			await fetch(PlanningCache.PLANNING_TEMPLATE_URI)
+				.then(response => {
+					return response.json();
+				})
+				.then(planningFile => 
+					this.idb.putAll(this.storeName, Object.entries(planningFile))
+				);
+		}
+	}
+
+	async readAll() {
+		const planningCollections = await this.idb.openCursor(this.storeName);
+		const plannings = {};
 		for (const [key, value] of planningCollections) {
 			plannings[key] = value;
 		}
 		return plannings;
-    }
+	}
 
-    async updateAll(planningCollections) {
-        await this.pdb.clear(PlanningCache.PLANNING_STORE_NAME);
-		await this.pdb.putAll(PlanningCache.PLANNING_STORE_NAME, planningCollections);
-    }
+	async updateAll(planningCollections) {
+		await this.idb.clear(this.storeName);
+		await this.idb.putAll(this.storeName, planningCollections);
+	}
 
-    async getExpenses() {
-        const keyRange = IDBKeyRange.only("Expense");
-		return await this.pdb.getAllByIndex(PlanningCache.PLANNING_STORE_NAME, 'byType', keyRange);
-    }
+	async getExpenses() {
+		const keyRange = IDBKeyRange.only("Expense");
+		return await this.idb.getAllByIndex(this.storeName, 'byType', keyRange);
+	}
 
-    async getCategories() {
-        return await this.pdb.openCursor(PlanningCache.PLANNING_STORE_NAME)
-    }
+	async getCategories() {
+		return await this.idb.openCursor(this.storeName)
+	}
 
-    async get(key) {
-        return await this.pdb.get(PlanningCache.PLANNING_STORE_NAME, key);
-    }
-    
-    async update(key, value) {
-        await this.pdb.put(PlanningCache.PLANNING_STORE_NAME, value, key);
-    }
-
-    upgradePlanningDatabase(db, oldVersion) {
-        if (oldVersion == 0) {
-            let store = db.createObjectStore(PlanningCache.PLANNING_STORE_NAME, { autoIncrement: true });
-            store.createIndex('byType', 'type', { unique: false });
-            //store.createIndex('byGroup', 'groups.name', { unique: false, multiEntry: true });
-
-            return;
-        }
-    }
+	async get(key) {
+		return await this.idb.get(this.storeName, key);
+	}
+	
+	async update(key, value) {
+		await this.idb.put(this.storeName, value, key);
+	}
 }

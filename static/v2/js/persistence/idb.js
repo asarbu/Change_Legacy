@@ -222,6 +222,10 @@ class Idb {
 		}
 	}
 
+	getObjectStores() {
+		return this.db.objectStoreNames;
+	}
+
 	getStoreTransaction(storeName, mode) {
 		if (!this.db.objectStoreNames.contains(storeName)) {
 			console.log("Error at getting store with name", storeName)
