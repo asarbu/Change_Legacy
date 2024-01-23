@@ -7,12 +7,31 @@ class Idb {
 		this.upgradeCallback = upgradeCallback;
 	}
 
+	/**
+	 * Initializes this object of IDB. Mandatory to be called before use.
+	 * @returns An instance of this
+	 */
 	async init() {
 		console.log("Init", this.dbName)
 		this.db = await this.open(this.dbName, this.dbVersion, this.upgradeCallback);
 		return this;
 	}
 
+	/**
+	 * @typedef {function(db:db, number, number)} upgradeCallback
+	 * @callback upgradeDbCallback
+	 * @param {db} db Database to be upgraded. 
+	 * @param {number} oldVersion Version from which to upgrade
+	 * @param {number} newVersion Version to which to upgrade. 
+	 */
+
+	/**
+	 * 
+	 * @param {string} dbName Database name
+	 * @param {number} version Version to upgrade this database
+	 * @param {upgradeDbCallback} upgradeCallback called in case the database needs upgrage 
+	 * @returns 
+	 */
 	open(dbName, version, upgradeCallback) {
 		return new Promise((resolve, reject) => {
 			if (!window.indexedDB) {
@@ -41,30 +60,25 @@ class Idb {
 		});
 	}
 
-	openCursor(storeName, key) {
+	/**
+	 * 
+	 * @param {string} storeName Database object store name
+	 * @returns 
+	 */
+	openCursor(storeName) {
 		return new Promise((resolve, reject) => {
 			const st = this.getStoreTransaction(storeName, Idb.#READ_ONLY);
 			const store = st[0];
 			const txn = st[1];
 
 			var values = new Map();
-			if(key) {
-				store.openCursor(key).onsuccess = (event) => {
-					let cursor = event.target.result;
-					if (cursor) {
-						values.set(cursor.key, cursor.value);
-						cursor.continue();
-					}
-				};
-			} else {
-				store.openCursor().onsuccess = (event) => {
-					let cursor = event.target.result;
-					if (cursor) {
-						values.set(cursor.key, cursor.value);
-						cursor.continue();
-					}
-				};
-			}
+			store.openCursor().onsuccess = (event) => {
+				let cursor = event.target.result;
+				if (cursor) {
+					values.set(cursor.key, cursor.value);
+					cursor.continue();
+				}
+			};
 			txn.oncomplete = function () {
 				resolve(values);
 			};

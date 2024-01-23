@@ -1,8 +1,6 @@
 class GraphicEffects {
 	constructor(domElement) {
-		//this.sliderContainer = domElement.querySelector('.container');
 		this.rootContainer = domElement;
-		
 		
 		this.mouseDown = false;
 		this.scrolling = undefined;
@@ -153,6 +151,12 @@ function createImageButton(text, href, classList, src) {
 	return btn;
 }
 
+/**
+ * Creates and decorates a new DOM Element
+ * @param {string} element Type of element to be created
+ * @param {Array} properties.classes Classes to be added to the DOM classlist 
+ * @returns {DOMElement} 
+ */
 function create(element, properties) {
 	var elmt = document.createElement(element);
 	for (var prop in properties) {
@@ -160,10 +164,7 @@ function create(element, properties) {
 			elmt.classList.add(...properties[prop]);
 			continue;
 		}
-		//if(elmt[prop])
-			elmt[prop] = properties[prop];
-		//else
-		//	elmt.setAttribute(prop, properties[prop]);
+		elmt[prop] = properties[prop];
 	}
 	return elmt;
 }

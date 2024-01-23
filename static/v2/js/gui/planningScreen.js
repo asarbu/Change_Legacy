@@ -24,8 +24,8 @@ class PlanningScreen {
 		this.dropupContent = create("div", {classes: ["dropup-content", "top-round"]});
 
 		const entries = Object.entries(this.planningCollections);
-		const span = create("span", {innerText: "▲", classes: ["white-50"]});
-		this.slicesButton = create("button", {classes: ["nav-item"]});
+		const span = create("span", { innerText: "▲", classes: ["white-50"] });
+		this.slicesButton = create("button", { classes: ["nav-item"] });
 		this.slicesButton.innerText = entries[0][0] + " ";
 		this.slicesButton.appendChild(span);
 		this.slicesButton.addEventListener("click", this.onClickDropup.bind(this), false);
