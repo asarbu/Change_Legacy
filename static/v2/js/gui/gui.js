@@ -1,15 +1,25 @@
 class GraphicEffects {
-	constructor(domElement) {
-		this.rootContainer = domElement;
-		
+	constructor() {
+		/* Slice slider */
+		this.rootContainer = undefined;
 		this.mouseDown = false;
 		this.scrolling = undefined;
 		this.currentIndex = 1;
 		this.startX = 0;
 		this.startY = 0;
+
+		this.startSliderEventListener = this.startSlider.bind(this);
+		this.moveSliderEventListener = this.moveSlider.bind(this);
+		this.endSliderEventListener = this.endSlider.bind(this);
+		this.refreshEventListener = this.refresh.bind(this);
+
+		/* Navigation panel */
+		this.navOpen = false;
 	}
 
-	init() {
+	init(forContainer) {
+		/* Slice slider */
+		this.rootContainer = forContainer;
 		this.containerWidth = this.rootContainer.clientWidth;
 		this.sliderWrapper = this.rootContainer.querySelector('.section');
 		this.lastIndex = this.sliderWrapper.children.length + 1;
@@ -22,34 +32,35 @@ class GraphicEffects {
 
 		this.slices = this.rootContainer.querySelectorAll('.slice');
 		this.slices.forEach((el, i) => {
-			el.setAttribute('data-item-index', i);
+			el.setAttribute('data-slice-index', i);
 		});
-
-		/*
-		const $tabLinks = document.querySelectorAll('.tab');
-		$tabLinks.forEach((el, i) => {
-			el.addEventListener("click", () => {
-			document.body.style.backgroundColor = "rgb(0, 0, 0)";
-			setSlide(i+1);
-			});
-		tabs.push(el);
-		});*/
 
 		this.currentIndex = 1;
 
 		this.sliderWrapper.style.transition = 'transform 0s linear';
-		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`; 
-		
+		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`;
+
 		// * when mousedown or touchstart
-		this.sliderWrapper.addEventListener('mousedown', this.startSlider.bind(this));
-		this.sliderWrapper.addEventListener('touchmove', this.startSlider.bind(this), { passive: true });
+		this.sliderWrapper.addEventListener('mousedown', this.startSliderEventListener);
+		this.sliderWrapper.addEventListener('touchmove', this.startSliderEventListener, { passive: true });
 
 		// * when mouseup or touchend
 		// TODO This registers the event listener multiple times
-		window.addEventListener('mouseup', this.endSlider.bind(this));
-		window.addEventListener('touchend', this.endSlider.bind(this));
-		window.addEventListener('resize', this.refresh.bind(this), true);
+		window.addEventListener('mouseup', this.endSliderEventListener);
+		window.addEventListener('touchend', this.endSliderEventListener);
+		window.addEventListener('resize', this.refreshEventListener, true);
 		this.setSlide(this.currentIndex);
+
+		/* nav panel */
+		this.$main = document.getElementById('main');
+		this.$sidenav_left = document.getElementById("sidenav");
+		this.$sidenav_right = this.$sidenav_left.cloneNode(true);
+		this.$sidenav_left.classList.add("sidenav-left");
+		this.$sidenav_right.classList.add("sidenav-right");
+		this.$sidenav_left.parentNode.appendChild(this.$sidenav_right);
+
+
+		document.querySelectorAll('.nav-trigger').forEach((el) => el.addEventListener("click", this.openNav.bind(this)));
 	}
 
 	setSlide(index) {
@@ -57,91 +68,140 @@ class GraphicEffects {
 		this.currentIndex = Math.min(this.currentIndex, this.lastIndex);
 		requestAnimationFrame(() => {
 			this.sliderWrapper.style.transition = 'transform 0.25s linear';
-			this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * index}px)`;  
+			this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * index}px)`;
 		});
-		/*
-		const $tabs = document.querySelectorAll('.tab');
-		
-		$tabs.forEach((el, i) => {
-		  el.classList.remove('active-tab');
-		});
-		tabs[index-1].classList.add('active-tab');*/
+	}
+
+	onClickSetSlice(e) {
+		const sliceIndex = e.target.getAttribute("data-slice-index");
+		this.setSlide(sliceIndex);
 	}
 
 	startSlider(e) {
+		console.log("Start slider")
 		this.mouseDown = true;
-	  
+
 		// check desktop or mobile
 		this.startX = e.clientX ? e.clientX : e.touches[0].screenX;
 		this.startY = e.clientY ? e.clientY : e.touches[0].screenY;
-		
-		this.sliderWrapper.removeEventListener('touchmove', this.startSlider.bind(this));
+
+		this.sliderWrapper.removeEventListener('touchmove', this.startSliderEventListener);
+		console.error("adding mousemove");
 		this.rootContainer.addEventListener(e.clientX ? 'mousemove' : 'touchmove',
-			this.moveSlider.bind(this), { passive: true	});
-	  };
-	  
-	  moveSlider(e) {
+			this.moveSliderEventListener, { passive: true });
+	};
+
+	moveSlider(e) {
 		if (!this.mouseDown) return;
-	  
+
 		let currentX = e.clientX || e.touches[0].screenX;
 		let currentY = e.clientY || e.touches[0].screenY;
 		requestAnimationFrame(() => {
-			if(!this.scrolling) {
-			  //Check scroll direction
-			  if(Math.abs(currentY - this.startY) > 10) { //Vertical
-				  //Needed to avoid glitches in horizontal scrolling
-				  this.scrolling = "vertical";
-				  //Reset horizontal scroll to zero, by resetting the slide index
-				  this.setSlide(this.currentIndex);
-				  return;
-			  } else if(Math.abs(currentX - this.startX) > 10) { //Horizontal
-				  this.scrolling = "horizontal";
-				  return;
-			  }
+			if (!this.scrolling) {
+				//Check scroll direction
+				if (Math.abs(currentY - this.startY) > 10) { //Vertical
+					//Needed to avoid glitches in horizontal scrolling
+					this.scrolling = "vertical";
+					//Reset horizontal scroll to zero, by resetting the slide index
+					this.setSlide(this.currentIndex);
+					return;
+				} else if (Math.abs(currentX - this.startX) > 10) { //Horizontal
+					this.scrolling = "horizontal";
+				}
 			}
-			
+
 			//Allow horizontal scroll even if no scroll is present.
 			//Vertical is allowed by default.
-			if(this.scrolling === undefined || this.scrolling === "horizontal") {
-				this.sliderWrapper.style.transition = 'transform 0s linear';	  
+			if (this.scrolling === undefined || this.scrolling === "horizontal") {
+				this.sliderWrapper.style.transition = 'transform 0s linear';
 				this.sliderWrapper.style.transform = `translateX(${
-				  currentX - this.startX - this.containerWidth * this.currentIndex
-				}px)`;
+					currentX - this.startX - this.containerWidth * this.currentIndex
+					}px)`;
+					console.log(this.sliderWrapper.style.transform, this.startX, currentX, this.containerWidth, this.currentIndex)
 			}
 		});
-	  };
-	  
+	};
+
 	endSlider(e) {
 		if (!this.mouseDown || !e) return;
-		
+
 		this.mouseDown = false;
-		if(this.scrolling === "horizontal") {
+		if (this.scrolling === "horizontal") {
 			let x = e.clientX;
 			//x evaluates to 0 if you drag left to the end of the body)
-			if(!x && e.changedTouches) {
+			if (!x && e.changedTouches) {
 				x = e.changedTouches[0].screenX;
 			}
-			
+
 			const dist = x - this.startX || 0;
-	  
+
 			if (dist > 50 && this.currentIndex > 1) this.currentIndex--;
-			else if (dist < -50 && this.currentIndex < this.lastIndex -1) this.currentIndex++;
+			else if (dist < -50 && this.currentIndex < this.lastIndex - 1) this.currentIndex++;
 			this.setSlide(this.currentIndex);
 		}
-		this.sliderWrapper.addEventListener('touchmove', this.startSlider.bind(this), { passive: true });
+		this.sliderWrapper.addEventListener('touchmove', this.startSliderEventListener, { passive: true });
 		this.scrolling = undefined;
 	};
-	
+
 	refresh() {
 		this.containerWidth = this.rootContainer.clientWidth;
 		this.setSlide(this.currentIndex);
 	};
+
+	/* Nav panel */
+	openNav(ev) {
+		const side = ev.target.dataset.side;
+		if (side === "left") {
+			if (this.navOpen === "left") {
+				this.closeNav();
+				return;
+			}
+
+			this.$sidenav_right.classList.remove("sidenav-open");
+			this.$sidenav_left.classList.add("sidenav-open");
+			this.$main.classList.remove("main-shift-right");
+			this.$main.classList.add("main-shift-left");
+
+			this.navOpen = "left";
+		}
+		else if (side === "right") {
+			if (this.navOpen === "right") {
+				this.closeNav();
+				return;
+			}
+
+			this.$sidenav_left.classList.remove("sidenav-open");
+			this.$sidenav_right.classList.add("sidenav-open");
+			this.$main.classList.remove("main-shift-left");
+			this.$main.classList.add("main-shift-right");
+
+			this.navOpen = "right";
+		}
+
+		this.$main.addEventListener("transitionend", function transitioned() {
+			this.$main.removeEventListener('transitionend', transitioned);
+			this.refresh();
+		}.bind(this));
+	}
+
+	closeNav() {
+		this.$sidenav_left.classList.remove("sidenav-open");
+		this.$sidenav_right.classList.remove("sidenav-open");
+		this.$main.classList.remove("main-shift-left");
+		this.$main.classList.remove("main-shift-right");
+
+		this.navOpen = undefined;
+		this.$main.addEventListener("transitionend", function transitioned() {
+			this.$main.removeEventListener('transitionend', transitioned);
+			this.refresh();
+		}.bind(this));
+	}
 }
 
 function createImageButton(text, href, classList, src) {
 	const btn = create("button");
 	btn.classList.add(...classList);
-	btn.setAttribute("href",href);
+	btn.setAttribute("href", href);
 	const img = create("img");
 	img.classList.add("white-fill");
 	img.textContent = text;
@@ -160,7 +220,7 @@ function createImageButton(text, href, classList, src) {
 function create(element, properties) {
 	var elmt = document.createElement(element);
 	for (var prop in properties) {
-		if(prop === "classes") {
+		if (prop === "classes") {
 			elmt.classList.add(...properties[prop]);
 			continue;
 		}
@@ -192,7 +252,7 @@ function createRow(table, data, options) {
 		dataCell.style.color = options.color;
 	}
 
-	if (options.deletable) {	
+	if (options.deletable) {
 		const buttonsCell = row.insertCell(-1);
 		const btn = create("button");
 		btn.classList.add("waves-effect", "waves-light", "red", "btn-small");
@@ -203,7 +263,7 @@ function createRow(table, data, options) {
 		img.alt = "Delete";
 		img.src = icons.delete;
 		btn.appendChild(img)
-		
+
 		buttonsCell.setAttribute("hideable", "true");
 		if (options.hidden) {
 			buttonsCell.style.display = 'none';

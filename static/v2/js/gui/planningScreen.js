@@ -1,17 +1,17 @@
 class PlanningScreen {
 	onClickUpdate = undefined;
-    constructor(id, planningCollections) {
+	constructor(id, planningCollections) {
 		this.planningCollections = planningCollections;
 		this.id = id;
 		//this.name = planningCollection.collectionName;
 		this.editMode = false;
-    }
+	}
 
-    init() {
-		const container = this.sketchAsFragment();
-		this.gfx = new GraphicEffects(container);
-    }
-		
+	init() {
+		this.gfx = new GraphicEffects();
+		this.container = this.sketchAsFragment();
+	}
+
 	//#region DOM creation
 
 	/**
@@ -19,37 +19,39 @@ class PlanningScreen {
 	 * @returns {DocumentFragment}
 	 */
 	sketchAsFragment() {
-		const container = create("div", {id: this.id, classes: ["container"]});
-		const section = create("div", { classes: ["section", "no-pad-bot"]});
-		this.dropupContent = create("div", {classes: ["dropup-content", "top-round"]});
+		const container = create("div", { id: this.id, classes: ["container"] });
+		const section = create("div", { classes: ["section"] });
+		const span = create("span", { innerText: "▲", classes: ["white-50"] });
+		this.dropupContent = create("div", { classes: ["dropup-content", "top-round"] });
+		this.dropupContent.style.display = "none";
 
 		const entries = Object.entries(this.planningCollections);
-		const span = create("span", { innerText: "▲", classes: ["white-50"] });
-		this.slicesButton = create("button", { classes: ["nav-item"] });
-		this.slicesButton.innerText = entries[0][0] + " ";
-		this.slicesButton.appendChild(span);
+		this.slicesButton = create("button", { classes: ["nav-item"], innerText: entries[0][0] + " " });
 		this.slicesButton.addEventListener("click", this.onClickDropup.bind(this), false);
 
+		var counter = 1;
 		for (const [id, planningCollection] of entries) {
 			const slice = this.createSlice(id, planningCollection);
-			
-			const anchor = create("a", {innerText: planningCollection.collectionName});
+
+			const anchor = create("a", { innerText: planningCollection.collectionName });
+			anchor.setAttribute("data-slice-index", counter++);
+			anchor.addEventListener("click", this.onClickSetSlice.bind(this));
 			this.dropupContent.appendChild(anchor);
-		
-			section.appendChild(slice);	
+
+			section.appendChild(slice);
 		}
-		
+
+		this.slicesButton.appendChild(span);
+		this.slicesButton.appendChild(this.dropupContent);
 		container.appendChild(section);
-		container.appendChild(this.dropupContent);
-		
-		this.container = container;
+
 		return container;
 	}
 
-	createSlice(id , planningCollection) {
-		const slice = create("div", { classes: ["slice"]});
+	createSlice(id, planningCollection) {
+		const slice = create("div", { classes: ["slice"] });
 		const h1 = create("h1", { innerText: id });
-		
+
 		slice.appendChild(h1);
 
 		const tables = this.createPlanningTables(planningCollection);
@@ -61,13 +63,13 @@ class PlanningScreen {
 	createPlanningTables(planningCollection) {
 		const tableFragment = document.createDocumentFragment();
 		for (const [groupId, group] of Object.entries(planningCollection.groups)) {
-			const table = create('table', {id: groupId});
+			const table = create('table', { id: groupId, classes:["top-round", "bot-round"] });
 			tableFragment.appendChild(table);
 			const thead = create('thead');
 			const tbody = create('tbody');
 
 			table.appendChild(thead);
-			table.appendChild(tbody);			
+			table.appendChild(tbody);
 			table.userData = group;
 
 			const headingRow = create('tr');
@@ -121,12 +123,12 @@ class PlanningScreen {
 		this.createDataCell(row, item.monthly, options);
 		this.createDataCell(row, item.yearly, options);
 
-		if (options.deletable) {	
+		if (options.deletable) {
 			const buttonsCell = row.insertCell(-1);
-			const btn = createImageButton("Delete", "", ["waves-effect", "waves-light", "red", "btn-small"], icons.delete);
+			const btn = createImageButton("Delete", "", [], icons.delete);
 			btn.addEventListener("click", this.onClickDelete.bind(this));
 			buttonsCell.appendChild(btn);
-			
+
 			buttonsCell.setAttribute("hideable", "true");
 			if (options.hidden) {
 				buttonsCell.style.display = 'none';
@@ -141,7 +143,7 @@ class PlanningScreen {
 		dataCell.textContent = text;
 		if (!options.readonly) {
 			dataCell.setAttribute('editable', 'true');
-			if(this.editMode) {
+			if (this.editMode) {
 				dataCell.setAttribute('contenteditable', 'true');
 			}
 			dataCell.addEventListener('keyup', this.onKeyUpCell.bind(this), false);
@@ -155,28 +157,27 @@ class PlanningScreen {
 		}
 		return dataCell;
 	}
-	
+
 	activate() {
-		if(this.slicesButton) {
+		if (this.slicesButton) {
 			const slicesButton = document.getElementById("sliceName");
 			slicesButton.parentElement.replaceChild(this.slicesButton, slicesButton);
 		} else {
 			document.getElementById("sliceId").innerText = this.id;
 			document.getElementById("sliceName").innerText = this.name;
 		}
-		
+
 		document.getElementById("main").appendChild(this.container);
-		this.gfx.init();
+		this.gfx.init(this.container);
 	}
 	//#endregion
 
 	//#region DOM manipulation
-	
 	update(planningCollection) {
 		this.planningCollection = planningCollection;
 		var tables = this.container.getElementsByTagName("TABLE");
-		for (var i=tables.length-1; i>=0;i-=1)
-		   if (tables[i]) tables[i].parentNode.removeChild(tables[i]);
+		for (var i = tables.length - 1; i >= 0; i -= 1)
+			if (tables[i]) tables[i].parentNode.removeChild(tables[i]);
 		this.createPlanningTable(this.planningCollection);
 	}
 
@@ -190,7 +191,7 @@ class PlanningScreen {
 			monthly: 0,
 			yearly: 0
 		}
-		if(create) {
+		if (create) {
 			const options = { useBold: true, readonly: true, index: -1, hidden: true, deletable: false };
 			lastRow = this.createRow(table, "Total", total, options);
 		}
@@ -213,6 +214,11 @@ class PlanningScreen {
 		lastRow.cells[2].innerText = totalMonthly;
 		lastRow.cells[3].innerText = totalYearly;
 	}
+
+	updateSliceButtonText(text) {
+		this.slicesButton.innerText = text + " ";
+
+	}
 	//#endregion
 
 	//#region event handlers
@@ -223,12 +229,12 @@ class PlanningScreen {
 		const itemId = row.id;
 		const groupId = row.parentNode.parentNode.id;
 		//console.log("OnClickDelete", itemId, groupId);
-		
+
 		delete this.planningCollection.groups[groupId].items[itemId];
 		tBody.removeChild(row);
 		this.recomputeTotal(tBody.parentNode);
 	}
-    
+
 	onClickEdit() {
 		this.saveBtn.style.display = "";
 		this.editBtn.style.display = "none";
@@ -270,8 +276,8 @@ class PlanningScreen {
 		for (var i = 0; i < trs.length; ++i) {
 			trs[i].style.display = 'none';
 		}
-		
-		if(this.onClickUpdate) {
+
+		if (this.onClickUpdate) {
 			this.onClickUpdate(this.id, this.planningCollection);
 		}
 
@@ -314,17 +320,25 @@ class PlanningScreen {
 				break;
 		}
 
-		this.recomputeTotal(table);		
+		this.recomputeTotal(table);
 		this.planningCollection.groups[table.id].items[row.id] = item;
 
 	}
 
 	onClickDropup(event) {
-		if(this.dropupContent.style.display === "none") {
+		if (this.dropupContent.style.display === "none") {
 			this.dropupContent.style.display = "block";
+			event.target.firstElementChild.innerText = "▼";
 		} else {
+			//No need to set arrow up because it'll be handled by setSliceButtonText
 			this.dropupContent.style.display = "none";
 		}
+	}
+
+	onClickSetSlice(e) {
+		this.gfx.onClickSetSlice(e);
+		const sliceName = e.target.innerText;
+		this.slicesButton.firstChild.nodeValue = sliceName + " ";
 	}
 
 	onClickAddRow(event) {
