@@ -78,9 +78,11 @@ class SpendingGDrive {
 		const yearFolderId = await this.getYearFolderId(year);
 		const fileId = await this.#gDrive.writeFile(yearFolderId, month + ".json", localSpendings);
 		if(!fileId) {
-			console.log("No file id generated", yearFolderId, month, localSpendings)
+			console.log("No file id generated", yearFolderId, month, localSpendings);
+			localStorage.setItem("Error_createFile_noFileId", yearFolderId + "," + month + "," + localSpendings);
+			return;
 		}
-		await this.setGdriveFileIdToLocalStorage(year, month, fileId);
+		this.setGdriveFileIdToLocalStorage(year, month, fileId);
 	}
 
 	async readAll(monthFileId) {
