@@ -20,25 +20,27 @@ class GraphicEffects {
 	init(forContainer) {
 		/* Slice slider */
 		this.rootContainer = forContainer;
-		this.containerWidth = this.rootContainer.clientWidth;
+		//TDO use percentages instead of width
+		//this.containerWidth = this.rootContainer.clientWidth;
 		this.sliderWrapper = this.rootContainer.querySelector('.section');
 		this.lastIndex = this.sliderWrapper.children.length + 1;
+		//TDO reuse in memory DOM elements in order to accelerate reflows (use few DOM nodes)
+		//This also ensures we have proper scroll position. We enable slide for > 3 slices
 		// appened cloneNodes to the parent element.
-		const $clonedFirstChild = this.sliderWrapper.firstElementChild.cloneNode(true);
-		const $clonedLastChild = this.sliderWrapper.lastElementChild.cloneNode(true);
-		//TODO: Do this after the user scrolled to the end, so that we also copy the scroll position
-		this.sliderWrapper.insertBefore($clonedLastChild, this.sliderWrapper.firstElementChild);
-		this.sliderWrapper.appendChild($clonedFirstChild);
+		//const $clonedFirstChild = this.sliderWrapper.firstElementChild.cloneNode(true);
+		//const $clonedLastChild = this.sliderWrapper.lastElementChild.cloneNode(true);
+		//this.sliderWrapper.insertBefore($clonedLastChild, this.sliderWrapper.firstElementChild);
+		//this.sliderWrapper.appendChild($clonedFirstChild);
+		/* this.sliderWrapper.style.transition = 'transform 0s linear';
+		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`;*/
 
 		this.slices = this.rootContainer.querySelectorAll('.slice');
 		this.slices.forEach((el, i) => {
 			el.setAttribute('data-slice-index', i);
 		});
 
-		this.currentIndex = 1;
+		this.currentIndex = 0;
 
-		this.sliderWrapper.style.transition = 'transform 0s linear';
-		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`;
 
 		// * when mousedown or touchstart
 		this.sliderWrapper.addEventListener('mousedown', this.startSliderEventListener);
@@ -49,7 +51,7 @@ class GraphicEffects {
 		window.addEventListener('mouseup', this.endSliderEventListener);
 		window.addEventListener('touchend', this.endSliderEventListener);
 		window.addEventListener('resize', this.refreshEventListener, true);
-		this.setSlide(this.currentIndex);
+		//this.setSlide(this.currentIndex);
 
 		/* nav panel */
 		this.$main = document.getElementById('main');
@@ -64,6 +66,9 @@ class GraphicEffects {
 	}
 
 	setSlide(index) {
+		if (!this.containerWidth) {
+			this.containerWidth = this.rootContainer.clientWidth;
+		}
 		this.currentIndex = +index;
 		this.currentIndex = Math.min(this.currentIndex, this.lastIndex);
 		requestAnimationFrame(() => {
@@ -78,7 +83,6 @@ class GraphicEffects {
 	}
 
 	startSlider(e) {
-		console.log("Start slider")
 		this.mouseDown = true;
 
 		// check desktop or mobile
@@ -86,7 +90,6 @@ class GraphicEffects {
 		this.startY = e.clientY ? e.clientY : e.touches[0].screenY;
 
 		this.sliderWrapper.removeEventListener('touchmove', this.startSliderEventListener);
-		console.error("adding mousemove");
 		this.rootContainer.addEventListener(e.clientX ? 'mousemove' : 'touchmove',
 			this.moveSliderEventListener, { passive: true });
 	};
@@ -114,10 +117,8 @@ class GraphicEffects {
 			//Vertical is allowed by default.
 			if (this.scrolling === undefined || this.scrolling === "horizontal") {
 				this.sliderWrapper.style.transition = 'transform 0s linear';
-				this.sliderWrapper.style.transform = `translateX(${
-					currentX - this.startX - this.containerWidth * this.currentIndex
+				this.sliderWrapper.style.transform = `translateX(${currentX - this.startX - this.containerWidth * this.currentIndex
 					}px)`;
-					console.log(this.sliderWrapper.style.transform, this.startX, currentX, this.containerWidth, this.currentIndex)
 			}
 		});
 	};
@@ -136,7 +137,7 @@ class GraphicEffects {
 			const dist = x - this.startX || 0;
 
 			if (dist > 50 && this.currentIndex > 1) this.currentIndex--;
-			else if (dist < -50 && this.currentIndex < this.lastIndex - 1) this.currentIndex++;
+			else if (dist < -50 && this.currentIndex < this.lastIndex - 2) this.currentIndex++;
 			this.setSlide(this.currentIndex);
 		}
 		this.sliderWrapper.addEventListener('touchmove', this.startSliderEventListener, { passive: true });
