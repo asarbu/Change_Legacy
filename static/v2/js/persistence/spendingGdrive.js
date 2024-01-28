@@ -65,6 +65,12 @@ class SpendingGDrive {
 	}
 
 	setGdriveFileIdToLocalStorage(year, month, fileId) {
+		if(!year || !month || !fileId) {
+			var err = new Error();
+			localStorage.setItem("Error_setGdriveFileIdToLocalStorage", year + "," + month + "," + fileId + "." + err.stack);
+			console.errror("missing one parameter");
+			return;
+		}
 		localStorage.setItem("gDrive_fileId_" + year + month, fileId);
 	}
 
