@@ -78,7 +78,7 @@ class PlanningScreen {
 			const monthly = create('th');
 			const yearly = create('th');
 			const buttons = create('th');
-			const button = createImageButton('Add Row', "", [], icons.add_row);
+			const button = createImageButton('Add Row', "", [], undefined);
 			button.addEventListener("click", this.onClickAddRow.bind(this), false);
 
 			nameCol.innerText = group.groupName;
@@ -125,7 +125,7 @@ class PlanningScreen {
 
 		if (options.deletable) {
 			const buttonsCell = row.insertCell(-1);
-			const btn = createImageButton("Delete", "", [], icons.delete);
+			const btn = createImageButton("Delete", "", [], undefined);
 			btn.addEventListener("click", this.onClickDelete.bind(this));
 			buttonsCell.appendChild(btn);
 

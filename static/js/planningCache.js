@@ -3,7 +3,7 @@ class PlanningCache {
     static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
 
     constructor() {
-		this.pdb = new Idb(PlanningCache.PLANNING_STORE_NAME, 1, this.upgradePlanningDatabase);
+		this.pdb = new Idb(PlanningCache.PLANNING_STORE_NAME, 2024, this.upgradePlanningDatabase);
     }
 
     async init() {

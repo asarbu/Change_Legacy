@@ -40,11 +40,12 @@ class PlanningController {
 			const localCollections = await planningCache.readAll();
 			const planningTab = new PlanningScreen(storeName, localCollections);
 			planningTab.onClickUpdate = this.onClickUpdate.bind(this);
-			planningTab.init();
+			//planningTab.init();
 			this.#tabs.set(storeName, planningTab);
 			//console.log(planningCollections)
 		}
 		
+		this.#tabs.get(currentYear).init();
 		this.#tabs.get(currentYear).activate();
 
 		/*if(gdriveSync) {

@@ -136,7 +136,7 @@ class GraphicEffects {
 
 			const dist = x - this.startX || 0;
 
-			if (dist > 50 && this.currentIndex > 1) this.currentIndex--;
+			if (dist > 50 && this.currentIndex > 0) this.currentIndex--;
 			else if (dist < -50 && this.currentIndex < this.lastIndex - 2) this.currentIndex++;
 			this.setSlide(this.currentIndex);
 		}
