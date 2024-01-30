@@ -1,11 +1,16 @@
+/**
+ * @class
+ */
 class PlanningCache {
 	static DATABASE_NAME = 'Planning';
 	static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
+	//TODO: Lower this to 1 at release
 	static DATABASE_VERSION = 2024;
 	
 	/**
 	 * Returns all planning caches in the database, initialized
-	 * @returns {Map<String, PlanningCache>}
+	 * @constructs PlanningCache
+	 * @returns {Array<PlanningCache>}
 	 */
 	static async getAll() {
 		//const currentYear =  new Date().toLocaleString("en-US", {year: "numeric"});
@@ -13,14 +18,14 @@ class PlanningCache {
 		await idb.init();
 		
 		const objectStores = idb.getObjectStores();
-		const planningCaches = new Map();
+		const planningsArray = new Array(objectStores.length);
 		for (let index = 0; index < objectStores.length; index++) {
 			const storeName = objectStores[index];
 			const planningCache = new PlanningCache(storeName, idb);
 			await planningCache.init();
-			planningCaches.set(storeName, planningCache);	
+			planningsArray.push(planningCache);	
 		}
-		return planningCaches;
+		return planningsArray;
 	}
 
 	static upgradePlanningDatabase(db, oldVersion, newVersion) {
