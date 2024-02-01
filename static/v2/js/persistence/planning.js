@@ -1,15 +1,15 @@
 /**
  * @class
  */
-class Planning {
+export class Planning {
 	/**
 	 * @constructs Planning
-	 * @param {integer} year 
+	 * @param {integer} year
 	 */
 	constructor(year) {
 		this.year = year;
 		/**
-		 * @type{Array<PlanningContexts>}
+		 * @type{Array<PlanningContext>}
 		 */
 		this.plannningContexts = [];
 	}
@@ -18,10 +18,10 @@ class Planning {
 /**
  * @class
  */
-class PlanningContext {
+export class PlanningContext {
 	/**
-	 * 
-	 * @param {string} name 
+	 *
+	 * @param {string} name
 	 */
 	constructor(name) {
 		/**
@@ -38,10 +38,10 @@ class PlanningContext {
 /**
  * @class
  */
-class PlanningCategory {
+export class PlanningCategory {
 	/**
-	 * 
-	 * @param {string} name 
+	 *
+	 * @param {string} name
 	 */
 	constructor(name) {
 		/**
@@ -58,7 +58,7 @@ class PlanningCategory {
 /**
  * @class
  */
-class PlanningGoal {
+export class PlanningGoal {
 	/**
 	 * @param {Object} goal - Unit to store in object.
 	 * @param {integer} goal.name - The name of the goal.
@@ -66,7 +66,12 @@ class PlanningGoal {
 	 * @param {integer} goal.monthly - The name of the goal.
 	 * @param {integer} goal.yearly - The name of the goal.
 	 */
-	constructor({ name, daily, monthly, yearly }) {
+	constructor({
+		name,
+		daily,
+		monthly,
+		yearly,
+	}) {
 		/**
 		 * @type{string}
 		 */

@@ -1,9 +1,14 @@
-/**
- * @class
- */
-class Idb {
-	static #READ_ONLY = "readonly";
-	static #READ_WRITE = "readwrite"
+export default class Idb {
+	static #READ_ONLY = 'readonly';
+
+	static #READ_WRITE = 'readwrite';
+
+	/**
+	 * @constructor
+	 * @param {string} dbName Database name
+	 * @param {number} dbVersion Database version
+	 * @param {upgradeDbCallback} upgradeCallback Callback function to call in case upgrade is needed
+	 */
 	constructor(dbName, dbVersion, upgradeCallback) {
 		this.dbName = dbName;
 		this.dbVersion = dbVersion;
@@ -15,49 +20,46 @@ class Idb {
 	 * @returns An instance of this
 	 */
 	async init() {
-		console.log("Init", this.dbName)
-		this.db = await this.open(this.dbName, this.dbVersion, this.upgradeCallback);
+		await this.open(this.dbName, this.dbVersion, this.upgradeCallback);
 		return this;
 	}
 
 	/**
 	 * @typedef {function(db:db, number, number)} upgradeCallback
 	 * @callback upgradeDbCallback
-	 * @param {db} db Database to be upgraded. 
+	 * @param {db} db Database to be upgraded.
 	 * @param {number} oldVersion Version from which to upgrade
-	 * @param {number} newVersion Version to which to upgrade. 
+	 * @param {number} newVersion Version to which to upgrade.
 	 */
 
 	/**
 	 * Opens an IndexedDb Database
 	 * @param {string} dbName Database name
 	 * @param {number} version Version to upgrade this database
-	 * @param {upgradeDbCallback} upgradeCallback called in case the database needs upgrage 
-	 * @returns {Promise<IndexedDb>} 
+	 * @param {upgradeDbCallback} upgradeCallback called in case the database needs upgrage
+	 * @returns {Promise<IndexedDb>}
 	 */
 	open(dbName, version, upgradeCallback) {
 		return new Promise((resolve, reject) => {
 			if (!window.indexedDB) {
-				console.error(`Your browser doesn't support IndexedDB`);
 				return;
 			}
 			const request = indexedDB.open(dbName, version);
 
 			request.onsuccess = (event) => {
 				const db = event.target.result;
+				this.db = db;
 				resolve(db);
-			}
+			};
 
 			request.onerror = (event) => {
-				reject(`Database error: ${event.target.errorCode}`);
+				reject(new Error(`Database error: ${event.target.errorCode}`));
 			};
 
 			request.onupgradeneeded = (event) => {
 				const db = event.target.result;
 				if (upgradeCallback) {
 					upgradeCallback(db, event.oldVersion, event.newVersion);
-				} else {
-					console.error(dbName + " upgrade callback not provided");
 				}
 			};
 		});
@@ -68,20 +70,20 @@ class Idb {
 	 * @returns {Promise<Array<PlanningContext>>}
 	 */
 	openCursor(storeName) {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			const st = this.getStoreTransaction(storeName, Idb.#READ_ONLY);
 			const store = st[0];
 			const txn = st[1];
 
-			var values = new Map();
+			const values = new Map();
 			store.openCursor().onsuccess = (event) => {
-				let cursor = event.target.result;
+				const cursor = event.target.result;
 				if (cursor) {
 					values.set(cursor.key, cursor.value);
 					cursor.continue();
 				}
 			};
-			txn.oncomplete = function () {
+			txn.oncomplete = () => {
 				resolve(values);
 			};
 		});
@@ -95,24 +97,23 @@ class Idb {
 	 * @returns {Promise<Array<Object>>} A pair of [key, value] objects.
 	 */
 	insert(storeName, value, key) {
-		console.log("IDB put:", storeName, value, key);
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
 
-			var query;
+			let query;
 			if (key) {
 				query = store.put(value, key);
 			} else {
 				query = store.put(value);
 			}
 
-			query.onsuccess = function (event) {
+			query.onsuccess = (event) => {
 				resolve([event.target.result, value]);
 			};
 
-			query.onerror = function (event) {
+			query.onerror = (event) => {
 				reject(event.target.errorCode);
-			}
+			};
 		});
 	}
 
@@ -125,11 +126,11 @@ class Idb {
 	get(storeName, key) {
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
-			let query = store.get(key);
+			const query = store.get(key);
 
 			query.onsuccess = (event) => {
 				if (!event.target.result) {
-					reject(`The value with key ${key} not found`);
+					reject(new Error(`The value with key ${key} not found`));
 				} else {
 					const value = event.target.result;
 					resolve(value);
@@ -139,29 +140,29 @@ class Idb {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param {string} storeName Object store to look up
 	 * @param {string} indexName Index Name from IndexedDb
 	 * @param {IDBKeyRange} iDbKey Criteria to filter results
 	 * @returns {Promise<Array<Object>>}
 	 */
 	getAllByIndex(storeName, indexName, iDbKey) {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			const st = this.getStoreTransaction(storeName, Idb.#READ_ONLY);
 			const store = st[0];
 			const txn = st[1];
 
-			//console.log("Getting all by index", storeName, index, key)
-			var values = [];
+			// console.log("Getting all by index", storeName, index, key)
+			const values = [];
 			store.index(indexName).openCursor(iDbKey).onsuccess = (event) => {
-				let cursor = event.target.result;
+				const cursor = event.target.result;
 				if (cursor) {
-					values.push({key: cursor.primaryKey, value: cursor.value});
+					values.push({ key: cursor.primaryKey, value: cursor.value });
 					cursor.continue();
 				}
 			};
 
-			txn.oncomplete = function () {
+			txn.oncomplete = () => {
 				resolve(values);
 			};
 		});
@@ -173,39 +174,38 @@ class Idb {
 	 * @returns {Promise<number>}
 	 */
 	count(storeName) {
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
 
-			let query = store.count();
+			const query = store.count();
 			query.onsuccess = (event) => {
-				resolve(query.result);
+				resolve(`${query.result} ${event.target.result}`);
 			};
 		});
 	}
 
 	/**
-	 * TODO clarify return. It is not consistent with below functions
-	 * Deletes all of the objects in the store 
+	 * TODO Check what result contains
+	 * Deletes all of the objects in the store
 	 * @param {string} storeName Object store to look up
-	 * @returns {Promise<Boolean|number>} True if success. Error code if failure
+	 * @returns {Promise<number>} Result or error code
 	 */
 	clear(storeName) {
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
 
-			let query = store.clear();
+			const query = store.clear();
 			query.onsuccess = (event) => {
-				resolve(true);
+				resolve(event.target.result);
 			};
 			query.onerror = (event) => {
 				reject(event.target.errorCode);
-			}
+			};
 		});
 	}
 
 	/**
-	 * TODO: Return deleted object in resolve.
-	 * Delete object from store by id. 
+	 * Delete object from store by id.
 	 * @param {string} storeName Object store to look up
 	 * @param {(string|number)} key The identifier of the object
 	 * @returns {Promise<undefined>}
@@ -213,23 +213,20 @@ class Idb {
 	delete(storeName, key) {
 		return new Promise((resolve, reject) => {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_WRITE)[0];
-			let query = store.delete(key);
+			const query = store.delete(key);
 
-			query.onsuccess = function (event) {
-				console.log("Deleted ", key);
-				//console.trace();
-				resolve();
+			query.onsuccess = (event) => {
+				resolve(event.target.result);
 			};
 
 			// handle the error case
-			query.onerror = function (event) {
+			query.onerror = (event) => {
 				reject(event);
-			}
+			};
 		});
 	}
 
 	/**
-	 * TODO clarify what return value actually means. What is the result?
 	 * Puts all of the properties of the object in the store.
 	 * Function is using the property name as store key and property value as store value
 	 * @param {string} storeName Object store to look up
@@ -237,41 +234,41 @@ class Idb {
 	 * @returns {Promise<number>} Result
 	 */
 	async putAll(storeName, data) {
-		console.log("IDB put all:", storeName, data);
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE);
-			
-			for (const [key, value] of data) {
-				var query;
+
+			for (let i = 0; i < data.length; i += 1) {
+				const value = data[i];
+				const key = data[i].id;
 				if (key) {
-					query = store.put(value, key);
+					store.put(value, key);
 				} else {
-					query = store.put(value);
+					store.put(value);
 				}
 			}
-			
-			transaction.oncomplete = function (event) {
+
+			transaction.oncomplete = (event) => {
 				resolve([event.target.result]);
 			};
 		});
 	}
 
 	/**
-	 * //TODO clarify what the data input type is  (Array, map?)
 	 * Update all of the values in the object store.
 	 * @param {string} storeName Object store to look up
 	 * @param {Array<Object>} data Items to update in store.
-	 * @returns 
+	 * @returns
 	 */
 	async updateAll(storeName, data) {
-		//console.log("IDB put all:", storeName, data);
-		return new Promise((resolve, reject) => {
+		// console.log("IDB put all:", storeName, data);
+		return new Promise((resolve) => {
 			const [store, transaction] = this.getStoreTransaction(storeName, Idb.#READ_WRITE);
-			for (const item of data) {
+			for (let i = 0; i < data.length; i += 1) {
+				const item = data[i];
 				store.put(item.value, item.key);
 			}
-			
-			transaction.oncomplete = function (event) {
+
+			transaction.oncomplete = (event) => {
 				resolve([event.target.result]);
 			};
 		});
@@ -286,6 +283,7 @@ class Idb {
 		if (this.db.objectStoreNames.contains(storeName)) {
 			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -297,17 +295,16 @@ class Idb {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param {string} storeName Object store to look up
 	 * @param {string} mode #READ_ONLY or #READ_WRITE
 	 * @returns {Array<Object>}
 	 */
 	getStoreTransaction(storeName, mode) {
 		if (!this.db.objectStoreNames.contains(storeName)) {
-			console.log("Error at getting store with name", storeName)
-			console.trace();
-			//this.db.createObjectStore(storeName, { autoIncrement: true });
+			return undefined;
 		}
+
 		const txn = this.db.transaction(storeName, mode);
 		const store = txn.objectStore(storeName);
 

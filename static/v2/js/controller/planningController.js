@@ -20,7 +20,7 @@ class PlanningController {
 	#slices=undefined;
 	/**
 	 * Used for fast retreival of local caches.
-	 * @type {Map<String, PlanningCache>}
+	 * @type {Array<PlanningCache>}
 	 * @private
 	 */
 	#caches = undefined;
@@ -36,7 +36,7 @@ class PlanningController {
 		this.#caches = await PlanningCache.getAll();
 		//const planningCaches = this.#caches.values();
 		
-		for (const [storeName, planningCache] of this.#caches.entries()){
+		for (const planningCache of this.#caches){
 			const localCollections = await planningCache.readAll();
 			const planningTab = new PlanningScreen(storeName, localCollections);
 			planningTab.onClickUpdate = this.onClickUpdate.bind(this);

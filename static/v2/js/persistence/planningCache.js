@@ -1,30 +1,30 @@
-import "./idb.js";
-import "./planning.js"
+import Idb from './idb';
 
-/**
- * @class
- */
 class PlanningCache {
 	static DATABASE_NAME = 'Planning';
+
 	static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
-	//TODO: Lower this to 1 at release
+
+	// TODO: Lower this to 1 at release
 	static DATABASE_VERSION = 2024;
 
 	/**
 	 * Returns all planning caches in the database, initialized
-	 * @async
 	 * @constructs PlanningCache
-	 * @returns {Array<PlanningCache>}
+	 * @returns {Promise<Array<PlanningCache>>}
 	 */
 	static async getAll() {
-		//const currentYear =  new Date().toLocaleString("en-US", {year: "numeric"});
-		const idb = new Idb(PlanningCache.DATABASE_NAME, PlanningCache.DATABASE_VERSION, PlanningCache.upgradePlanningDatabase);
+		const idb = new Idb(
+			PlanningCache.DATABASE_NAME,
+			PlanningCache.DATABASE_VERSION,
+			PlanningCache.upgradePlanningDatabase,
+		);
 		await idb.init();
 
 		const objectStores = idb.getObjectStores();
 		const planningsArray = new Array(objectStores.length);
-		for (let index = 0; index < objectStores.length; index++) {
-			const storeName = objectStores[index];
+		for (let i = 0; i < objectStores.length; i += 1) {
+			const storeName = objectStores[i];
 			const planningCache = new PlanningCache(storeName, idb);
 			await planningCache.init();
 			planningsArray.push(planningCache);
@@ -41,18 +41,14 @@ class PlanningCache {
 	 */
 	static upgradePlanningDatabase(db, oldVersion, newVersion) {
 		if (!newVersion) {
-			console.error("No new version provided to create object store", db, newVersion);
+			return;
 		}
 
-		let store = db.createObjectStore(newVersion, { autoIncrement: true });
+		const store = db.createObjectStore(newVersion, { autoIncrement: true });
 		store.createIndex('byType', 'type', { unique: false });
-		//store.createIndex('byGroup', 'groups.name', { unique: false, multiEntry: true });
-
-		return;
 	}
 
 	/**
-	 * 
 	 * @param {string} storeName Object store name associated with this object
 	 * @param {Idb} idb Idb instance
 	 */
@@ -69,24 +65,19 @@ class PlanningCache {
 		await this.idb.init();
 
 		const storeCount = await this.idb.count(this.storeName);
-		if (storeCount == 0) {
+		if (storeCount === 0) {
 			await fetch(PlanningCache.PLANNING_TEMPLATE_URI)
-				.then(response => {
-					return response.json();
-				})
-				.then(planningFile =>
-					this.idb.putAll(this.storeName, Object.entries(planningFile))
-				);
+				.then((response) => response.json())
+				.then((planningFile) => this.idb.putAll(this.storeName, Object.entries(planningFile)));
 		}
 	}
 
 	/**
 	 * Read all planning contexts from the cache
-	 * @async
-	 * @returns {Array<PlanningContext>}
+	 * @returns {Promise<Array<PlanningContext>>}
 	 */
 	async readAll() {
-		return await this.idb.openCursor(this.storeName);
+		return this.idb.openCursor(this.storeName);
 	}
 
 	/**
@@ -105,8 +96,8 @@ class PlanningCache {
 	 * @returns {Array<PlanningContext>}
 	 */
 	async readExpenses() {
-		const keyRange = IDBKeyRange.only("Expense");
-		return await this.idb.getAllByIndex(this.storeName, 'byType', keyRange);
+		const keyRange = IDBKeyRange.only('Expense');
+		return this.idb.getAllByIndex(this.storeName, 'byType', keyRange);
 	}
 
 	/**
@@ -115,7 +106,7 @@ class PlanningCache {
 	 * @returns {Array<PlanningCategory>}
 	 */
 	async readCategories() {
-		return await this.idb.openCursor(this.storeName)
+		return this.idb.openCursor(this.storeName);
 	}
 
 	/**
@@ -125,7 +116,7 @@ class PlanningCache {
 	 * @returns {PlanningContext}
 	 */
 	async read(key) {
-		return await this.idb.get(this.storeName, key);
+		return this.idb.get(this.storeName, key);
 	}
 
 	/**
