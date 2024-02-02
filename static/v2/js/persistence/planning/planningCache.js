@@ -1,6 +1,6 @@
-import Idb from './idb';
+import Idb from '../idb';
 
-class PlanningCache {
+export default class PlanningCache {
 	static DATABASE_NAME = 'Planning';
 
 	static PLANNING_TEMPLATE_URI = 'static/js/planning.json';

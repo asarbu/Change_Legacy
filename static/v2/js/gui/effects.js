@@ -1,4 +1,4 @@
-class GraphicEffects {
+export default class GraphicEffects {
 	constructor() {
 		/* Slice slider */
 		this.rootContainer = undefined;
@@ -20,19 +20,19 @@ class GraphicEffects {
 	init(forContainer) {
 		/* Slice slider */
 		this.rootContainer = forContainer;
-		//TDO use percentages instead of width
-		//this.containerWidth = this.rootContainer.clientWidth;
+		// TDO use percentages instead of width
+		// this.containerWidth = this.rootContainer.clientWidth;
 		this.sliderWrapper = this.rootContainer.querySelector('.section');
 		this.lastIndex = this.sliderWrapper.children.length + 1;
-		//TDO reuse in memory DOM elements in order to accelerate reflows (use few DOM nodes)
-		//This also ensures we have proper scroll position. We enable slide for > 3 slices
+		// TDO reuse in memory DOM elements in order to accelerate reflows (use few DOM nodes)
+		// This also ensures we have proper scroll position. We enable slide for > 3 slices
 		// appened cloneNodes to the parent element.
-		//const $clonedFirstChild = this.sliderWrapper.firstElementChild.cloneNode(true);
-		//const $clonedLastChild = this.sliderWrapper.lastElementChild.cloneNode(true);
-		//this.sliderWrapper.insertBefore($clonedLastChild, this.sliderWrapper.firstElementChild);
-		//this.sliderWrapper.appendChild($clonedFirstChild);
+		// const $clonedFirstChild = this.sliderWrapper.firstElementChild.cloneNode(true);
+		// const $clonedLastChild = this.sliderWrapper.lastElementChild.cloneNode(true);
+		// this.sliderWrapper.insertBefore($clonedLastChild, this.sliderWrapper.firstElementChild);
+		// this.sliderWrapper.appendChild($clonedFirstChild);
 		/* this.sliderWrapper.style.transition = 'transform 0s linear';
-		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`;*/
+		this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * 1}px)`; */
 
 		this.slices = this.rootContainer.querySelectorAll('.slice');
 		this.slices.forEach((el, i) => {
@@ -40,7 +40,6 @@ class GraphicEffects {
 		});
 
 		this.currentIndex = 0;
-
 
 		// * when mousedown or touchstart
 		this.sliderWrapper.addEventListener('mousedown', this.startSliderEventListener);
@@ -51,18 +50,17 @@ class GraphicEffects {
 		window.addEventListener('mouseup', this.endSliderEventListener);
 		window.addEventListener('touchend', this.endSliderEventListener);
 		window.addEventListener('resize', this.refreshEventListener, true);
-		//this.setSlide(this.currentIndex);
+		// this.setSlide(this.currentIndex);
 
 		/* nav panel */
 		this.$main = document.getElementById('main');
-		this.$sidenav_left = document.getElementById("sidenav");
+		this.$sidenav_left = document.getElementById('sidenav');
 		this.$sidenav_right = this.$sidenav_left.cloneNode(true);
-		this.$sidenav_left.classList.add("sidenav-left");
-		this.$sidenav_right.classList.add("sidenav-right");
+		this.$sidenav_left.classList.add('sidenav-left');
+		this.$sidenav_right.classList.add('sidenav-right');
 		this.$sidenav_left.parentNode.appendChild(this.$sidenav_right);
 
-
-		document.querySelectorAll('.nav-trigger').forEach((el) => el.addEventListener("click", this.openNav.bind(this)));
+		document.querySelectorAll('.nav-trigger').forEach((el) => el.addEventListener('click', this.openNav.bind(this)));
 	}
 
 	setSlide(index) {
@@ -78,7 +76,7 @@ class GraphicEffects {
 	}
 
 	onClickSetSlice(e) {
-		const sliceIndex = e.target.getAttribute("data-slice-index");
+		const sliceIndex = e.target.getAttribute('data-slice-index');
 		this.setSlide(sliceIndex);
 	}
 
@@ -90,35 +88,38 @@ class GraphicEffects {
 		this.startY = e.clientY ? e.clientY : e.touches[0].screenY;
 
 		this.sliderWrapper.removeEventListener('touchmove', this.startSliderEventListener);
-		this.rootContainer.addEventListener(e.clientX ? 'mousemove' : 'touchmove',
-			this.moveSliderEventListener, { passive: true });
-	};
+		this.rootContainer.addEventListener(
+			e.clientX ? 'mousemove' : 'touchmove',
+			this.moveSliderEventListener,
+			{ passive: true },
+		);
+	}
 
 	moveSlider(e) {
 		if (!this.mouseDown) return;
 
-		let currentX = e.clientX || e.touches[0].screenX;
-		let currentY = e.clientY || e.touches[0].screenY;
+		const currentX = e.clientX || e.touches[0].screenX;
+		const currentY = e.clientY || e.touches[0].screenY;
 		requestAnimationFrame(() => {
 			if (!this.scrolling) {
-				//Check scroll direction
-				if (Math.abs(currentY - this.startY) > 10) { //Vertical
-					//Needed to avoid glitches in horizontal scrolling
-					this.scrolling = "vertical";
-					//Reset horizontal scroll to zero, by resetting the slide index
+				// Check scroll direction
+				if (Math.abs(currentY - this.startY) > 10) { // Vertical
+					// Needed to avoid glitches in horizontal scrolling
+					this.scrolling = 'vertical';
+					// Reset horizontal scroll to zero, by resetting the slide index
 					this.setSlide(this.currentIndex);
 					return;
-				} else if (Math.abs(currentX - this.startX) > 10) { //Horizontal
-					this.scrolling = "horizontal";
+				} if (Math.abs(currentX - this.startX) > 10) { // Horizontal
+					this.scrolling = 'horizontal';
 				}
 			}
 
-			//Allow horizontal scroll even if no scroll is present.
-			//Vertical is allowed by default.
-			if (this.scrolling === undefined || this.scrolling === "horizontal") {
+			// Allow horizontal scroll even if no scroll is present.
+			// Vertical is allowed by default.
+			if (this.scrolling === undefined || this.scrolling === 'horizontal') {
 				this.sliderWrapper.style.transition = 'transform 0s linear';
-				this.sliderWrapper.style.transform = `translateX(${currentX - this.startX - this.containerWidth * this.currentIndex
-					}px)`;
+				this.sliderWrapper.style.transform = `translateX(${currentX - this.startX
+					- this.containerWidth * this.currentIndex}px)`;
 			}
 		});
 	};
@@ -127,108 +128,78 @@ class GraphicEffects {
 		if (!this.mouseDown || !e) return;
 
 		this.mouseDown = false;
-		if (this.scrolling === "horizontal") {
+		if (this.scrolling === 'horizontal') {
 			let x = e.clientX;
-			//x evaluates to 0 if you drag left to the end of the body)
+			// x evaluates to 0 if you drag left to the end of the body)
 			if (!x && e.changedTouches) {
 				x = e.changedTouches[0].screenX;
 			}
 
 			const dist = x - this.startX || 0;
 
-			if (dist > 50 && this.currentIndex > 0) this.currentIndex--;
-			else if (dist < -50 && this.currentIndex < this.lastIndex - 2) this.currentIndex++;
+			if (dist > 50 && this.currentIndex > 0) this.currentIndex -= 1;
+			else if (dist < -50 && this.currentIndex < this.lastIndex - 2) this.currentIndex += 1;
 			this.setSlide(this.currentIndex);
 		}
 		this.sliderWrapper.addEventListener('touchmove', this.startSliderEventListener, { passive: true });
 		this.scrolling = undefined;
-	};
+	}
 
 	refresh() {
 		this.containerWidth = this.rootContainer.clientWidth;
 		this.setSlide(this.currentIndex);
-	};
+	}
 
 	/* Nav panel */
 	openNav(ev) {
-		const side = ev.target.dataset.side;
-		if (side === "left") {
-			if (this.navOpen === "left") {
+		const { side } = ev.target.dataset;
+		if (side === 'left') {
+			if (this.navOpen === 'left') {
 				this.closeNav();
 				return;
 			}
 
-			this.$sidenav_right.classList.remove("sidenav-open");
-			this.$sidenav_left.classList.add("sidenav-open");
-			this.$main.classList.remove("main-shift-right");
-			this.$main.classList.add("main-shift-left");
+			this.$sidenav_right.classList.remove('sidenav-open');
+			this.$sidenav_left.classList.add('sidenav-open');
+			this.$main.classList.remove('main-shift-right');
+			this.$main.classList.add('main-shift-left');
 
-			this.navOpen = "left";
+			this.navOpen = 'left';
 		}
-		else if (side === "right") {
-			if (this.navOpen === "right") {
+		else if (side === 'right') {
+			if (this.navOpen === 'right') {
 				this.closeNav();
 				return;
 			}
 
-			this.$sidenav_left.classList.remove("sidenav-open");
-			this.$sidenav_right.classList.add("sidenav-open");
-			this.$main.classList.remove("main-shift-left");
-			this.$main.classList.add("main-shift-right");
+			this.$sidenav_left.classList.remove('sidenav-open');
+			this.$sidenav_right.classList.add('sidenav-open');
+			this.$main.classList.remove('main-shift-left');
+			this.$main.classList.add('main-shift-right');
 
-			this.navOpen = "right";
+			this.navOpen = 'right';
 		}
 
-		this.$main.addEventListener("transitionend", function transitioned() {
+		this.$main.addEventListener('transitionend', function transitioned() {
 			this.$main.removeEventListener('transitionend', transitioned);
 			this.refresh();
 		}.bind(this));
 	}
 
 	closeNav() {
-		this.$sidenav_left.classList.remove("sidenav-open");
-		this.$sidenav_right.classList.remove("sidenav-open");
-		this.$main.classList.remove("main-shift-left");
-		this.$main.classList.remove("main-shift-right");
+		this.$sidenav_left.classList.remove('sidenav-open');
+		this.$sidenav_right.classList.remove('sidenav-open');
+		this.$main.classList.remove('main-shift-left');
+		this.$main.classList.remove('main-shift-right');
 
 		this.navOpen = undefined;
-		this.$main.addEventListener("transitionend", function transitioned() {
+		this.$main.addEventListener('transitionend', function transitioned() {
 			this.$main.removeEventListener('transitionend', transitioned);
 			this.refresh();
 		}.bind(this));
 	}
 }
 
-function createImageButton(text, href, classList, src) {
-	const btn = create("button");
-	btn.classList.add(...classList);
-	btn.setAttribute("href", href);
-	const img = create("img");
-	img.classList.add("white-fill");
-	img.textContent = text;
-	img.alt = text;
-	img.src = src;
-	btn.appendChild(img);
-	return btn;
-}
-
-/**
- * Creates and decorates a new DOM Element
- * @param {string} element Type of element to be created
- * @param {Array} properties.classes Classes to be added to the DOM classlist 
- * @returns {DOMElement} 
- */
-function create(element, properties) {
-	var elmt = document.createElement(element);
-	for (var prop in properties) {
-		if (prop === "classes") {
-			elmt.classList.add(...properties[prop]);
-			continue;
-		}
-		elmt[prop] = properties[prop];
-	}
-	return elmt;
-}
 
 function createRow(table, data, options) {
 	var index = -1;
@@ -242,10 +213,10 @@ function createRow(table, data, options) {
 		dataCell = row.insertCell(-1);
 		dataCell.textContent = dataCtn;
 		if (!options.readonly) {
-			dataCell.setAttribute("editable", true);
+			dataCell.setAttribute('editable', true);
 		}
 		if (options.useBold == true) {
-			dataCell.style.fontWeight = "bold";
+			dataCell.style.fontWeight = 'bold';
 		}
 	}
 
@@ -255,31 +226,23 @@ function createRow(table, data, options) {
 
 	if (options.deletable) {
 		const buttonsCell = row.insertCell(-1);
-		const btn = create("button");
-		btn.classList.add("waves-effect", "waves-light", "red", "btn-small");
+		const btn = create('button');
+		btn.classList.add('waves-effect', 'waves-light', 'red', 'btn-small');
 		buttonsCell.appendChild(btn);
-		const img = create("img");
-		img.classList.add("white-fill");
-		img.innerText = "Delete";
-		img.alt = "Delete";
+		const img = create('img');
+		img.classList.add('white-fill');
+		img.innerText = 'Delete';
+		img.alt = 'Delete';
 		img.src = icons.delete;
 		btn.appendChild(img)
 
-		buttonsCell.setAttribute("hideable", "true");
+		buttonsCell.setAttribute('hideable', 'true');
 		if (options.hidden) {
 			buttonsCell.style.display = 'none';
 		}
 	}
-	//console.log("Created row", row)
+	// console.log("Created row", row)
 	return row;
-}
-
-function ReadRow() {
-	//TBD
-}
-
-function DeleteRow(table, row) {
-
 }
 
 var percentColors = [
@@ -312,18 +275,3 @@ function getColorForPercentage(pct) {
 	return 'rgb(' + [color.r, color.g, color.b].join(',') + ')';
 	// or output as hex if preferred
 };
-
-
-function onMouseOver(event) {
-	if (!event.target.matches("td"))
-		return;
-	var row = event.target.parentNode;
-	row.classList.add('active-row');
-}
-
-function onMouseOut(event) {
-	if (!event.target.matches("td"))
-		return;
-	var row = event.target.parentNode;
-	row.classList.remove('active-row');
-}

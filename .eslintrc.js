@@ -24,5 +24,6 @@ module.exports = {
 	rules: {
 		'no-tabs': 0,
 		indent: [1, 'tab'],
+		'linebreak-style': ['error', 'windows'],
 	},
 };
