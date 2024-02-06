@@ -75,11 +75,11 @@ export default class Idb {
 			const store = st[0];
 			const txn = st[1];
 
-			const values = new Map();
+			const values = [];
 			store.openCursor().onsuccess = (event) => {
 				const cursor = event.target.result;
 				if (cursor) {
-					values.set(cursor.key, cursor.value);
+					values.push(cursor.value);
 					cursor.continue();
 				}
 			};
@@ -178,8 +178,8 @@ export default class Idb {
 			const store = this.getStoreTransaction(storeName, Idb.#READ_ONLY)[0];
 
 			const query = store.count();
-			query.onsuccess = (event) => {
-				resolve(`${query.result} ${event.target.result}`);
+			query.onsuccess = () => {
+				resolve(query.result);
 			};
 		});
 	}

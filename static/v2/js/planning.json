@@ -1,389 +1,455 @@
-{
-	"VitalExpenses": {
-		"collectionName": "Vital expenses",
+[
+	{
+		"id": "VitalExpenses",
+		"name": "Vital expenses",
 		"type": "Expense",
-		"groups": {
-			"VitalExpenses": {
-				"groupName":"Vital Expenses",
-				"items":{
-					"Food": {
-						"itemName": "Food",
+		"categories": [
+			{
+				"id": "VitalExpenses",
+				"name": "Vital Expenses",
+				"goals": [
+					{
+						"id": "Food",
+						"name": "Food",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"Lunch": {
-						"itemName": "Lunch",
+					{
+						"id": "Lunch",
+						"name": "Lunch",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"Medication": {
-						"itemName": "Medication",
+					{
+						"id": "Medication",
+						"name": "Medication",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					},
-					"Hygene": {
-						"itemName": "Hygene",
+					{
+						"id": "Hygene",
+						"name": "Hygene",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					}
-				}
+				]
 			},
-			"Household": {
-				"groupName":"Household",
-				"items": {
-					"Rent": {
-						"itemName": "Rent",
+			{
+				"id":  "Household",
+				"name": "Household",
+				"goals": [
+					{
+						"id": "Rent",
+						"name": "Rent",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Gas": {
-						"itemName": "Gas",
+					{
+						"id": "Gas",
+						"name": "Gas",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Electricity": {
-						"itemName": "Electricity",
+					{
+						"id": "Electricity",
+						"name": "Electricity",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Water": {
-						"itemName": "Water",
+					{
+						"id": "Water",
+						"name": "Water",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Cable": {
-						"itemName": "Cable (Netflix/HBO/...)",
+					{
+						"id": "CableNetflixHBO",
+						"name": "Cable (Netflix/HBO/...)",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Internet": {
-						"itemName": "Internet",
+					{
+						"id": "Internet",
+						"name": "Internet",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Telephone": {
-						"itemName": "Telephone",
+					{
+						"id": "Telephone",
+						"name": "Telephone",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Trash": {
-						"itemName": "Trash",
+					{
+						"id": "Trash",
+						"name": "Trash",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"HouseMaintenance": {
-						"itemName": "House maintenance",
+					{
+						"id": "HouseMaintenance",
+						"name": "House maintenance",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Insurance": {
-						"itemName": "Insurance",
+					{
+						"id": "HomeInsurance",
+						"name": "Home Insurance",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Repairs": {
-						"itemName": "Repairs",
+					{
+						"id": "Repairs",
+						"name": "Repairs",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					}
-				}
+				]
 			},
-			"Transport": {
-				"groupName":"Transport",
-				"items": {
-					"PublicTransport": {
-						"itemName": "Public transport plan",
+			{
+				"id": "Transport",
+				"name": "Transport",
+				"goals": [
+					{
+						"id": "PublicTransportPlan",
+						"name": "Public transport plan",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Fuel": {
-						"itemName": "Fuel",
+					{
+						"id": "Fuel",
+						"name": "Fuel",
 						"daily": "0",
 						"monthly": "60",
 						"yearly": "0"
 					},
-					"Insurance": {
-						"itemName": "Insurance",
+					{
+						"id": "CarInsurance",
+						"name": "Car Insurance",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"CASCO": {
-						"itemName": "CASCO",
+					{
+						"id": "CASCO",
+						"name": "CASCO",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Tolls": {
-						"itemName": "Tolls",
+					{
+						"id": "Tolls",
+						"name": "Tolls",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Taxes": {
-						"itemName": "Taxes",
+					{
+						"id": "Taxes",
+						"name": "Taxes",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Revision": {
-						"itemName": "Revision",
+					{
+						"id": "Revision",
+						"name": "Revision",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Repairs": {
-						"itemName": "Repairs",
+					{
+						"id": "CarRepairs",
+						"name": "Car Repairs",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Tires": {
-						"itemName": "Tires",
+					{
+						"id": "Tires",
+						"name": "Tires",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Parking": {
-						"itemName": "Parking",
+					{
+						"id": "Parking",
+						"name": "Parking",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					}
-				}
+				]
 			},
-			"Savings": {
-				"groupName":"Savings",
-				"items": {
-					"EmergencyFund": {
-						"itemName": "Emergency fund",
+			{
+				"id": "Savings",
+				"name": "Savings",
+				"goals": [
+					{
+						"id": "EmergencyFund",
+						"name": "Emergency fund",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"SafetyFund": {
-						"itemName": "Safety fund",
+					{
+						"id": "SafetyFund",
+						"name": "Safety fund",
 						"daily": "0",
 						"monthly": "60",
 						"yearly": "0"
 					},
-					"Education": {
-						"itemName": "Education",
+					{
+						"id": "Education",
+						"name": "Education",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Retirement": {
-						"itemName": "Retirement",
+					{
+						"id": "Retirement",
+						"name": "Retirement",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					}
-				}
+				]
 			}
-		}
+		]
 	},
-	"OptionalExpenses": {
-		"collectionName": "Optional expenses",
+	{
+		"id": "OptionalExpenses",
+		"name": "Optional expenses",
 		"type": "Expense",
-		"groups": {
-			"OptionalExpenses": {
-				"groupName": "Optional expenses",
-				"items":{
-					"Vacations": {
-						"itemName": "Vacations",
+		"categories": [
+			{
+				"id": "OptionalExpenses",
+				"name": "Optional expenses",
+				"goals": [
+					{
+						"id": "Vacations",
+						"name": "Vacations",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Haircuts": {
-						"itemName": "Haircuts",
+					{
+						"id": "Haitcuts",
+						"name": "Haircuts",
 						"daily": "0",
 						"monthly": "60",
 						"yearly": "0"
 					},
-					"NightOuts": {
-						"itemName": "Night outs",
+					{
+						"id": "NightOuts",
+						"name": "Night outs",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"HouseRepairs": {
-						"itemName": "House repairs",
+					{
+						"id": "HouseRepairs",
+						"name": "House repairs",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Clothes": {
-						"itemName": "Clothes",
+					{
+						"id": "Clothes",
+						"name": "Clothes",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Gifts": {
-						"itemName": "Gifts",
+					{
+						"id": "Gifts",
+						"name": "Gifts",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Electronics": {
-						"itemName": "Electronics",
+					{
+						"id": "Electronics",
+						"name": "Electronics",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"PensionFund": {
-						"itemName": "Pension fund",
+					{
+						"id": "PensionFund",
+						"name": "Pension fund",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					}
-				}
+				]
 			},
-			"WastedMoney": {
-				"groupName": "Wasted Money",
-				"items":{
-					"Cigarettes": {
-						"itemName": "Cigarettes",
+			{
+				"id": "WastedMoney",
+				"name": "Wasted Money",
+				"goals": [
+					{
+						"id": "Cigarettes",
+						"name": "Cigarettes",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					},
-					"Gambling": {
-						"itemName": "Gambling",
+					{
+						"id": "Gambling",
+						"name": "Gambling",
 						"daily": "0",
 						"monthly": "60",
 						"yearly": "0"
 					},
-					"Hobbies": {
-						"itemName": "Hobbies",
+					{
+						"id": "Hobbies",
+						"name": "Hobbies",
 						"daily": "0",
 						"monthly": "0",
 						"yearly": "0"
 					}
-				}
+				]
 			}
-		}
+		]
 	},
-	"Debt": {
-		"collectionName":"Debt",
+	{
+		"id": "Debt",
+		"name": "Debt",
 		"type": "Expense",
-		"groups": {
-			"Debt": {
-				"groupName": "Debt",
-				"items" :{
-					"Mortgage": {
-						"itemName": "Mortgage",
+		"categories": [
+			{
+				"id": "Debt",
+				"name": "Debt",
+				"goals": [
+					{
+						"id": "Mortgage",
+						"name": "Mortgage",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"PersonalNeedsLoan": {
-						"itemName": "Personal needs loan",
+					{
+						"id": "PersonalNeedsLoan",
+						"name": "Personal needs loan",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"CreditCard": {
-						"itemName": "Credit card",
+					{
+						"id": "CreditCard",
+						"name": "Credit card",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					}
-				}
+				]
 			}
-		}
+		]
 	},
-	"Income": {
-		"collectionName": "Income",
+	{
+		"id": "Income",
+		"name": "Income",
 		"type": "Income",
-		"groups": {
-			"ActiveIncome" : {
-				"groupName": "Active Income",
-				"items": {
-					"Wage1": {
-						"itemName": "Wage 1",
+		"categories": [
+			{
+				"id": "ActiveIncome",
+				"name": "Active Income",
+				"goals": [
+					{
+						"id": "Wage1",
+						"name": "Wage 1",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"Wage2": {
-						"itemName": "Wage 2",
+					{
+						"id": "Wage2",
+						"name": "Wage 2",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "729"
 					},
-					"Bonus": {
-						"itemName": "Bonus",
+					{
+						"id": "Bonus",
+						"name": "Bonus",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					},
-					"MealTickets": {
-						"itemName": "Meal Tickets",
+					{
+						"id": "MealTickets",
+						"name": "Meal Tickets",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					}
-				}
+				]
 			},
-			"PassiveIncome": {
-				"groupName":"Passive Income",
-				"items": {
-					"Rents": {
-						"itemName": "Rents",
+			{
+				"id": "PassiveIncome",
+				"name": "Passive Income",
+				"goals": [
+					{
+						"id": "Rents",
+						"name": "Rents",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"Interests": {
-						"itemName": "Interests",
+					{
+						"id": "Interests",
+						"name": "Interests",
 						"daily": "3",
 						"monthly": "60",
 						"yearly": "720"
 					},
-					"Dividends": {
-						"itemName": "Dividends",
+					{
+						"id": "Dividends",
+						"name": "Dividends",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					},
-					"Copyright": {
-						"itemName": "Copyright",
+					{
+						"id": "Copyright",
+						"name": "Copyright",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					},
-					"Allowance": {
-						"itemName": "Allowance",
+					{
+						"id": "Allowance",
+						"name": "Allowance",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					},
-					"ChildSupport": {
-						"itemName": "Child support",
+					{
+						"id": "ChildSupport",
+						"name": "Child support",
 						"daily": "1",
 						"monthly": "20",
 						"yearly": "240"
 					}
-				}
+				]
 			}
-		}
+		]
 	}
-}
+]

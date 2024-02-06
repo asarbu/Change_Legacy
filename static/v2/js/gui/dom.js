@@ -6,13 +6,17 @@
  */
 export function create(element, properties) {
 	const elmt = document.createElement(element);
-	Object.entries(properties).forEach(([key, value]) => {
-		if (key === 'classes') {
-			elmt.classList.add(...value);
-		} else {
-			elmt[key] = value;
-		}
-	});
+
+	if (properties) {
+		Object.entries(properties).forEach(([key, value]) => {
+			if (key === 'classes') {
+				elmt.classList.add(...value);
+			} else {
+				elmt[key] = value;
+			}
+		});
+	}
+
 	return elmt;
 }
 

@@ -1,58 +1,57 @@
-const APP_FOLDER = "Change!";
-const PLANNING_FILE_NAME = "planning.json";
+import PlanningCache from '../persistence/planning/planningCache.js';
+import PlanningScreen from '../gui/planningScreen.js';
 
-async function initPlanning() {	
-	const planning = new PlanningController();
-	await planning.init();
-}
-
-class PlanningController {
+export default class PlanningController {
 	/**
-	 * Used for fast retrieval of GUI tabs by name 
+	 * Used for fast retrieval of GUI tabs by name
 	 * @type {Map<string, PlanningScreen>}
 	 * @private
 	 */
 	#tabs = undefined;
+
 	/**
-	 * Planning year => planning collection => planning slice
-	 * @type {Map<numeric, <Map<String, PlanningTab>>}}
+	 * Planning year => planning statement => planning screen
+	 * @type {Map<numeric, <Map<String, PlanningScreen>>}}
 	 */
-	#slices=undefined;
+	#slices = undefined;
+
 	/**
 	 * Used for fast retreival of local caches.
 	 * @type {Array<PlanningCache>}
 	 * @private
 	 */
 	#caches = undefined;
+
 	constructor() {
-		/*if(gdriveSync) {
+		/* if(gdriveSync) {
 			this.planningGDrive = new PlanningGDrive(this.planningCache);
-		}*/
+		} */
 		this.#tabs = new Map();
 	}
 
 	async init() {
-		const currentYear =  new Date().toLocaleString("en-US", {year: "numeric"});
+		const currentYear = new Date().toLocaleString('en-US', {year: 'numeric'});
 		this.#caches = await PlanningCache.getAll();
-		//const planningCaches = this.#caches.values();
-		
-		for (const planningCache of this.#caches){
+		// const planningCaches = this.#caches.values();
+
+		for (let i = 0; i < this.#caches.length; i += 1) {
+			const planningCache = this.#caches[i];
 			const localCollections = await planningCache.readAll();
-			const planningTab = new PlanningScreen(storeName, localCollections);
-			planningTab.onClickUpdate = this.onClickUpdate.bind(this);
-			//planningTab.init();
-			this.#tabs.set(storeName, planningTab);
-			//console.log(planningCollections)
+			const planningScreen = new PlanningScreen(planningCache.storeName, localCollections);
+			planningScreen.onClickUpdate = this.onClickUpdate.bind(this);
+			// planningTab.init();
+			this.#tabs.set(planningCache.storeName, planningScreen);
 		}
-		
+
 		this.#tabs.get(currentYear).init();
 		this.#tabs.get(currentYear).activate();
 
-		/*if(gdriveSync) {
+		/* if(gdriveSync) {
 			this.initGDrive();
-		}*/
+		} */
 	}
 
+	/*
 	async initGDrive() {
 		await this.planningGDrive.init();
 		const needsUpdate = await this.planningGDrive.syncGDrive();
@@ -63,12 +62,12 @@ class PlanningController {
 			}
 			M.toast({html: 'Updated from GDrive', classes: 'rounded'});
 		}
-	}
+	} */
 
 	async onClickUpdate(id, planningCollection) {
-		//console.log("OnClickUpdate");
 		await this.planningCache.update(id, planningCollection);
-		
+
+		/*
 		if(gdriveSync) {
 			localStorage.setItem(GDrive.MODIFIED_TIME_FIELD, new Date().toISOString());
 			const needsUpdate = await this.planningGDrive.syncGDrive();
@@ -76,8 +75,6 @@ class PlanningController {
 				this.#tabs.get(id).update(planningCollection);
 				M.toast({html: 'Updated from GDrive', classes: 'rounded'});
 			}
-		}
+		} */
 	}
 }
-
-document.addEventListener("DOMContentLoaded", initPlanning);

@@ -3,7 +3,7 @@ import Idb from '../idb.js';
 export default class PlanningCache {
 	static DATABASE_NAME = 'Planning';
 
-	static PLANNING_TEMPLATE_URI = 'static/js/planning.json';
+	static PLANNING_TEMPLATE_URI = 'static/v2/js/planning.json';
 
 	// TODO: Lower this to 1 at release
 	static DATABASE_VERSION = 2024;
@@ -27,7 +27,7 @@ export default class PlanningCache {
 			const storeName = objectStores[i];
 			const planningCache = new PlanningCache(storeName, idb);
 			await planningCache.init();
-			planningsArray.push(planningCache);
+			planningsArray[i] = (planningCache);
 		}
 		return planningsArray;
 	}
@@ -68,7 +68,7 @@ export default class PlanningCache {
 		if (storeCount === 0) {
 			await fetch(PlanningCache.PLANNING_TEMPLATE_URI)
 				.then((response) => response.json())
-				.then((planningFile) => this.idb.putAll(this.storeName, Object.entries(planningFile)));
+				.then((planningFile) => this.idb.putAll(this.storeName, planningFile));
 		}
 	}
 

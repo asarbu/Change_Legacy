@@ -136,22 +136,22 @@ export default class PlanningScreen {
 		return tableFragment;
 	}
 
-	createRow(table, id, item, options) {
+	createRow(table, item, options) {
 		// console.log("Creating row", item,options)
 		let index = -1;
-		if (options.index) {
+		if (options?.index) {
 			index = options.index;
 		}
 		const row = table.tBodies[0].insertRow(index);
-		row.id = id;
+		row.id = item.id;
 		row.userData = item;
 
-		this.createDataCell(row, item.itemName, options);
+		this.createDataCell(row, item.name, options);
 		this.createDataCell(row, item.daily, options);
 		this.createDataCell(row, item.monthly, options);
 		this.createDataCell(row, item.yearly, options);
 
-		if (options.deletable) {
+		if (options?.deletable) {
 			const buttonsCell = row.insertCell(-1);
 			const btn = createImageButton('Delete', '', [], undefined);
 			btn.addEventListener('click', this.onClickDelete.bind(this));
@@ -169,18 +169,18 @@ export default class PlanningScreen {
 		// console.log("Create data cell", text, options.readonly)
 		const dataCell = row.insertCell(-1);
 		dataCell.textContent = text;
-		if (!options.readonly) {
+		if (!options?.readonly) {
 			dataCell.setAttribute('editable', 'true');
 			if (this.editMode) {
 				dataCell.setAttribute('contenteditable', 'true');
 			}
 			dataCell.addEventListener('keyup', this.onKeyUpCell.bind(this), false);
 		}
-		if (options.useBold === true) {
+		if (options?.useBold === true) {
 			dataCell.style.fontWeight = 'bold';
 		}
 
-		if (options.color) {
+		if (options?.color) {
 			dataCell.style.color = options.color;
 		}
 		return dataCell;
