@@ -15,10 +15,11 @@
 {% endblock %}
 
 {% block script %}
-<script src='static/v2/js/persistence/idb.js'></script>
-<script src='static/v2/js/gui/gui.js'></script>
 <!--script src='static/v2/js/gui/icons.js'></script-->
-<script src='static/v2/js/gui/planningScreen.js'></script>
-<script src='static/v2/js/persistence/planningCache.js'></script>
-<script src='static/v2/js/controller/planningController.js'></script>
+
+<script type="module">
+	import PlanningScreen from '/static/v2/js/gui/planningScreen.js'
+	const p = new PlanningScreen();
+	p.init();
+</script>
 {% endblock %}

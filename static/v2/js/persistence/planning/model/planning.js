@@ -6,8 +6,8 @@ export default class Planning {
 	constructor(year) {
 		this.year = year;
 		/**
-		 * @type{Array<PlanningContext>}
+		 * @type{Array<Statement>}
 		 */
-		this.plannningContexts = [];
+		this.statements = [];
 	}
 }

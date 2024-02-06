@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+
+	</head>
+	<body>
+		<script type="module">
+			import Planning from '/static/v2/js/persistence/planning/model/planning.js'
+			import Statement from '/static/v2/js/persistence/planning/model/statement.js'
+			import Category from '/static/v2/js/persistence/planning/model/category.js'
+			import Goal from '/static/v2/js/persistence/planning/model/goal.js'
+
+			const p = new Planning();
+			for (let s = 0; s < 5; s++) {
+				const statement = new Statement(s, `${s}`);
+				for (let c = 0; c < 5; c++) {
+					const category = new Category(c, `${c}`);
+					for (let g = 0; g < 5; g += 1) {
+						const goal = new Goal(`${g}`, g, g, g);
+						category.goals.push(goal);
+					}
+					statement.type = Statement.EXPENSE;
+					statement.categories.push(category);
+				}
+				p.statements.push(statement);
+			}
+
+			p.year = 2024;
+			console.log(p);
+			let str = JSON.stringify(p)
+			console.log(JSON.parse(str));
+
+			str = JSON.stringify(p.statements);
+			const p2 = new Planning(2025);
+			p2.statements = JSON.parse(str);
+			console.log(p2);
+		</script>
+	</body>
+</html>

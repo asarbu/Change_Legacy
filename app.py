@@ -28,6 +28,10 @@ def indexHtml(name="Change!"):
 @app.route('/Settings', methods=['GET'])
 def authHtml(name="Change!"):
     return render_template('Settings.html', name=name)
+
+@app.route('/tests', methods=['GET'])
+def testsHtml(name="Change!"):
+    return render_template('tests.html', name=name)
     
 @app.route('/sw.js')
 def sw():

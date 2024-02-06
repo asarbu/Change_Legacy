@@ -1,4 +1,4 @@
-import Idb from '../idb';
+import Idb from '../idb.js';
 
 export default class PlanningCache {
 	static DATABASE_NAME = 'Planning';
