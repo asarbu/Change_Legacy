@@ -2,15 +2,16 @@ import GraphicEffects from './effects.js';
 import { create, createImageButton } from './dom.js';
 import Statement from '../persistence/planning/model/statement.js';
 import Category from '../persistence/planning/model/category.js';
+import icons from './icons.js';
 
 export default class PlanningScreen {
 	onClickUpdate = undefined;
 
-	constructor(id, planningContexts) {
+	constructor(id, statements) {
 		/**
 		 * @type { Array<Statement> }
 		 */
-		this.planningContexts = planningContexts;
+		this.statements = statements;
 		this.id = id;
 		// this.name = planningCollection.collectionName;
 		this.editMode = false;
@@ -19,6 +20,7 @@ export default class PlanningScreen {
 	init() {
 		this.gfx = new GraphicEffects();
 		this.container = this.sketchAsFragment();
+		this.navbar = this.createNavBar();
 	}
 
 	// #region DOM creation
@@ -30,27 +32,17 @@ export default class PlanningScreen {
 	sketchAsFragment() {
 		const container = create('div', { id: this.id, classes: ['container'] });
 		const section = create('div', { classes: ['section'] });
-		const span = create('span', { innerText: '▲', classes: ['white-50'] });
 		this.dropupContent = create('div', { classes: ['dropup-content', 'top-round'] });
 		this.dropupContent.style.display = 'none';
 
-		this.slicesButton = create('button', { classes: ['nav-item'], innerText: this.planningContexts[0].name });
-		this.slicesButton.addEventListener('click', this.onClickDropup.bind(this), false);
-
-		for (let i = 0; i < this.planningContexts.length; i += 1) {
-			const planningContext = this.planningContexts[i];
-			const slice = this.createSlice(planningContext);
-
-			const anchor = create('a', { innerText: planningContext.name });
-			anchor.setAttribute('data-slice-index', i);
-			anchor.addEventListener('click', this.onClickSetSlice.bind(this));
-			this.dropupContent.appendChild(anchor);
+		// TODO Merge this with navbar creation, since we are iterating through same array.
+		for (let i = 0; i < this.statements.length; i += 1) {
+			const statement = this.statements[i];
+			const slice = this.createSlice(statement);
 
 			section.appendChild(slice);
 		}
 
-		this.slicesButton.appendChild(span);
-		this.slicesButton.appendChild(this.dropupContent);
 		container.appendChild(section);
 
 		return container;
@@ -58,16 +50,16 @@ export default class PlanningScreen {
 
 	/**
 	 * Creates a DOM slice
-	 * @param {Statement} planningContext Planning context representing this slice
+	 * @param {Statement} statement Statement representing this slice
 	 * @returns {DOMElement} Constructed and decorated DOM element
 	 */
-	createSlice(planningContext) {
+	createSlice(statement) {
 		const slice = create('div', { classes: ['slice'] });
-		const h1 = create('h1', { innerText: planningContext.name });
+		const h1 = create('h1', { innerText: statement.name });
 
 		slice.appendChild(h1);
 
-		const tables = this.createPlanningTables(planningContext.categories);
+		const tables = this.createPlanningTables(statement.categories);
 		slice.appendChild(tables);
 
 		return slice;
@@ -97,7 +89,7 @@ export default class PlanningScreen {
 			const monthly = create('th');
 			const yearly = create('th');
 			const buttons = create('th');
-			const button = createImageButton('Add Row', '', [], undefined);
+			const button = createImageButton('Add Row', '', ['nav-item', 'large-text'], icons.add_row);
 			button.addEventListener('click', this.onClickAddRow.bind(this), false);
 
 			nameCol.innerText = planningCategory.name;
@@ -130,8 +122,6 @@ export default class PlanningScreen {
 				);
 			}
 			this.recomputeTotal(table, true);
-
-			// this.tab.appendChild(tableFragment);
 		}
 		return tableFragment;
 	}
@@ -151,16 +141,17 @@ export default class PlanningScreen {
 		this.createDataCell(row, item.monthly, options);
 		this.createDataCell(row, item.yearly, options);
 
+		const buttonsCell = row.insertCell(-1);
+
 		if (options?.deletable) {
-			const buttonsCell = row.insertCell(-1);
-			const btn = createImageButton('Delete', '', [], undefined);
+			const btn = createImageButton('Delete', '', ['nav-item', 'large-text'], icons.delete);
 			btn.addEventListener('click', this.onClickDelete.bind(this));
 			buttonsCell.appendChild(btn);
+		}
 
-			buttonsCell.setAttribute('hideable', 'true');
-			if (options.hidden) {
-				buttonsCell.style.display = 'none';
-			}
+		buttonsCell.setAttribute('hideable', 'true');
+		if (options.hidden) {
+			buttonsCell.style.display = 'none';
 		}
 		return row;
 	}
@@ -187,16 +178,53 @@ export default class PlanningScreen {
 	}
 
 	activate() {
-		if (this.slicesButton) {
+		/* if (this.slicesButton) {
 			const slicesButton = document.getElementById('sliceName');
 			slicesButton.parentElement.replaceChild(this.slicesButton, slicesButton);
 		} else {
 			document.getElementById('sliceId').innerText = this.id;
 			document.getElementById('sliceName').innerText = this.name;
 		}
-
-		document.getElementById('main').appendChild(this.container);
+*/
+		const mainElement = document.getElementById('main');
+		mainElement.appendChild(this.container);
+		mainElement.appendChild(this.navbar);
 		this.gfx.init(this.container);
+	}
+
+	createNavBar() {
+		const navbar = create('nav');
+		const navHeader = create('div', {classes: ['nav-header']}, navbar);
+		const leftAddButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.plus, navHeader);
+		this.editButton = createImageButton('Edit', '#', ['nav-item', 'large-text'], icons.edit, navHeader);
+		this.saveButton = createImageButton('Save', '#', ['nav-item', 'large-text'], icons.save);
+		const rightAddButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.plus, navHeader);
+
+		const navFooter = create('div', {classes: ['nav-footer']}, navbar);
+		const leftMenuButton = createImageButton('Menu', '#', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
+		leftMenuButton.setAttribute('data-side', 'left');
+		const yearDropup = create('button', { innerText: `${this.id} `, classes: ['dropup', 'nav-item'] }, navFooter);
+
+		const span = create('span', { innerText: '▲', classes: ['white-50'] });
+		const statementDropup = create('button', { classes: ['nav-item'], innerText: `${this.statements[0].name} ` }, navFooter);
+		statementDropup.addEventListener('click', this.onClickDropup.bind(this), false);
+
+		for (let i = 0; i < this.statements.length; i += 1) {
+			const statement = this.statements[i];
+			const anchor = create('a', { innerText: statement.name });
+			anchor.setAttribute('data-slice-index', i);
+			anchor.addEventListener('click', this.onClickSetSlice.bind(this));
+			this.dropupContent.appendChild(anchor);
+		}
+
+		statementDropup.appendChild(span);
+		statementDropup.appendChild(this.dropupContent);
+		const rightMenuButton = createImageButton('Menu', '#', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
+		rightMenuButton.setAttribute('data-side', 'right');
+
+		this.editButton.addEventListener('click', this.onClickEdit.bind(this));
+		this.saveButton.addEventListener('click', this.onClickSave.bind(this));
+		return navbar;
 	}
 	// #endregion
 
@@ -217,7 +245,7 @@ export default class PlanningScreen {
 		// TODO Use planning collection to recompute, instead of parsing.
 		let lastRow;
 		const total = {
-			itemName: 'Total',
+			name: 'Total',
 			daily: 0,
 			monthly: 0,
 			yearly: 0,
@@ -230,7 +258,7 @@ export default class PlanningScreen {
 				hidden: true,
 				deletable: false,
 			};
-			lastRow = this.createRow(table, 'Total', total, options);
+			lastRow = this.createRow(table, total, options);
 		} else {
 			lastRow = table.tBodies[0].rows[table.tBodies[0].rows.length - 1];
 		}
@@ -259,21 +287,18 @@ export default class PlanningScreen {
 	// #region event handlers
 	onClickDelete(event) {
 		const btn = event.target;
-		const row = btn.parentNode.parentNode;
+		const row = btn.parentNode.parentNode.parentNode;
 		const tBody = row.parentNode;
 		const itemId = row.id;
 		const groupId = row.parentNode.parentNode.id;
 		// console.log("OnClickDelete", itemId, groupId);
 
-		delete this.planningCollection.groups[groupId].items[itemId];
+		//delete this.planningCollection.groups[groupId].items[itemId];
 		tBody.removeChild(row);
 		this.recomputeTotal(tBody.parentNode);
 	}
 
 	onClickEdit() {
-		this.saveBtn.style.display = '';
-		this.editBtn.style.display = 'none';
-
 		const tableDefs = document.querySelectorAll('td[editable="true"]');
 		for (let i = 0; i < tableDefs.length; i += 1) {
 			tableDefs[i].contentEditable = 'true';
@@ -290,13 +315,10 @@ export default class PlanningScreen {
 		}
 
 		this.editMode = true;
+		this.editButton.parentNode.replaceChild(this.saveButton, this.editButton);
 	}
 
 	onClickSave() {
-		// console.log("onClickSave", this.onUpdate);
-		this.editBtn.style.display = '';
-		this.saveBtn.style.display = 'none';
-
 		const tableDefs = document.querySelectorAll('td[editable="true"]');
 		for (let i = 0; i < tableDefs.length; i += 1) {
 			tableDefs[i].contentEditable = 'false';
@@ -317,6 +339,7 @@ export default class PlanningScreen {
 		}
 
 		this.editMode = false;
+		this.saveButton.parentNode.replaceChild(this.editButton, this.saveButton);
 	}
 
 	onKeyUpCell(event) {
@@ -381,13 +404,13 @@ export default class PlanningScreen {
 	onClickAddRow(event) {
 		const btn = event.target;
 		const item = {
-			itemName: 'New Row',
+			name: 'New Row',
 			daily: 0,
 			monthly: 0,
 			yearly: 0,
 		};
 
-		const table = btn.parentNode.parentNode.parentNode.parentNode;
+		const table = btn.parentNode.parentNode.parentNode.parentNode.parentNode;
 		const index = table.rows.length - 2;
 
 		const options = {
@@ -398,9 +421,9 @@ export default class PlanningScreen {
 			readonly: false,
 		};
 		const id = new Date().getTime(); // millisecond precision
-		this.createRow(table, id, item, options);
+		this.createRow(table, item, options);
 
-		this.planningCollection.groups[table.id].items[id] = item;
+		//this.planningCollection.groups[table.id].items[id] = item;
 	}
 
 	// #endregion

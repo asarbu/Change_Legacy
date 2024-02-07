@@ -1,10 +1,11 @@
 /**
  * Creates and decorates a new DOM Element
  * @param {string} element Type of element to be created
- * @param {Array} properties.classes Classes to be added to the DOM classlist 
+ * @param {Array} properties.classes Classes to be added to the DOM classlist
+ * @param {DOMElement} parent Parent to bind the newly created element to
  * @returns {DOMElement}
  */
-export function create(element, properties) {
+export function create(element, properties, parent) {
 	const elmt = document.createElement(element);
 
 	if (properties) {
@@ -17,10 +18,14 @@ export function create(element, properties) {
 		});
 	}
 
+	if (parent) {
+		parent.appendChild(elmt);
+	}
+
 	return elmt;
 }
 
-export function createImageButton(text, href, classList, src) {
+export function createImageButton(text, href, classList, src, parent) {
 	const btn = create('button');
 	btn.classList.add(...classList);
 	btn.setAttribute('href', href);
@@ -30,5 +35,8 @@ export function createImageButton(text, href, classList, src) {
 	img.alt = text;
 	img.src = src;
 	btn.appendChild(img);
+	if (parent) {
+		parent.appendChild(btn);
+	}
 	return btn;
 }
