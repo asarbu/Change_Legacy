@@ -1,4 +1,6 @@
 import Idb from '../idb.js';
+import Category from './model/category.js';
+import Statement from './model/statement.js';
 
 export default class PlanningCache {
 	static DATABASE_NAME = 'Planning';
@@ -73,27 +75,27 @@ export default class PlanningCache {
 	}
 
 	/**
-	 * Read all planning contexts from the cache
-	 * @returns {Promise<Array<PlanningContext>>}
+	 * Read all planning statements from the cache
+	 * @returns {Promise<Array<Statement>>}
 	 */
 	async readAll() {
 		return this.idb.openCursor(this.storeName);
 	}
 
 	/**
-	 * Updates all of the contexts from the current object store
+	 * Updates all of the statements from the current object store
 	 * @async
-	 * @param {Array<PlanningContext>} planningContexts Contexts to be updated in dabatase
+	 * @param {Array<Statement>} statements Statenents to be updated in dabatase
 	 */
-	async updateAll(planningContexts) {
+	async updateAll(statements) {
 		await this.idb.clear(this.storeName);
-		await this.idb.putAll(this.storeName, planningContexts);
+		await this.idb.putAll(this.storeName, statements);
 	}
 
 	/**
-	 * Fetch only the contexts that of type "Expense"
+	 * Fetch only the statements of type "Expense"
 	 * @async
-	 * @returns {Array<PlanningContext>}
+	 * @returns {Array<Statement>}
 	 */
 	async readExpenses() {
 		const keyRange = IDBKeyRange.only('Expense');
@@ -103,38 +105,38 @@ export default class PlanningCache {
 	/**
 	 * Fetch only the planning categories from the current object store
 	 * @async
-	 * @returns {Array<PlanningCategory>}
+	 * @returns {Array<Category>}
 	 */
 	async readCategories() {
 		return this.idb.openCursor(this.storeName);
 	}
 
 	/**
-	 * Fetch only the planning context corresponding to the key
+	 * Fetch only the planning statement corresponding to the key
 	 * @async
 	 * @param {string} key Key to lookup in the datastore
-	 * @returns {PlanningContext}
+	 * @returns {Statement}
 	 */
 	async read(key) {
 		return this.idb.get(this.storeName, key);
 	}
 
 	/**
-	 * Update a single Planning context in the database
+	 * Update a single Planning statement in the database
 	 * @async
 	 * @param {string} key Key to lookup in the datastore
-	 * @param {PlanningContext} value Value to update
-	 * @returns {PlanningContext} Updated value
+	 * @param {Statement} value Value to update
+	 * @returns {Statement} Updated value
 	 */
 	async update(key, value) {
 		await this.idb.insert(this.storeName, value, key);
 	}
 
 	/**
-	 * Delete a single Planning context in the database
+	 * Delete a single Planning statenent in the database
 	 * @async
 	 * @param {string} key Key to lookup in the datastore
-	 * @returns {PlanningContext} Deleted value
+	 * @returns {Statement} Deleted value
 	 */
 	async delete(key) {
 		await this.idb.delete(this.storeName, key);

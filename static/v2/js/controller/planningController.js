@@ -29,26 +29,37 @@ export default class PlanningController {
 		this.#tabs = new Map();
 	}
 
-	async init() {
-		const currentYear = new Date().toLocaleString('en-US', {year: 'numeric'});
+	async init(forYear) {
+		const year = forYear || new Date().toLocaleString('en-US', { year: 'numeric' });
 		this.#caches = await PlanningCache.getAll();
-		// const planningCaches = this.#caches.values();
 
+		let defaultYearCache;
 		for (let i = 0; i < this.#caches.length; i += 1) {
-			const planningCache = this.#caches[i];
-			const localCollections = await planningCache.readAll();
-			const planningScreen = new PlanningScreen(planningCache.storeName, localCollections);
-			planningScreen.onClickUpdate = this.onClickUpdate.bind(this);
-			// planningTab.init();
-			this.#tabs.set(planningCache.storeName, planningScreen);
+			if (this.#caches[i].storeName === year) {
+				defaultYearCache = this.#caches[i];
+			}
 		}
 
-		this.#tabs.get(currentYear).init();
-		this.#tabs.get(currentYear).activate();
+		const currentYearScreen = await this.initPlanningScreen(defaultYearCache);
+		currentYearScreen.init();
+		currentYearScreen.activate();
 
 		/* if(gdriveSync) {
 			this.initGDrive();
 		} */
+	}
+
+	/**
+	 *
+	 * @param {PlanningCache} cache
+	 */
+	async initPlanningScreen(cache) {
+		const planningCache = cache;
+		const localCollections = await planningCache.readAll();
+		const planningScreen = new PlanningScreen(planningCache.storeName, localCollections);
+		planningScreen.onClickUpdate = this.onClickUpdate.bind(this);
+		this.#tabs.set(planningCache.storeName, planningScreen);
+		return planningScreen;
 	}
 
 	/*
@@ -64,8 +75,13 @@ export default class PlanningController {
 		}
 	} */
 
-	async onClickUpdate(id, planningCollection) {
-		await this.planningCache.update(id, planningCollection);
+	async onClickUpdate(id, statements) {
+		// TODO repalce with a map
+		for (let i = 0; i < this.#caches.length; i += 1) {
+			if (this.#caches[i].storeName === id) {
+				this.#caches[i].update(id, statements);
+			}
+		}
 
 		/*
 		if(gdriveSync) {

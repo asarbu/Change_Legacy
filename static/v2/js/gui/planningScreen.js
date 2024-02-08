@@ -335,7 +335,7 @@ export default class PlanningScreen {
 		}
 
 		if (this.onClickUpdate) {
-			this.onClickUpdate(this.id, this.planningCollection);
+			this.onClickUpdate(this.id, this.statements);
 		}
 
 		this.editMode = false;
@@ -381,7 +381,6 @@ export default class PlanningScreen {
 		}
 
 		this.recomputeTotal(table);
-		this.planningCollection.groups[table.id].items[row.id] = item;
 	}
 
 	onClickDropup(event) {
@@ -403,7 +402,9 @@ export default class PlanningScreen {
 
 	onClickAddRow(event) {
 		const btn = event.target;
+		const id = new Date().getTime(); // millisecond precision
 		const item = {
+			id: id,
 			name: 'New Row',
 			daily: 0,
 			monthly: 0,
@@ -420,9 +421,9 @@ export default class PlanningScreen {
 			hidden: false,
 			readonly: false,
 		};
-		const id = new Date().getTime(); // millisecond precision
 		this.createRow(table, item, options);
 
+		table.userData.goals.push(item);
 		//this.planningCollection.groups[table.id].items[id] = item;
 	}
 
