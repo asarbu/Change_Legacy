@@ -20,9 +20,9 @@
 <script type="module">
 	import PlanningController from '/static/v2/js/controller/planningController.js';
 
-	async function initPlanning() {
+	function initPlanning() {
 		const planning = new PlanningController();
-		await planning.init();
+		planning.init();
 	}
 	
 	document.addEventListener("DOMContentLoaded", initPlanning);

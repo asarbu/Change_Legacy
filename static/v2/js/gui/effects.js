@@ -63,7 +63,7 @@ export default class GraphicEffects {
 		document.querySelectorAll('.nav-trigger').forEach((el) => el.addEventListener('click', this.openNav.bind(this)));
 	}
 
-	setSlide(index) {
+	slideTo(index) {
 		if (!this.containerWidth) {
 			this.containerWidth = this.rootContainer.clientWidth;
 		}
@@ -75,9 +75,13 @@ export default class GraphicEffects {
 		});
 	}
 
+	selectedIndex() {
+		return this.currentIndex;
+	}
+
 	onClickSetSlice(e) {
 		const sliceIndex = e.target.getAttribute('data-slice-index');
-		this.setSlide(sliceIndex);
+		this.slideTo(sliceIndex);
 	}
 
 	startSlider(e) {
@@ -107,7 +111,7 @@ export default class GraphicEffects {
 					// Needed to avoid glitches in horizontal scrolling
 					this.scrolling = 'vertical';
 					// Reset horizontal scroll to zero, by resetting the slide index
-					this.setSlide(this.currentIndex);
+					this.slideTo(this.currentIndex);
 					return;
 				} if (Math.abs(currentX - this.startX) > 10) { // Horizontal
 					this.scrolling = 'horizontal';
@@ -139,7 +143,7 @@ export default class GraphicEffects {
 
 			if (dist > 50 && this.currentIndex > 0) this.currentIndex -= 1;
 			else if (dist < -50 && this.currentIndex < this.lastIndex - 2) this.currentIndex += 1;
-			this.setSlide(this.currentIndex);
+			this.slideTo(this.currentIndex);
 		}
 		this.sliderWrapper.addEventListener('touchmove', this.startSliderEventListener, { passive: true });
 		this.scrolling = undefined;
@@ -147,7 +151,7 @@ export default class GraphicEffects {
 
 	refresh() {
 		this.containerWidth = this.rootContainer.clientWidth;
-		this.setSlide(this.currentIndex);
+		this.slideTo(this.currentIndex);
 	}
 
 	/* Nav panel */

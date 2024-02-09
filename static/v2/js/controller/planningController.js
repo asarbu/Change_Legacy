@@ -3,19 +3,6 @@ import PlanningScreen from '../gui/planningScreen.js';
 
 export default class PlanningController {
 	/**
-	 * Used for fast retrieval of GUI tabs by name
-	 * @type {Map<string, PlanningScreen>}
-	 * @private
-	 */
-	#tabs = undefined;
-
-	/**
-	 * Planning year => planning statement => planning screen
-	 * @type {Map<numeric, <Map<String, PlanningScreen>>}}
-	 */
-	#slices = undefined;
-
-	/**
 	 * Used for fast retreival of local caches.
 	 * @type {Array<PlanningCache>}
 	 * @private
@@ -26,7 +13,6 @@ export default class PlanningController {
 		/* if(gdriveSync) {
 			this.planningGDrive = new PlanningGDrive(this.planningCache);
 		} */
-		this.#tabs = new Map();
 	}
 
 	async init(forYear) {
@@ -58,7 +44,6 @@ export default class PlanningController {
 		const localCollections = await planningCache.readAll();
 		const planningScreen = new PlanningScreen(planningCache.storeName, localCollections);
 		planningScreen.onClickUpdate = this.onClickUpdate.bind(this);
-		this.#tabs.set(planningCache.storeName, planningScreen);
 		return planningScreen;
 	}
 
@@ -79,7 +64,7 @@ export default class PlanningController {
 		// TODO repalce with a map
 		for (let i = 0; i < this.#caches.length; i += 1) {
 			if (this.#caches[i].storeName === id) {
-				this.#caches[i].update(id, statements);
+				this.#caches[i].updateAll(statements);
 			}
 		}
 

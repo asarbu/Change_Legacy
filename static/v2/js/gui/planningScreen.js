@@ -3,6 +3,7 @@ import { create, createImageButton } from './dom.js';
 import Statement from '../persistence/planning/model/statement.js';
 import Category from '../persistence/planning/model/category.js';
 import icons from './icons.js';
+import Goal from '../persistence/planning/model/goal.js';
 
 export default class PlanningScreen {
 	onClickUpdate = undefined;
@@ -13,14 +14,16 @@ export default class PlanningScreen {
 		 */
 		this.statements = statements;
 		this.id = id;
-		// this.name = planningCollection.collectionName;
 		this.editMode = false;
 	}
 
+	/**
+	 * Initialize the current screen
+	 */
 	init() {
 		this.gfx = new GraphicEffects();
 		this.container = this.sketchAsFragment();
-		this.navbar = this.createNavBar();
+		this.navbar = this.sketchNavBar();
 	}
 
 	// #region DOM creation
@@ -38,9 +41,10 @@ export default class PlanningScreen {
 		// TODO Merge this with navbar creation, since we are iterating through same array.
 		for (let i = 0; i < this.statements.length; i += 1) {
 			const statement = this.statements[i];
-			const slice = this.createSlice(statement);
+			const htmlStatement = this.sketchStatement(statement);
+			htmlStatement.userData = statement;
 
-			section.appendChild(slice);
+			section.appendChild(htmlStatement);
 		}
 
 		container.appendChild(section);
@@ -51,15 +55,15 @@ export default class PlanningScreen {
 	/**
 	 * Creates a DOM slice
 	 * @param {Statement} statement Statement representing this slice
-	 * @returns {DOMElement} Constructed and decorated DOM element
+	 * @returns {HTMLDivElement} Constructed and decorated DOM element
 	 */
-	createSlice(statement) {
+	sketchStatement(statement) {
 		const slice = create('div', { classes: ['slice'] });
 		const h1 = create('h1', { innerText: statement.name });
 
 		slice.appendChild(h1);
 
-		const tables = this.createPlanningTables(statement.categories);
+		const tables = this.sketchCategory(statement.categories);
 		slice.appendChild(tables);
 
 		return slice;
@@ -70,7 +74,7 @@ export default class PlanningScreen {
 	 * @param {Array<Category>} planningCategories Categories to draw inside parent slice
 	 * @returns {DocumentFragment} Document fragment with all of the created tables
 	 */
-	createPlanningTables(planningCategories) {
+	sketchCategory(planningCategories) {
 		const tableFragment = document.createDocumentFragment();
 		for (let i = 0; i < planningCategories.length; i += 1) {
 			const planningCategory = planningCategories[i];
@@ -85,12 +89,18 @@ export default class PlanningScreen {
 
 			const headingRow = create('tr');
 			const nameCol = create('th');
+			nameCol.setAttribute('editable', 'true');
+			if (this.editMode) {
+				nameCol.setAttribute('contenteditable', 'true');
+			}
+			nameCol.addEventListener('keyup', this.onKeyUpCategoryNameCell.bind(this), false);
+
 			const daily = create('th');
 			const monthly = create('th');
 			const yearly = create('th');
 			const buttons = create('th');
 			const button = createImageButton('Add Row', '', ['nav-item', 'large-text'], icons.add_row);
-			button.addEventListener('click', this.onClickAddRow.bind(this), false);
+			button.addEventListener('click', this.onClickAddGoal.bind(this), true);
 
 			nameCol.innerText = planningCategory.name;
 			daily.innerText = 'Daily';
@@ -110,14 +120,13 @@ export default class PlanningScreen {
 
 			for (let j = 0; j < planningCategory.goals.length; j += 1) {
 				const planningGoal = planningCategory.goals[j];
-				this.createRow(
+				this.skecthRow(
 					table,
 					planningGoal,
 					{
 						index: -1,
-						hidden: true,
+						hideLastCell: true,
 						deletable: true,
-						readonly: false,
 					},
 				);
 			}
@@ -126,20 +135,30 @@ export default class PlanningScreen {
 		return tableFragment;
 	}
 
-	createRow(table, item, options) {
-		// console.log("Creating row", item,options)
+	/**
+	 * Creates a new row in the table, fills the data and decorates it.
+	 * @param {DOMElement} table Table where to append row
+	 * @param {Goal} item Goal data to fill in the row
+	 * @param {Object} options Format options for the row
+	 * @param {Number} options.index Position to add the row to. Defaults to -1 (last)
+	 * @param {Boolean} options.deletable Add a "Delete" icon to the last cell of the row
+	 * @param {Boolean} options.hideLastCell Hide last cell of the row
+	 * @param {Boolean} options.readonly Make the row uneditable
+	 * @returns {HTMLTableRowElement} Row that was created and decorated. Contains Goal in userData
+	 */
+	skecthRow(table, item, options) {
 		let index = -1;
-		if (options?.index) {
+		if (Object.prototype.hasOwnProperty.call(options, 'index')) {
 			index = options.index;
 		}
 		const row = table.tBodies[0].insertRow(index);
 		row.id = item.id;
 		row.userData = item;
 
-		this.createDataCell(row, item.name, options);
-		this.createDataCell(row, item.daily, options);
-		this.createDataCell(row, item.monthly, options);
-		this.createDataCell(row, item.yearly, options);
+		this.sketchDataCell(row, item.name, options);
+		this.sketchDataCell(row, item.daily, options);
+		this.sketchDataCell(row, item.monthly, options);
+		this.sketchDataCell(row, item.yearly, options);
 
 		const buttonsCell = row.insertCell(-1);
 
@@ -150,13 +169,13 @@ export default class PlanningScreen {
 		}
 
 		buttonsCell.setAttribute('hideable', 'true');
-		if (options.hidden) {
+		if (options.hideLastCell) {
 			buttonsCell.style.display = 'none';
 		}
 		return row;
 	}
 
-	createDataCell(row, text, options) {
+	sketchDataCell(row, text, options) {
 		// console.log("Create data cell", text, options.readonly)
 		const dataCell = row.insertCell(-1);
 		dataCell.textContent = text;
@@ -167,9 +186,6 @@ export default class PlanningScreen {
 			}
 			dataCell.addEventListener('keyup', this.onKeyUpCell.bind(this), false);
 		}
-		if (options?.useBold === true) {
-			dataCell.style.fontWeight = 'bold';
-		}
 
 		if (options?.color) {
 			dataCell.style.color = options.color;
@@ -178,29 +194,23 @@ export default class PlanningScreen {
 	}
 
 	activate() {
-		/* if (this.slicesButton) {
-			const slicesButton = document.getElementById('sliceName');
-			slicesButton.parentElement.replaceChild(this.slicesButton, slicesButton);
-		} else {
-			document.getElementById('sliceId').innerText = this.id;
-			document.getElementById('sliceName').innerText = this.name;
-		}
-*/
 		const mainElement = document.getElementById('main');
 		mainElement.appendChild(this.container);
 		mainElement.appendChild(this.navbar);
 		this.gfx.init(this.container);
 	}
 
-	createNavBar() {
+	sketchNavBar() {
 		const navbar = create('nav');
-		const navHeader = create('div', {classes: ['nav-header']}, navbar);
+		const navHeader = create('div', { classes: ['nav-header'] }, navbar);
 		const leftAddButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.plus, navHeader);
 		this.editButton = createImageButton('Edit', '#', ['nav-item', 'large-text'], icons.edit, navHeader);
 		this.saveButton = createImageButton('Save', '#', ['nav-item', 'large-text'], icons.save);
 		const rightAddButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.plus, navHeader);
+		leftAddButton.addEventListener('click', this.onClickAddCategory.bind(this));
+		rightAddButton.addEventListener('click', this.onClickAddCategory.bind(this));
 
-		const navFooter = create('div', {classes: ['nav-footer']}, navbar);
+		const navFooter = create('div', { classes: ['nav-footer'] }, navbar);
 		const leftMenuButton = createImageButton('Menu', '#', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
 		leftMenuButton.setAttribute('data-side', 'left');
 		const yearDropup = create('button', { innerText: `${this.id} `, classes: ['dropup', 'nav-item'] }, navFooter);
@@ -229,22 +239,20 @@ export default class PlanningScreen {
 	// #endregion
 
 	// #region DOM manipulation
-	update(planningCollection) {
-		this.planningCollection = planningCollection;
-		const tables = this.container.getElementsByTagName('TABLE');
-		for (let i = tables.length - 1; i >= 0; i -= 1) {
-			if (tables[i]) {
-				tables[i].parentNode.removeChild(tables[i]);
-			}
-		}
-		this.createPlanningTable(this.planningCollection);
+	update(statements) {
+		this.statements = statements;
+		const newContainer = this.sketchAsFragment();
+		const mainElement = document.getElementById('main');
+		mainElement.replaceChild(newContainer, this.container);
+		this.container = newContainer;
 	}
 
 	// Recompute from DOM instead of memory/db/network to have real time updates in UI
 	recomputeTotal(table, forceCreate = false) {
-		// TODO Use planning collection to recompute, instead of parsing.
+		// TODO Use planning statements to recompute, instead of parsing.
 		let lastRow;
 		const total = {
+			id: `${table.id}Total`,
 			name: 'Total',
 			daily: 0,
 			monthly: 0,
@@ -254,11 +262,9 @@ export default class PlanningScreen {
 			const options = {
 				useBold: true,
 				readonly: true,
-				index: -1,
-				hidden: true,
-				deletable: false,
+				hideLastCell: true,
 			};
-			lastRow = this.createRow(table, total, options);
+			lastRow = this.skecthRow(table, total, options);
 		} else {
 			lastRow = table.tBodies[0].rows[table.tBodies[0].rows.length - 1];
 		}
@@ -285,15 +291,26 @@ export default class PlanningScreen {
 	// #endregion
 
 	// #region event handlers
-	onClickDelete(event) {
-		const btn = event.target;
-		const row = btn.parentNode.parentNode.parentNode;
-		const tBody = row.parentNode;
-		const itemId = row.id;
-		const groupId = row.parentNode.parentNode.id;
-		// console.log("OnClickDelete", itemId, groupId);
+	onClickAddCategory(event) {
+		const id = new Date().getTime(); // millisecond precision
+		const category = new Category(id, 'New Category');
+		/** @type{Statement} */
+		const statement = this.statements[this.gfx.selectedIndex()];
+		statement.categories.push(category);
+		// TODO update only the current statement, not all of them
+		this.update(this.statements);
+		this.onClickEdit();
+	}
 
-		//delete this.planningCollection.groups[groupId].items[itemId];
+	onClickDelete(event) {
+		const btn = event.currentTarget;
+		const row = btn.parentNode.parentNode;
+		const tBody = row.parentNode;
+		const goal = row.userData;
+		const category = row.parentNode.parentNode.userData;
+
+		category.goals.splice(category.goals.indexOf(goal), 1);
+
 		tBody.removeChild(row);
 		this.recomputeTotal(tBody.parentNode);
 	}
@@ -302,6 +319,11 @@ export default class PlanningScreen {
 		const tableDefs = document.querySelectorAll('td[editable="true"]');
 		for (let i = 0; i < tableDefs.length; i += 1) {
 			tableDefs[i].contentEditable = 'true';
+		}
+
+		const tableHeaders = document.querySelectorAll('th[editable="true"]');
+		for (let i = 0; i < tableHeaders.length; i += 1) {
+			tableHeaders[i].contentEditable = 'true';
 		}
 
 		const ths = document.querySelectorAll('th[hideable="true"]');
@@ -342,39 +364,47 @@ export default class PlanningScreen {
 		this.saveButton.parentNode.replaceChild(this.editButton, this.saveButton);
 	}
 
+	// eslint-disable-next-line class-methods-use-this
+	onKeyUpCategoryNameCell(event) {
+		const categoryName = event.target.textContent;
+		const table = event.target.parentNode.parentNode.parentNode;
+		const statement = table.userData;
+
+		statement.name = categoryName;
+	}
+
 	onKeyUpCell(event) {
-		// TODO update the value in the collection to be saved later
 		const cell = event.target;
 		const row = cell.parentNode;
 		const table = row.parentNode.parentNode;
 
 		const { cellIndex } = event.target;
-		const item = row.userData;
+		const goal = row.userData;
 
 		switch (cellIndex) {
 		case 0:
-			item.itemName = cell.textContent;
+			goal.itemName = cell.textContent;
 			break;
 		case 1:
-			item.daily = parseInt(cell.textContent, 10);
-			item.monthly = item.daily * 30;
-			item.yearly = item.daily * 365;
-			cell.parentNode.cells[2].textContent = item.monthly;
-			cell.parentNode.cells[3].textContent = item.yearly;
+			goal.daily = parseInt(cell.textContent, 10);
+			goal.monthly = goal.daily * 30;
+			goal.yearly = goal.daily * 365;
+			cell.parentNode.cells[2].textContent = goal.monthly;
+			cell.parentNode.cells[3].textContent = goal.yearly;
 			break;
 		case 2:
-			item.monthly = parseInt(cell.textContent, 10);
-			item.daily = Math.floor(item.monthly / 30);
-			item.yearly = item.monthly * 12;
-			cell.parentNode.cells[1].textContent = item.daily;
-			cell.parentNode.cells[3].textContent = item.yearly;
+			goal.monthly = parseInt(cell.textContent, 10);
+			goal.daily = Math.ceil(goal.monthly / 30);
+			goal.yearly = goal.monthly * 12;
+			cell.parentNode.cells[1].textContent = goal.daily;
+			cell.parentNode.cells[3].textContent = goal.yearly;
 			break;
 		case 3:
-			item.yearly = parseInt(cell.textContent, 10);
-			item.daily = Math.floor(item.yearly / 365);
-			item.monthly = Math.floor(item.yearly / 12);
-			cell.parentNode.cells[1].textContent = item.daily;
-			cell.parentNode.cells[2].textContent = item.monthly;
+			goal.yearly = parseInt(cell.textContent, 10);
+			goal.daily = Math.ceil(goal.yearly / 365);
+			goal.monthly = Math.ceil(goal.yearly / 12);
+			cell.parentNode.cells[1].textContent = goal.daily;
+			cell.parentNode.cells[2].textContent = goal.monthly;
 			break;
 		default:
 			break;
@@ -400,31 +430,29 @@ export default class PlanningScreen {
 		this.slicesButton.firstChild.nodeValue = `${sliceName} `;
 	}
 
-	onClickAddRow(event) {
-		const btn = event.target;
+	onClickAddGoal(event) {
+		const btn = event.currentTarget;
 		const id = new Date().getTime(); // millisecond precision
-		const item = {
+		const goal = {
 			id: id,
-			name: 'New Row',
+			name: 'New Goal',
 			daily: 0,
 			monthly: 0,
 			yearly: 0,
 		};
 
-		const table = btn.parentNode.parentNode.parentNode.parentNode.parentNode;
-		const index = table.rows.length - 2;
+		const table = btn.parentNode.parentNode.parentNode.parentNode;
+		const tbody = table.tBodies[0];
+		// Subtract one for the bottom "Total" row.
+		const index = tbody.rows.length - 1;
 
 		const options = {
 			index: index,
-			useBold: false,
 			deletable: true,
-			hidden: false,
-			readonly: false,
 		};
-		this.createRow(table, item, options);
+		this.skecthRow(table, goal, options);
 
-		table.userData.goals.push(item);
-		//this.planningCollection.groups[table.id].items[id] = item;
+		table.userData.goals.push(goal);
 	}
 
 	// #endregion
