@@ -25,7 +25,17 @@ export function create(element, properties, parent) {
 	return elmt;
 }
 
+/**
+ * 
+ * @param {string} text Text to display in button. TODO remove if notused
+ * @param {string} href URL to where the button redirects. TODO remove if not used
+ * @param {Array<string>} classList Array of classes to decorate button. TODO remove if not used
+ * @param {string} src String that represents the icon inside the button
+ * @param {HTMLElement} parent Parent to append this button to.
+ * @returns 
+ */
 export function createImageButton(text, href, classList, src, parent) {
+	//TODO Add event listener for on click in params
 	const btn = create('button');
 	btn.classList.add(...classList);
 	btn.setAttribute('href', href);

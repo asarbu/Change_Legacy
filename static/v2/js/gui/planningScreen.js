@@ -60,11 +60,17 @@ export default class PlanningScreen {
 	sketchStatement(statement) {
 		const slice = create('div', { classes: ['slice'] });
 		const h1 = create('h1', { innerText: statement.name });
-
+		const addCategoryButton = createImageButton('', '', ['btn'], icons.add_table);
+		addCategoryButton.addEventListener('click', this.onClickAddCategory.bind(this));
+		addCategoryButton.setAttribute('hideable', 'true');
+		if(!this.editMode)
+			addCategoryButton.style.display = 'none';
+		
 		slice.appendChild(h1);
 
 		const tables = this.sketchCategory(statement.categories);
 		slice.appendChild(tables);
+		slice.appendChild(addCategoryButton);
 
 		return slice;
 	}
@@ -95,20 +101,22 @@ export default class PlanningScreen {
 			}
 			nameCol.addEventListener('keyup', this.onKeyUpCategoryNameCell.bind(this), false);
 
+			//TODO replace this with Add row
 			const daily = create('th');
 			const monthly = create('th');
 			const yearly = create('th');
 			const buttons = create('th');
-			const button = createImageButton('Add Row', '', ['nav-item', 'large-text'], icons.add_row);
-			button.addEventListener('click', this.onClickAddGoal.bind(this), true);
-
+			const button = createImageButton('Add Row', '', ['nav-item'], icons.delete);
+			button.addEventListener('click', this.onClickDeleteCategory.bind(this));
+			
 			nameCol.innerText = planningCategory.name;
 			daily.innerText = 'Daily';
 			monthly.innerText = 'Monthly';
 			yearly.innerText = 'Yearly';
 
 			buttons.setAttribute('hideable', 'true');
-			buttons.style.display = 'none';
+			if(!this.editMode)
+				buttons.style.display = 'none';
 
 			headingRow.appendChild(nameCol);
 			headingRow.appendChild(daily);
@@ -120,13 +128,16 @@ export default class PlanningScreen {
 
 			for (let j = 0; j < planningCategory.goals.length; j += 1) {
 				const planningGoal = planningCategory.goals[j];
-				this.skecthRow(
+				
+				const deleteButton = createImageButton('Delete goal', '#', ['nav-item'], icons.delete);
+				deleteButton.addEventListener('click', this.onClickDeleteGoal.bind(this));
+				this.sketchRow(
 					table,
 					planningGoal,
 					{
 						index: -1,
 						hideLastCell: true,
-						deletable: true,
+						lastCellContent: deleteButton,
 					},
 				);
 			}
@@ -141,12 +152,12 @@ export default class PlanningScreen {
 	 * @param {Goal} item Goal data to fill in the row
 	 * @param {Object} options Format options for the row
 	 * @param {Number} options.index Position to add the row to. Defaults to -1 (last)
-	 * @param {Boolean} options.deletable Add a "Delete" icon to the last cell of the row
 	 * @param {Boolean} options.hideLastCell Hide last cell of the row
 	 * @param {Boolean} options.readonly Make the row uneditable
+	 * @param {HTMLButtonElement} options.lastCellContent Optional button to add functionality to the table
 	 * @returns {HTMLTableRowElement} Row that was created and decorated. Contains Goal in userData
 	 */
-	skecthRow(table, item, options) {
+	sketchRow(table, item, options) {
 		let index = -1;
 		if (Object.prototype.hasOwnProperty.call(options, 'index')) {
 			index = options.index;
@@ -162,14 +173,12 @@ export default class PlanningScreen {
 
 		const buttonsCell = row.insertCell(-1);
 
-		if (options?.deletable) {
-			const btn = createImageButton('Delete', '', ['nav-item', 'large-text'], icons.delete);
-			btn.addEventListener('click', this.onClickDelete.bind(this));
-			buttonsCell.appendChild(btn);
+		if (options?.lastCellContent) {
+			buttonsCell.appendChild(options.lastCellContent);
 		}
 
 		buttonsCell.setAttribute('hideable', 'true');
-		if (options.hideLastCell) {
+		if (options?.hideLastCell && !this.editMode) {
 			buttonsCell.style.display = 'none';
 		}
 		return row;
@@ -203,12 +212,16 @@ export default class PlanningScreen {
 	sketchNavBar() {
 		const navbar = create('nav');
 		const navHeader = create('div', { classes: ['nav-header'] }, navbar);
-		const leftAddButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.plus, navHeader);
+		const addStatementButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.add_file, navHeader);
 		this.editButton = createImageButton('Edit', '#', ['nav-item', 'large-text'], icons.edit, navHeader);
 		this.saveButton = createImageButton('Save', '#', ['nav-item', 'large-text'], icons.save);
-		const rightAddButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.plus, navHeader);
-		leftAddButton.addEventListener('click', this.onClickAddCategory.bind(this));
-		rightAddButton.addEventListener('click', this.onClickAddCategory.bind(this));
+		const deleteStatement = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.delete_file, navHeader);
+		addStatementButton.addEventListener('click', this.onClickAddStatement.bind(this));
+		addStatementButton.style.display = 'none';
+		addStatementButton.setAttribute('hideable', true);
+		deleteStatement.addEventListener('click', this.onClickDeleteStatement.bind(this));
+		deleteStatement.style.display = 'none';
+		deleteStatement.setAttribute('hideable', true);
 
 		const navFooter = create('div', { classes: ['nav-footer'] }, navbar);
 		const leftMenuButton = createImageButton('Menu', '#', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
@@ -259,12 +272,15 @@ export default class PlanningScreen {
 			yearly: 0,
 		};
 		if (forceCreate) {
+			const addGoalButton = createImageButton('Delete goal', '#', ['nav-item'], icons.add_row);
+			addGoalButton.addEventListener('click', this.onClickAddGoal.bind(this));
 			const options = {
 				useBold: true,
 				readonly: true,
 				hideLastCell: true,
+				lastCellContent: addGoalButton
 			};
-			lastRow = this.skecthRow(table, total, options);
+			lastRow = this.sketchRow(table, total, options);
 		} else {
 			lastRow = table.tBodies[0].rows[table.tBodies[0].rows.length - 1];
 		}
@@ -299,10 +315,9 @@ export default class PlanningScreen {
 		statement.categories.push(category);
 		// TODO update only the current statement, not all of them
 		this.update(this.statements);
-		this.onClickEdit();
 	}
 
-	onClickDelete(event) {
+	onClickDeleteGoal(event) {
 		const btn = event.currentTarget;
 		const row = btn.parentNode.parentNode;
 		const tBody = row.parentNode;
@@ -326,14 +341,9 @@ export default class PlanningScreen {
 			tableHeaders[i].contentEditable = 'true';
 		}
 
-		const ths = document.querySelectorAll('th[hideable="true"]');
-		for (let i = 0; i < ths.length; i += 1) {
-			ths[i].style.display = '';
-		}
-
-		const trs = document.querySelectorAll('td[hideable="true"]');
-		for (let i = 0; i < trs.length; i += 1) {
-			trs[i].style.display = '';
+		const elements = document.querySelectorAll('[hideable="true"]');
+		for (let i = 0; i < elements.length; i += 1) {
+			elements[i].style.display = '';
 		}
 
 		this.editMode = true;
@@ -346,14 +356,9 @@ export default class PlanningScreen {
 			tableDefs[i].contentEditable = 'false';
 		}
 
-		const ths = document.querySelectorAll('th[hideable="true"]');
-		for (let i = 0; i < ths.length; i += 1) {
-			ths[i].style.display = 'none';
-		}
-
-		const trs = document.querySelectorAll('td[hideable="true"]');
-		for (let i = 0; i < trs.length; i += 1) {
-			trs[i].style.display = 'none';
+		const elements = document.querySelectorAll('[hideable="true"]');
+		for (let i = 0; i < elements.length; i += 1) {
+			elements[i].style.display = 'none';
 		}
 
 		if (this.onClickUpdate) {
@@ -446,13 +451,37 @@ export default class PlanningScreen {
 		// Subtract one for the bottom "Total" row.
 		const index = tbody.rows.length - 1;
 
+		const button = createImageButton('Add Row', '', ['nav-item'], icons.delete);
+		button.addEventListener('click', this.onClickDeleteGoal.bind(this));
 		const options = {
 			index: index,
-			deletable: true,
+			lastCellContent: button,
 		};
-		this.skecthRow(table, goal, options);
+		this.sketchRow(table, goal, options);
 
 		table.userData.goals.push(goal);
+	}
+
+	onClickDeleteCategory(event) {
+		const table = event.target.parentNode.parentNode.parentNode.parentNode.parentNode;
+		const category = table.userData;
+		const statement = table.parentNode.userData;
+
+		statement.categories.splice(statement.categories.indexOf(category), 1);
+		table.parentNode.removeChild(table);
+	}
+
+	onClickDeleteStatement(event) {
+		this.statements.splice(this.gfx.selectedIndex(), 1);
+		this.update(this.statements);
+	}
+
+	onClickAddStatement(event) {
+		const id = new Date().getTime(); // millisecond precision
+		const newStatement = new Statement(id, 'New statement', Statement.EXPENSE);
+		//this.statements.push(newStatement);
+		this.statements.unshift(newStatement);
+		this.update(this.statements);
 	}
 
 	// #endregion
