@@ -1,9 +1,8 @@
+/* eslint-disable class-methods-use-this */
 import GraphicEffects from './effects.js';
 import { create, createImageButton } from './dom.js';
-import Statement from '../persistence/planning/model/statement.js';
-import Category from '../persistence/planning/model/category.js';
+import { Statement, Category, Goal } from '../persistence/planning/planningModel.js';
 import icons from './icons.js';
-import Goal from '../persistence/planning/model/goal.js';
 
 export default class PlanningScreen {
 	onClickUpdate = undefined;
@@ -63,9 +62,7 @@ export default class PlanningScreen {
 		const addCategoryButton = createImageButton('', '', ['btn'], icons.add_table);
 		addCategoryButton.addEventListener('click', this.onClickAddCategory.bind(this));
 		addCategoryButton.setAttribute('hideable', 'true');
-		if(!this.editMode)
-			addCategoryButton.style.display = 'none';
-		
+		if (!this.editMode) addCategoryButton.style.display = 'none';
 		slice.appendChild(h1);
 
 		const tables = this.sketchCategory(statement.categories);
@@ -101,22 +98,21 @@ export default class PlanningScreen {
 			}
 			nameCol.addEventListener('keyup', this.onKeyUpCategoryNameCell.bind(this), false);
 
-			//TODO replace this with Add row
+			// TODO replace this with Add row
 			const daily = create('th');
 			const monthly = create('th');
 			const yearly = create('th');
 			const buttons = create('th');
 			const button = createImageButton('Add Row', '', ['nav-item'], icons.delete);
 			button.addEventListener('click', this.onClickDeleteCategory.bind(this));
-			
+
 			nameCol.innerText = planningCategory.name;
 			daily.innerText = 'Daily';
 			monthly.innerText = 'Monthly';
 			yearly.innerText = 'Yearly';
 
 			buttons.setAttribute('hideable', 'true');
-			if(!this.editMode)
-				buttons.style.display = 'none';
+			if (!this.editMode) buttons.style.display = 'none';
 
 			headingRow.appendChild(nameCol);
 			headingRow.appendChild(daily);
@@ -128,7 +124,7 @@ export default class PlanningScreen {
 
 			for (let j = 0; j < planningCategory.goals.length; j += 1) {
 				const planningGoal = planningCategory.goals[j];
-				
+
 				const deleteButton = createImageButton('Delete goal', '#', ['nav-item'], icons.delete);
 				deleteButton.addEventListener('click', this.onClickDeleteGoal.bind(this));
 				this.sketchRow(
@@ -154,7 +150,7 @@ export default class PlanningScreen {
 	 * @param {Number} options.index Position to add the row to. Defaults to -1 (last)
 	 * @param {Boolean} options.hideLastCell Hide last cell of the row
 	 * @param {Boolean} options.readonly Make the row uneditable
-	 * @param {HTMLButtonElement} options.lastCellContent Optional button to add functionality to the table
+	 * @param {HTMLButtonElement} options.lastCellContent Optional element to add to last cell
 	 * @returns {HTMLTableRowElement} Row that was created and decorated. Contains Goal in userData
 	 */
 	sketchRow(table, item, options) {
@@ -278,7 +274,7 @@ export default class PlanningScreen {
 				useBold: true,
 				readonly: true,
 				hideLastCell: true,
-				lastCellContent: addGoalButton
+				lastCellContent: addGoalButton,
 			};
 			lastRow = this.sketchRow(table, total, options);
 		} else {
@@ -300,14 +296,10 @@ export default class PlanningScreen {
 		lastRow.cells[2].innerText = totalMonthly;
 		lastRow.cells[3].innerText = totalYearly;
 	}
-
-	updateSliceButtonText(text) {
-		this.slicesButton.innerText = `${text} `;
-	}
 	// #endregion
 
 	// #region event handlers
-	onClickAddCategory(event) {
+	onClickAddCategory() {
 		const id = new Date().getTime(); // millisecond precision
 		const category = new Category(id, 'New Category');
 		/** @type{Statement} */
@@ -318,8 +310,7 @@ export default class PlanningScreen {
 	}
 
 	onClickDeleteGoal(event) {
-		const btn = event.currentTarget;
-		const row = btn.parentNode.parentNode;
+		const row = event.currentTarget.parentNode.parentNode;
 		const tBody = row.parentNode;
 		const goal = row.userData;
 		const category = row.parentNode.parentNode.userData;
@@ -471,15 +462,14 @@ export default class PlanningScreen {
 		table.parentNode.removeChild(table);
 	}
 
-	onClickDeleteStatement(event) {
+	onClickDeleteStatement() {
 		this.statements.splice(this.gfx.selectedIndex(), 1);
 		this.update(this.statements);
 	}
 
-	onClickAddStatement(event) {
+	onClickAddStatement() {
 		const id = new Date().getTime(); // millisecond precision
 		const newStatement = new Statement(id, 'New statement', Statement.EXPENSE);
-		//this.statements.push(newStatement);
 		this.statements.unshift(newStatement);
 		this.update(this.statements);
 	}

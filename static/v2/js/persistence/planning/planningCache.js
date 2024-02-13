@@ -1,6 +1,5 @@
 import Idb from '../idb.js';
-import Category from './model/category.js';
-import Statement from './model/statement.js';
+import { Category, Statement } from './planningModel.js';
 
 export default class PlanningCache {
 	static DATABASE_NAME = 'Planning';
