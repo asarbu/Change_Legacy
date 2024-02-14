@@ -1,18 +1,23 @@
 /* eslint-disable class-methods-use-this */
 import GraphicEffects from './effects.js';
-import { create, createImageButton } from './dom.js';
+import { create, createChild, createImageButton } from './dom.js';
 import { Statement, Category, Goal } from '../persistence/planning/planningModel.js';
 import icons from './icons.js';
 
 export default class PlanningScreen {
 	onClickUpdate = undefined;
 
+	/**
+	 * Constructor
+	 * @param {string} id Unique identifier of the screen
+	 * @param {Array<Statement>} statements Statements to draw on the screen
+	 */
 	constructor(id, statements) {
-		/**
-		 * @type { Array<Statement> }
-		 */
+		/** @type { Array<Statement> } */
 		this.statements = statements;
+		/** @type {string} */
 		this.id = id;
+		/** @type {boolean} */
 		this.editMode = false;
 	}
 
@@ -34,8 +39,6 @@ export default class PlanningScreen {
 	sketchAsFragment() {
 		const container = create('div', { id: this.id, classes: ['container'] });
 		const section = create('div', { classes: ['section'] });
-		this.dropupContent = create('div', { classes: ['dropup-content', 'top-round'] });
-		this.dropupContent.style.display = 'none';
 
 		// TODO Merge this with navbar creation, since we are iterating through same array.
 		for (let i = 0; i < this.statements.length; i += 1) {
@@ -52,18 +55,39 @@ export default class PlanningScreen {
 	}
 
 	/**
-	 * Creates a DOM slice
+	 * Creates a DOM statement
 	 * @param {Statement} statement Statement representing this slice
 	 * @returns {HTMLDivElement} Constructed and decorated DOM element
 	 */
 	sketchStatement(statement) {
 		const slice = create('div', { classes: ['slice'] });
 		const h1 = create('h1', { innerText: statement.name });
-		const addCategoryButton = createImageButton('', '', ['btn'], icons.add_table);
-		addCategoryButton.addEventListener('click', this.onClickAddCategory.bind(this));
+		const span = create('span', { innerText: '▼', classes: ['white-50'] });
+
+		const statementTypeDropup = create('div', { classes: ['dropdown-content', 'top-round', 'bot-round'] });
+		statementTypeDropup.style.display = 'none';
+		const h2 = create('h2', { classes: [], innerText: `${this.statements[0].type} ` });
+		h2.addEventListener('click', this.onClickDropup.bind(this, statementTypeDropup));
+		const expenseAnchor = create('div', { innerText: Statement.EXPENSE });
+		expenseAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
+		statementTypeDropup.appendChild(expenseAnchor);
+
+		const incomeAnchor = create('div', { innerText: Statement.INCOME });
+		incomeAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
+		statementTypeDropup.appendChild(incomeAnchor);
+
+		const savingAnchor = create('div', { innerText: Statement.SAVING });
+		savingAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
+		statementTypeDropup.appendChild(savingAnchor);
+
+		h2.appendChild(span);
+		h2.appendChild(statementTypeDropup);
+
+		const addCategoryButton = createImageButton('Add Category', [], icons.add_table, undefined, this.onClickAddCategory.bind(this));
 		addCategoryButton.setAttribute('hideable', 'true');
 		if (!this.editMode) addCategoryButton.style.display = 'none';
 		slice.appendChild(h1);
+		slice.appendChild(h2);
 
 		const tables = this.sketchCategory(statement.categories);
 		slice.appendChild(tables);
@@ -74,7 +98,7 @@ export default class PlanningScreen {
 
 	/**
 	 * Creates a Document Fragment containing all of the tables constructed from the categories.
-	 * @param {Array<Category>} planningCategories Categories to draw inside parent slice
+	 * @param {Array<Category>} planningCategories Categories to draw inside parent statement
 	 * @returns {DocumentFragment} Document fragment with all of the created tables
 	 */
 	sketchCategory(planningCategories) {
@@ -83,15 +107,13 @@ export default class PlanningScreen {
 			const planningCategory = planningCategories[i];
 			const table = create('table', { id: planningCategory.id, classes: ['top-round', 'bot-round'] });
 			tableFragment.appendChild(table);
-			const thead = create('thead');
-			const tbody = create('tbody');
+			const thead = createChild('thead', table);
+			createChild('tbody', table);
 
-			table.appendChild(thead);
-			table.appendChild(tbody);
 			table.userData = planningCategory;
 
-			const headingRow = create('tr');
-			const nameCol = create('th');
+			const headingRow = createChild('tr', thead);
+			const nameCol = create('th', { textContent: planningCategory.name }, headingRow);
 			nameCol.setAttribute('editable', 'true');
 			if (this.editMode) {
 				nameCol.setAttribute('contenteditable', 'true');
@@ -99,34 +121,19 @@ export default class PlanningScreen {
 			nameCol.addEventListener('keyup', this.onKeyUpCategoryNameCell.bind(this), false);
 
 			// TODO replace this with Add row
-			const daily = create('th');
-			const monthly = create('th');
-			const yearly = create('th');
-			const buttons = create('th');
-			const button = createImageButton('Add Row', '', ['nav-item'], icons.delete);
-			button.addEventListener('click', this.onClickDeleteCategory.bind(this));
-
-			nameCol.innerText = planningCategory.name;
-			daily.innerText = 'Daily';
-			monthly.innerText = 'Monthly';
-			yearly.innerText = 'Yearly';
+			create('th', { textContent: 'Daily' }, headingRow);
+			create('th', { textContent: 'Monthly' }, headingRow);
+			create('th', { textContent: 'Yearly' }, headingRow);
+			const buttons = createChild('th', headingRow);
+			createImageButton('Delete Row', [], icons.delete, buttons, this.onClickDeleteCategory.bind(this));
 
 			buttons.setAttribute('hideable', 'true');
 			if (!this.editMode) buttons.style.display = 'none';
 
-			headingRow.appendChild(nameCol);
-			headingRow.appendChild(daily);
-			headingRow.appendChild(monthly);
-			headingRow.appendChild(yearly);
-			headingRow.appendChild(buttons);
-			buttons.appendChild(button);
-			thead.appendChild(headingRow);
-
 			for (let j = 0; j < planningCategory.goals.length; j += 1) {
 				const planningGoal = planningCategory.goals[j];
 
-				const deleteButton = createImageButton('Delete goal', '#', ['nav-item'], icons.delete);
-				deleteButton.addEventListener('click', this.onClickDeleteGoal.bind(this));
+				const deleteButton = createImageButton('Delete goal', [], icons.delete, undefined, this.onClickDeleteGoal.bind(this));
 				this.sketchRow(
 					table,
 					planningGoal,
@@ -180,6 +187,15 @@ export default class PlanningScreen {
 		return row;
 	}
 
+	/**
+	 * Creates and decorates a new data cell to be appended in a table row
+	 * @param {HTMLTableRowElement} row Row to populate with data cells
+	 * @param {string} text Text to display
+	 * @param {Object} options Miscelatious options for this data cell
+	 * @param {boolean} options.readonly Makes the cell uneditable
+	 * @param {boolean} options.color Paints the text a certain color (#000000)
+	 * @returns {HTMLTableCellElement}
+	 */
 	sketchDataCell(row, text, options) {
 		// console.log("Create data cell", text, options.readonly)
 		const dataCell = row.insertCell(-1);
@@ -198,6 +214,9 @@ export default class PlanningScreen {
 		return dataCell;
 	}
 
+	/**
+	 * Activate the current screen and all its effects.
+	 */
 	activate() {
 		const mainElement = document.getElementById('main');
 		mainElement.appendChild(this.container);
@@ -205,50 +224,53 @@ export default class PlanningScreen {
 		this.gfx.init(this.container);
 	}
 
+	/**
+	 * Creates and populates the navbar with relevant information for this screen
+	 * @returns {HTMLNavElement}
+	 */
 	sketchNavBar() {
 		const navbar = create('nav');
 		const navHeader = create('div', { classes: ['nav-header'] }, navbar);
-		const addStatementButton = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.add_file, navHeader);
-		this.editButton = createImageButton('Edit', '#', ['nav-item', 'large-text'], icons.edit, navHeader);
-		this.saveButton = createImageButton('Save', '#', ['nav-item', 'large-text'], icons.save);
-		const deleteStatement = createImageButton('Add', '#', ['nav-item', 'large-text'], icons.delete_file, navHeader);
-		addStatementButton.addEventListener('click', this.onClickAddStatement.bind(this));
+		const addStatementButton = createImageButton('Add', ['nav-item'], icons.add_file, navHeader, this.onClickAddStatement.bind(this));
+		this.editButton = createImageButton('Edit', ['nav-item'], icons.edit, navHeader, this.onClickEdit.bind(this));
+		this.saveButton = createImageButton('Save', ['nav-item'], icons.save, undefined, this.onClickSave.bind(this));
+		const deleteStatement = createImageButton('Add', ['nav-item'], icons.delete_file, navHeader, this.onClickDeleteStatement.bind(this));
 		addStatementButton.style.display = 'none';
 		addStatementButton.setAttribute('hideable', true);
-		deleteStatement.addEventListener('click', this.onClickDeleteStatement.bind(this));
 		deleteStatement.style.display = 'none';
 		deleteStatement.setAttribute('hideable', true);
 
 		const navFooter = create('div', { classes: ['nav-footer'] }, navbar);
-		const leftMenuButton = createImageButton('Menu', '#', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
+		const leftMenuButton = createImageButton('Menu', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
 		leftMenuButton.setAttribute('data-side', 'left');
 		const yearDropup = create('button', { innerText: `${this.id} `, classes: ['dropup', 'nav-item'] }, navFooter);
 
 		const span = create('span', { innerText: '▲', classes: ['white-50'] });
-		const statementDropup = create('button', { classes: ['nav-item'], innerText: `${this.statements[0].name} ` }, navFooter);
-		statementDropup.addEventListener('click', this.onClickDropup.bind(this), false);
+		const statementDropupButton = create('button', { classes: ['nav-item'], innerText: `${this.statements[0].name} ` }, navFooter);
+
+		const statementDropupContent = create('div', { classes: ['dropup-content', 'top-round'] });
+		statementDropupContent.style.display = 'none';
+		statementDropupButton.addEventListener('click', this.onClickDropup.bind(this, statementDropupContent));
 
 		for (let i = 0; i < this.statements.length; i += 1) {
 			const statement = this.statements[i];
 			const anchor = create('a', { innerText: statement.name });
 			anchor.setAttribute('data-slice-index', i);
-			anchor.addEventListener('click', this.onClickSetSlice.bind(this));
-			this.dropupContent.appendChild(anchor);
+			anchor.addEventListener('click', this.onClickShowStatement.bind(this));
+			statementDropupContent.appendChild(anchor);
 		}
 
-		statementDropup.appendChild(span);
-		statementDropup.appendChild(this.dropupContent);
-		const rightMenuButton = createImageButton('Menu', '#', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
+		statementDropupButton.appendChild(span);
+		statementDropupButton.appendChild(statementDropupContent);
+		const rightMenuButton = createImageButton('Menu', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
 		rightMenuButton.setAttribute('data-side', 'right');
-
-		this.editButton.addEventListener('click', this.onClickEdit.bind(this));
-		this.saveButton.addEventListener('click', this.onClickSave.bind(this));
 		return navbar;
 	}
 	// #endregion
 
 	// #region DOM manipulation
-	update(statements) {
+	/** Refresh screen */
+	refresh(statements) {
 		this.statements = statements;
 		const newContainer = this.sketchAsFragment();
 		const mainElement = document.getElementById('main');
@@ -257,8 +279,14 @@ export default class PlanningScreen {
 	}
 
 	// Recompute from DOM instead of memory/db/network to have real time updates in UI
+	/**
+	 * Computes the column wise total value of the table and inserts it into the last row.
+	 * @param {HTMLTableElement} table Table for which to compute total row
+	 * @param {boolean} forceCreate Force the creation of total row, if not present
+	 */
 	recomputeTotal(table, forceCreate = false) {
 		// TODO Use planning statements to recompute, instead of parsing.
+		// TODO remove force create and use the table id to identify if creation is needed.
 		let lastRow;
 		const total = {
 			id: `${table.id}Total`,
@@ -268,8 +296,7 @@ export default class PlanningScreen {
 			yearly: 0,
 		};
 		if (forceCreate) {
-			const addGoalButton = createImageButton('Delete goal', '#', ['nav-item'], icons.add_row);
-			addGoalButton.addEventListener('click', this.onClickAddGoal.bind(this));
+			const addGoalButton = createImageButton('Delete goal', ['nav-item'], icons.add_row, undefined, this.onClickAddGoal.bind(this));
 			const options = {
 				useBold: true,
 				readonly: true,
@@ -299,26 +326,27 @@ export default class PlanningScreen {
 	// #endregion
 
 	// #region event handlers
-	onClickAddCategory() {
-		const id = new Date().getTime(); // millisecond precision
-		const category = new Category(id, 'New Category');
-		/** @type{Statement} */
-		const statement = this.statements[this.gfx.selectedIndex()];
-		statement.categories.push(category);
-		// TODO update only the current statement, not all of them
-		this.update(this.statements);
+	// #region statement event handlers
+	onClickDeleteStatement() {
+		this.statements.splice(this.gfx.selectedIndex(), 1);
+		this.refresh(this.statements);
 	}
 
-	onClickDeleteGoal(event) {
-		const row = event.currentTarget.parentNode.parentNode;
-		const tBody = row.parentNode;
-		const goal = row.userData;
-		const category = row.parentNode.parentNode.userData;
+	onClickAddStatement() {
+		const id = new Date().getTime(); // millisecond precision
+		const newStatement = new Statement(id, 'New statement', Statement.EXPENSE);
+		this.statements.unshift(newStatement);
+		this.refresh(this.statements);
+	}
 
-		category.goals.splice(category.goals.indexOf(goal), 1);
+	onClickShowStatement(e) {
+		this.gfx.onClickSetSlice(e);
+		const sliceName = e.currentTarget.innerText;
+		this.slicesButton.firstChild.nodeValue = `${sliceName} `;
+	}
 
-		tBody.removeChild(row);
-		this.recomputeTotal(tBody.parentNode);
+	onClickChangeStatementType(e) {
+		return;
 	}
 
 	onClickEdit() {
@@ -360,21 +388,82 @@ export default class PlanningScreen {
 		this.saveButton.parentNode.replaceChild(this.editButton, this.saveButton);
 	}
 
+	onClickDropup(dropup, event) {
+		const dropupStyle = dropup.style;
+		if (dropupStyle.display === 'none') {
+			dropupStyle.display = 'block';
+			const clickedDropup = event.currentTarget.firstElementChild;
+			clickedDropup.innerText = '▼';
+		} else {
+			// No need to set arrow up because it'll be handled by setSliceButtonText
+			dropupStyle.display = 'none';
+		}
+	}
+	// #endregion
+
+	// #region category event handlers
+	onClickAddCategory() {
+		const id = new Date().getTime(); // millisecond precision
+		const category = new Category(id, 'New Category');
+		/** @type{Statement} */
+		const statement = this.statements[this.gfx.selectedIndex()];
+		statement.categories.push(category);
+		// TODO update only the current statement, not all of them
+		this.refresh(this.statements);
+	}
+
+	onClickDeleteCategory(event) {
+		const table = event.currentTarget.parentNode.parentNode.parentNode.parentNode;
+		const category = table.userData;
+		const statement = table.parentNode.userData;
+
+		statement.categories.splice(statement.categories.indexOf(category), 1);
+		table.parentNode.removeChild(table);
+	}
+
 	// eslint-disable-next-line class-methods-use-this
 	onKeyUpCategoryNameCell(event) {
-		const categoryName = event.target.textContent;
-		const table = event.target.parentNode.parentNode.parentNode;
+		const categoryName = event.currentTarget.textContent;
+		const table = event.currentTarget.parentNode.parentNode.parentNode;
 		const statement = table.userData;
 
 		statement.name = categoryName;
 	}
+	// #endregion
+
+	// #region goal event handlers
+	onClickAddGoal(event) {
+		const btn = event.currentTarget;
+		const id = new Date().getTime(); // millisecond precision
+		const goal = {
+			id: id,
+			name: 'New Goal',
+			daily: 0,
+			monthly: 0,
+			yearly: 0,
+		};
+
+		const table = btn.parentNode.parentNode.parentNode.parentNode;
+		const tbody = table.tBodies[0];
+		// Subtract one for the bottom "Total" row.
+		const index = tbody.rows.length - 1;
+
+		const button = createImageButton('Add Row', [], icons.delete, undefined, this.onClickDeleteGoal.bind(this));
+		const options = {
+			index: index,
+			lastCellContent: button,
+		};
+		this.sketchRow(table, goal, options);
+
+		table.userData.goals.push(goal);
+	}
 
 	onKeyUpCell(event) {
-		const cell = event.target;
+		const cell = event.currentTarget;
 		const row = cell.parentNode;
 		const table = row.parentNode.parentNode;
 
-		const { cellIndex } = event.target;
+		const { cellIndex } = event.currentTarget;
 		const goal = row.userData;
 
 		switch (cellIndex) {
@@ -409,70 +498,17 @@ export default class PlanningScreen {
 		this.recomputeTotal(table);
 	}
 
-	onClickDropup(event) {
-		if (this.dropupContent.style.display === 'none') {
-			this.dropupContent.style.display = 'block';
-			const clickedDropup = event.target.firstElementChild;
-			clickedDropup.innerText = '▼';
-		} else {
-			// No need to set arrow up because it'll be handled by setSliceButtonText
-			this.dropupContent.style.display = 'none';
-		}
+	onClickDeleteGoal(event) {
+		const row = event.currentTarget.parentNode.parentNode;
+		const tBody = row.parentNode;
+		const goal = row.userData;
+		const category = row.parentNode.parentNode.userData;
+
+		category.goals.splice(category.goals.indexOf(goal), 1);
+
+		tBody.removeChild(row);
+		this.recomputeTotal(tBody.parentNode);
 	}
-
-	onClickSetSlice(e) {
-		this.gfx.onClickSetSlice(e);
-		const sliceName = e.target.innerText;
-		this.slicesButton.firstChild.nodeValue = `${sliceName} `;
-	}
-
-	onClickAddGoal(event) {
-		const btn = event.currentTarget;
-		const id = new Date().getTime(); // millisecond precision
-		const goal = {
-			id: id,
-			name: 'New Goal',
-			daily: 0,
-			monthly: 0,
-			yearly: 0,
-		};
-
-		const table = btn.parentNode.parentNode.parentNode.parentNode;
-		const tbody = table.tBodies[0];
-		// Subtract one for the bottom "Total" row.
-		const index = tbody.rows.length - 1;
-
-		const button = createImageButton('Add Row', '', ['nav-item'], icons.delete);
-		button.addEventListener('click', this.onClickDeleteGoal.bind(this));
-		const options = {
-			index: index,
-			lastCellContent: button,
-		};
-		this.sketchRow(table, goal, options);
-
-		table.userData.goals.push(goal);
-	}
-
-	onClickDeleteCategory(event) {
-		const table = event.target.parentNode.parentNode.parentNode.parentNode.parentNode;
-		const category = table.userData;
-		const statement = table.parentNode.userData;
-
-		statement.categories.splice(statement.categories.indexOf(category), 1);
-		table.parentNode.removeChild(table);
-	}
-
-	onClickDeleteStatement() {
-		this.statements.splice(this.gfx.selectedIndex(), 1);
-		this.update(this.statements);
-	}
-
-	onClickAddStatement() {
-		const id = new Date().getTime(); // millisecond precision
-		const newStatement = new Statement(id, 'New statement', Statement.EXPENSE);
-		this.statements.unshift(newStatement);
-		this.update(this.statements);
-	}
-
+	// #endregion
 	// #endregion
 }
