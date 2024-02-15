@@ -64,24 +64,26 @@ export default class PlanningScreen {
 		const h1 = create('h1', { innerText: statement.name });
 		const span = create('span', { innerText: '▼', classes: ['white-50'] });
 
-		const statementTypeDropup = create('div', { classes: ['dropdown-content', 'top-round', 'bot-round'] });
-		statementTypeDropup.style.display = 'none';
+		const statementTypeDropdown = create('div', { classes: ['dropdown-content', 'top-round', 'bot-round'] });
+		statementTypeDropdown.style.display = 'none';
 		const h2 = create('h2', { classes: [], innerText: `${this.statements[0].type} ` });
-		h2.addEventListener('click', this.onClickDropup.bind(this, statementTypeDropup));
+		h2.addEventListener('click', this.onClickDropup.bind(this, statementTypeDropdown));
+		h2.setAttribute('hideable', 'true');
+		if (!this.editMode) h2.style.display = 'none';
 		const expenseAnchor = create('div', { innerText: Statement.EXPENSE });
 		expenseAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
-		statementTypeDropup.appendChild(expenseAnchor);
+		statementTypeDropdown.appendChild(expenseAnchor);
 
 		const incomeAnchor = create('div', { innerText: Statement.INCOME });
 		incomeAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
-		statementTypeDropup.appendChild(incomeAnchor);
+		statementTypeDropdown.appendChild(incomeAnchor);
 
 		const savingAnchor = create('div', { innerText: Statement.SAVING });
 		savingAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
-		statementTypeDropup.appendChild(savingAnchor);
+		statementTypeDropdown.appendChild(savingAnchor);
 
 		h2.appendChild(span);
-		h2.appendChild(statementTypeDropup);
+		h2.appendChild(statementTypeDropdown);
 
 		const addCategoryButton = createImageButton('Add Category', [], icons.add_table, undefined, this.onClickAddCategory.bind(this));
 		addCategoryButton.setAttribute('hideable', 'true');
@@ -254,14 +256,14 @@ export default class PlanningScreen {
 
 		for (let i = 0; i < this.statements.length; i += 1) {
 			const statement = this.statements[i];
-			const anchor = create('a', { innerText: statement.name });
+			const anchor = create('div', { innerText: statement.name });
 			anchor.setAttribute('data-slice-index', i);
 			anchor.addEventListener('click', this.onClickShowStatement.bind(this));
 			statementDropupContent.appendChild(anchor);
 		}
 
 		statementDropupButton.appendChild(span);
-		statementDropupButton.appendChild(statementDropupContent);
+		navbar.appendChild(statementDropupContent);
 		const rightMenuButton = createImageButton('Menu', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
 		rightMenuButton.setAttribute('data-side', 'right');
 		return navbar;
@@ -298,7 +300,6 @@ export default class PlanningScreen {
 		if (forceCreate) {
 			const addGoalButton = createImageButton('Delete goal', ['nav-item'], icons.add_row, undefined, this.onClickAddGoal.bind(this));
 			const options = {
-				useBold: true,
 				readonly: true,
 				hideLastCell: true,
 				lastCellContent: addGoalButton,
@@ -346,7 +347,10 @@ export default class PlanningScreen {
 	}
 
 	onClickChangeStatementType(e) {
-		return;
+		const newStatementType = e.currentTarget.textContent;
+		const statement = this.statements[this.gfx.selectedIndex()];
+		statement.type = newStatementType;
+		this.refresh(this.statements);
 	}
 
 	onClickEdit() {
@@ -389,10 +393,12 @@ export default class PlanningScreen {
 	}
 
 	onClickDropup(dropup, event) {
+		const button = event.currentTarget;
+		button.classList.toggle('active');
 		const dropupStyle = dropup.style;
 		if (dropupStyle.display === 'none') {
 			dropupStyle.display = 'block';
-			const clickedDropup = event.currentTarget.firstElementChild;
+			const clickedDropup = button.firstElementChild;
 			clickedDropup.innerText = '▼';
 		} else {
 			// No need to set arrow up because it'll be handled by setSliceButtonText
