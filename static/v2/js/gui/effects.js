@@ -67,10 +67,11 @@ export default class GraphicEffects {
 		if (!this.containerWidth) {
 			this.containerWidth = this.rootContainer.clientWidth;
 		}
+
 		this.currentIndex = +index;
 		this.currentIndex = Math.min(this.currentIndex, this.lastIndex);
 		requestAnimationFrame(() => {
-			this.sliderWrapper.style.transition = 'transform 0.25s linear';
+			this.sliderWrapper.style.transition = 'transform 0.2s linear';
 			this.sliderWrapper.style.transform = `translateX(${-this.containerWidth * index}px)`;
 		});
 	}
@@ -86,12 +87,16 @@ export default class GraphicEffects {
 
 	startSlider(e) {
 		this.mouseDown = true;
+		if (!this.containerWidth) {
+			this.containerWidth = this.rootContainer.clientWidth;
+		}
 
 		// check desktop or mobile
 		this.startX = e.clientX ? e.clientX : e.touches[0].screenX;
 		this.startY = e.clientY ? e.clientY : e.touches[0].screenY;
 
 		this.sliderWrapper.removeEventListener('touchmove', this.startSliderEventListener);
+		this.sliderWrapper.style.transition = 'transform 0s linear';
 		this.rootContainer.addEventListener(
 			e.clientX ? 'mousemove' : 'touchmove',
 			this.moveSliderEventListener,
@@ -104,6 +109,7 @@ export default class GraphicEffects {
 
 		const currentX = e.clientX || e.touches[0].screenX;
 		const currentY = e.clientY || e.touches[0].screenY;
+
 		requestAnimationFrame(() => {
 			if (!this.scrolling) {
 				// Check scroll direction
@@ -121,12 +127,11 @@ export default class GraphicEffects {
 			// Allow horizontal scroll even if no scroll is present.
 			// Vertical is allowed by default.
 			if (this.scrolling === undefined || this.scrolling === 'horizontal') {
-				this.sliderWrapper.style.transition = 'transform 0s linear';
-				this.sliderWrapper.style.transform = `translateX(${currentX - this.startX
-					- this.containerWidth * this.currentIndex}px)`;
+				const xTranslation = currentX - this.startX - this.containerWidth * (this.currentIndex);
+				this.sliderWrapper.style.transform = `translateX(${xTranslation}px)`;
 			}
 		});
-	};
+	}
 
 	endSlider(e) {
 		if (!this.mouseDown || !e) return;

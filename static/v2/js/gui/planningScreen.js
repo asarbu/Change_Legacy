@@ -61,24 +61,29 @@ export default class PlanningScreen {
 	 */
 	sketchStatement(statement) {
 		const slice = create('div', { classes: ['slice'] });
-		const h1 = create('h1', { innerText: statement.name });
-		const span = create('span', { innerText: '▼', classes: ['white-50'] });
+		const h1 = create('h1', { textContent: statement.name });
+		h1.setAttribute('editable', 'true');
+		h1.addEventListener('keyup', this.onKeyUpStatementName.bind(this), false);
+		if (this.editMode) {
+			h1.setAttribute('contenteditable', 'true');
+		}
+		const span = create('span', { textContent: '▼', classes: ['white-50'] });
 
 		const statementTypeDropdown = create('div', { classes: ['dropdown-content', 'top-round', 'bot-round'] });
 		statementTypeDropdown.style.display = 'none';
-		const h2 = create('h2', { classes: [], innerText: `${this.statements[0].type} ` });
+		const h2 = create('h2', { classes: [], textContent: `${this.statements[0].type} ` });
 		h2.addEventListener('click', this.onClickDropup.bind(this, statementTypeDropdown));
 		h2.setAttribute('hideable', 'true');
 		if (!this.editMode) h2.style.display = 'none';
-		const expenseAnchor = create('div', { innerText: Statement.EXPENSE });
+		const expenseAnchor = create('div', { textContent: Statement.EXPENSE });
 		expenseAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
 		statementTypeDropdown.appendChild(expenseAnchor);
 
-		const incomeAnchor = create('div', { innerText: Statement.INCOME });
+		const incomeAnchor = create('div', { textContent: Statement.INCOME });
 		incomeAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
 		statementTypeDropdown.appendChild(incomeAnchor);
 
-		const savingAnchor = create('div', { innerText: Statement.SAVING });
+		const savingAnchor = create('div', { textContent: Statement.SAVING });
 		savingAnchor.addEventListener('click', this.onClickChangeStatementType.bind(this));
 		statementTypeDropdown.appendChild(savingAnchor);
 
@@ -120,7 +125,7 @@ export default class PlanningScreen {
 			if (this.editMode) {
 				nameCol.setAttribute('contenteditable', 'true');
 			}
-			nameCol.addEventListener('keyup', this.onKeyUpCategoryNameCell.bind(this), false);
+			nameCol.addEventListener('keyup', this.onKeyUpCategoryName.bind(this), false);
 
 			// TODO replace this with Add row
 			create('th', { textContent: 'Daily' }, headingRow);
@@ -148,6 +153,7 @@ export default class PlanningScreen {
 			}
 			this.recomputeTotal(table, true);
 		}
+
 		return tableFragment;
 	}
 
@@ -207,7 +213,7 @@ export default class PlanningScreen {
 			if (this.editMode) {
 				dataCell.setAttribute('contenteditable', 'true');
 			}
-			dataCell.addEventListener('keyup', this.onKeyUpCell.bind(this), false);
+			dataCell.addEventListener('keyup', this.onKeyUpGoal.bind(this), false);
 		}
 
 		if (options?.color) {
@@ -245,10 +251,10 @@ export default class PlanningScreen {
 		const navFooter = create('div', { classes: ['nav-footer'] }, navbar);
 		const leftMenuButton = createImageButton('Menu', ['nav-item', 'nav-trigger'], icons.menu, navFooter);
 		leftMenuButton.setAttribute('data-side', 'left');
-		const yearDropup = create('button', { innerText: `${this.id} `, classes: ['dropup', 'nav-item'] }, navFooter);
+		const yearDropup = create('button', { textContent: `${this.id} `, classes: ['dropup', 'nav-item'] }, navFooter);
 
-		const span = create('span', { innerText: '▲', classes: ['white-50'] });
-		const statementDropupButton = create('button', { classes: ['nav-item'], innerText: `${this.statements[0].name} ` }, navFooter);
+		const span = create('span', { textContent: '▲', classes: ['white-50'] });
+		const statementDropupButton = create('button', { classes: ['nav-item'], textContent: `${this.statements[0].name} ` }, navFooter);
 
 		const statementDropupContent = create('div', { classes: ['dropup-content', 'top-round'] });
 		statementDropupContent.style.display = 'none';
@@ -256,9 +262,9 @@ export default class PlanningScreen {
 
 		for (let i = 0; i < this.statements.length; i += 1) {
 			const statement = this.statements[i];
-			const anchor = create('div', { innerText: statement.name });
+			const anchor = create('div', { textContent: statement.name });
 			anchor.setAttribute('data-slice-index', i);
-			anchor.addEventListener('click', this.onClickShowStatement.bind(this));
+			anchor.addEventListener('click', this.onClickShowStatement.bind(this, statementDropupButton));
 			statementDropupContent.appendChild(anchor);
 		}
 
@@ -315,14 +321,14 @@ export default class PlanningScreen {
 
 		for (let rowIndex = 0; rowIndex < table.tBodies[0].rows.length - 1; rowIndex += 1) {
 			const row = table.tBodies[0].rows[rowIndex];
-			totalDaily += parseInt(row.cells[1].innerText, 10);
-			totalMonthly += parseInt(row.cells[2].innerText, 10);
-			totalYearly += parseInt(row.cells[3].innerText, 10);
+			totalDaily += parseInt(row.cells[1].textContent, 10);
+			totalMonthly += parseInt(row.cells[2].textContent, 10);
+			totalYearly += parseInt(row.cells[3].textContent, 10);
 		}
 
-		lastRow.cells[1].innerText = totalDaily;
-		lastRow.cells[2].innerText = totalMonthly;
-		lastRow.cells[3].innerText = totalYearly;
+		lastRow.cells[1].textContent = totalDaily;
+		lastRow.cells[2].textContent = totalMonthly;
+		lastRow.cells[3].textContent = totalYearly;
 	}
 	// #endregion
 
@@ -340,10 +346,12 @@ export default class PlanningScreen {
 		this.refresh(this.statements);
 	}
 
-	onClickShowStatement(e) {
+	onClickShowStatement(dropup, e) {
 		this.gfx.onClickSetSlice(e);
-		const sliceName = e.currentTarget.innerText;
-		this.slicesButton.firstChild.nodeValue = `${sliceName} `;
+		const sliceName = e.currentTarget.textContent;
+		const dropupText = dropup.firstChild;
+		dropupText.nodeValue = `${sliceName} `;
+		dropup.click();
 	}
 
 	onClickChangeStatementType(e) {
@@ -354,14 +362,9 @@ export default class PlanningScreen {
 	}
 
 	onClickEdit() {
-		const tableDefs = document.querySelectorAll('td[editable="true"]');
+		const tableDefs = document.querySelectorAll('[editable="true"]');
 		for (let i = 0; i < tableDefs.length; i += 1) {
 			tableDefs[i].contentEditable = 'true';
-		}
-
-		const tableHeaders = document.querySelectorAll('th[editable="true"]');
-		for (let i = 0; i < tableHeaders.length; i += 1) {
-			tableHeaders[i].contentEditable = 'true';
 		}
 
 		const elements = document.querySelectorAll('[hideable="true"]');
@@ -374,14 +377,14 @@ export default class PlanningScreen {
 	}
 
 	onClickSave() {
-		const tableDefs = document.querySelectorAll('td[editable="true"]');
-		for (let i = 0; i < tableDefs.length; i += 1) {
-			tableDefs[i].contentEditable = 'false';
+		const editableElmts = document.querySelectorAll('[editable="true"]');
+		for (let i = 0; i < editableElmts.length; i += 1) {
+			editableElmts[i].contentEditable = 'false';
 		}
 
-		const elements = document.querySelectorAll('[hideable="true"]');
-		for (let i = 0; i < elements.length; i += 1) {
-			elements[i].style.display = 'none';
+		const hideableElmts = document.querySelectorAll('[hideable="true"]');
+		for (let i = 0; i < hideableElmts.length; i += 1) {
+			hideableElmts[i].style.display = 'none';
 		}
 
 		if (this.onClickUpdate) {
@@ -398,12 +401,16 @@ export default class PlanningScreen {
 		const dropupStyle = dropup.style;
 		if (dropupStyle.display === 'none') {
 			dropupStyle.display = 'block';
-			const clickedDropup = button.firstElementChild;
-			clickedDropup.innerText = '▼';
 		} else {
 			// No need to set arrow up because it'll be handled by setSliceButtonText
 			dropupStyle.display = 'none';
 		}
+	}
+
+	onKeyUpStatementName(event) {
+		const statementName = event.currentTarget.textContent;
+		const statement = event.currentTarget.parentNode.userData;
+		statement.name = statementName;
 	}
 	// #endregion
 
@@ -428,7 +435,7 @@ export default class PlanningScreen {
 	}
 
 	// eslint-disable-next-line class-methods-use-this
-	onKeyUpCategoryNameCell(event) {
+	onKeyUpCategoryName(event) {
 		const categoryName = event.currentTarget.textContent;
 		const table = event.currentTarget.parentNode.parentNode.parentNode;
 		const statement = table.userData;
@@ -464,7 +471,7 @@ export default class PlanningScreen {
 		table.userData.goals.push(goal);
 	}
 
-	onKeyUpCell(event) {
+	onKeyUpGoal(event) {
 		const cell = event.currentTarget;
 		const row = cell.parentNode;
 		const table = row.parentNode.parentNode;
